@@ -31,3 +31,7 @@ te.txt
 tmp_out.txt
 tmp_err.txt
 test_results_phase1.csv
+
+# Bulk Kenney source ZIPs — curated GLBs under assets/models/{heroes,enemies,weapons,env} are committed
+assets/models/external/
+

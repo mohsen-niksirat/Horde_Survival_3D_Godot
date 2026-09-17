@@ -101,16 +101,12 @@ func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: 
 ## Cache the part materials for hit flashes; elites get a gold tint.
 func _collect_flash_materials() -> void:
 	_flash_materials.clear()
-	for part in _mesh.get_children():
-		if part is MeshInstance3D:
-			# Duplicate shared cache mats so elite tint / hit flash stay per-instance
-			var mat: StandardMaterial3D = EnemyVisuals.ensure_unique_material(part)
-			if mat == null:
-				continue
-			if elite != null:
+	EnemyVisuals.collect_flash_materials(_mesh, _flash_materials)
+	if elite != null:
+		for mat in _flash_materials:
+			if is_instance_valid(mat):
 				mat.albedo_color = Color(1.0, 0.8, 0.2)
-			mat.set_meta("base_color", mat.albedo_color)
-			_flash_materials.append(mat)
+				mat.set_meta("base_color", Color(1.0, 0.8, 0.2))
 
 ## Promote this enemy to an elite with the given abilities.
 func make_elite(p_abilities: Array) -> void:

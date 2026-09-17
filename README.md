@@ -30,6 +30,7 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 - Threat-budget horde spawning, difficulty timeline, quality-tier entity caps
 - Versioned meta save (gold, bests, achievements) that persists in the browser
 - Responsive HUD; virtual joystick + touch camera on mobile
+- Kenney CC0 GLB heroes/enemies/weapons/skybox (see docs/ASSET_CREDITS.md); quality Very Low→Ultra + FPS counter
 
 ## How to Run Locally
 

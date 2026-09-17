@@ -1,15 +1,49 @@
 extends Node3D
-## V2 enemy visual builder — primitive models per archetype with a shared
-## material cache so recycled enemies don't explode material/draw-call counts.
-## Hit-flash / elite tint duplicate materials per instance when needed.
+## Enemy visual builder — Kenney GLB meshes on Low+ quality, primitive
+## fallback on Very Low. Shared material cache for primitives.
 
 static var _mat_cache: Dictionary = {}
 
+const ENEMY_SCENES := {
+	"basic_drone": "res://assets/models/enemies/enemy_drone.glb",
+	"fast_wisp": "res://assets/models/enemies/enemy_wisp.glb",
+	"tank_golem": "res://assets/models/enemies/enemy_golem.glb",
+	"shooter_turret": "res://assets/models/enemies/enemy_human.glb",
+	"swarm_bat": "res://assets/models/enemies/enemy_bat.glb",
+	"ghost": "res://assets/models/enemies/enemy_ghost.glb",
+	"splitter": "res://assets/models/enemies/enemy_orc.glb",
+	"healer": "res://assets/models/enemies/enemy_healer.glb",
+	"mage": "res://assets/models/enemies/enemy_mage.glb",
+	"swarm_bat_mini": "res://assets/models/enemies/enemy_bat.glb",
+}
+
+const GLB_SCALES := {
+	"basic_drone": 1.15,
+	"fast_wisp": 1.05,
+	"tank_golem": 1.45,
+	"shooter_turret": 1.2,
+	"swarm_bat": 0.85,
+	"ghost": 1.1,
+	"splitter": 1.25,
+	"healer": 1.15,
+	"mage": 1.15,
+	"swarm_bat_mini": 0.65,
+}
+
+static func prefer_glb() -> bool:
+	if PerformanceManager == null:
+		return true
+	return PerformanceManager.quality >= PerformanceManager.Quality.LOW
+
 static func build(visual_root: Node3D, archetype_id: String) -> void:
-	if visual_root.has_meta("built_for") and visual_root.get_meta("built_for") == archetype_id:
+	var mode := "glb" if prefer_glb() else "prim"
+	var key := archetype_id + "|" + mode
+	if visual_root.has_meta("built_for") and visual_root.get_meta("built_for") == key:
 		return
 	_clear_parts(visual_root)
-	visual_root.set_meta("built_for", archetype_id)
+	visual_root.set_meta("built_for", key)
+	if mode == "glb" and _try_glb(visual_root, archetype_id):
+		return
 	match archetype_id:
 		"basic_drone": _build_drone(visual_root)
 		"fast_wisp": _build_wisp(visual_root)
@@ -23,6 +57,22 @@ static func build(visual_root: Node3D, archetype_id: String) -> void:
 		"swarm_bat_mini": _build_bat(visual_root)
 		_: _build_drone(visual_root)
 
+static func _try_glb(visual_root: Node3D, archetype_id: String) -> bool:
+	var path: String = ENEMY_SCENES.get(archetype_id, ENEMY_SCENES["basic_drone"])
+	if not ResourceLoader.exists(path):
+		return false
+	var packed = load(path)
+	if packed == null:
+		return false
+	var inst = packed.instantiate()
+	if inst == null:
+		return false
+	inst.name = "External"
+	var s: float = GLB_SCALES.get(archetype_id, 1.1)
+	inst.scale = Vector3(s, s, s)
+	visual_root.add_child(inst)
+	return true
+
 static func clear(visual_root: Node3D) -> void:
 	visual_root.remove_meta("built_for")
 	_clear_parts(visual_root)
@@ -30,6 +80,34 @@ static func clear(visual_root: Node3D) -> void:
 static func _clear_parts(visual_root: Node3D) -> void:
 	for child in visual_root.get_children():
 		child.queue_free()
+
+static func collect_flash_materials(visual_root: Node3D, out: Array) -> void:
+	_collect_flash_recursive(visual_root, out)
+
+static func _collect_flash_recursive(node: Node, out: Array) -> void:
+	if node is MeshInstance3D:
+		var mat: StandardMaterial3D = ensure_unique_material(node)
+		if mat != null:
+			if not mat.has_meta("base_color"):
+				mat.set_meta("base_color", mat.albedo_color)
+			out.append(mat)
+	for c in node.get_children():
+		_collect_flash_recursive(c, out)
+
+static func ensure_unique_material(mi: MeshInstance3D) -> StandardMaterial3D:
+	var mat: StandardMaterial3D = mi.get_surface_override_material(0)
+	if mat == null:
+		var active = mi.get_active_material(0)
+		if active is StandardMaterial3D:
+			mat = (active as StandardMaterial3D).duplicate()
+			mi.set_surface_override_material(0, mat)
+		else:
+			return null
+	if mat.get_meta("shared_base", false):
+		mat = mat.duplicate()
+		mat.set_meta("shared_base", false)
+		mi.set_surface_override_material(0, mat)
+	return mat
 
 static func _mesh(parent: Node3D, mesh: Mesh, mat: StandardMaterial3D, pos: Vector3, rot_x: float = 0.0) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
@@ -58,23 +136,9 @@ static func _mat(color: Color, emission: float = 0.0, transparency: int = BaseMa
 	_mat_cache[key] = m
 	return m
 
-## Unique copy for flash/elite tinting so shared cache stays clean.
-static func ensure_unique_material(mi: MeshInstance3D) -> StandardMaterial3D:
-	var mat: StandardMaterial3D = mi.get_surface_override_material(0)
-	if mat == null:
-		return null
-	if mat.get_meta("shared_base", false):
-		mat = mat.duplicate()
-		mat.set_meta("shared_base", false)
-		mi.set_surface_override_material(0, mat)
-	return mat
-
-# --- Basic Drone ---
 static func _build_drone(v: Node3D) -> void:
-	var body_col := Color(0.62, 0.67, 0.72)
-	var accent := Color(0.95, 0.45, 0.25)
-	var body_mat := _mat(body_col)
-	var accent_mat := _mat(accent, 0.8)
+	var body_mat := _mat(Color(0.62, 0.67, 0.72))
+	var accent_mat := _mat(Color(0.95, 0.45, 0.25), 0.8)
 	_sphere(v, body_mat, 0.5, Vector3(0, 0.55, 0))
 	_mesh(v, SphereMesh.new(), accent_mat, Vector3(0, 0.55, 0)).scale = Vector3(0.28, 0.28, 0.28)
 	var pole := CylinderMesh.new()
@@ -95,17 +159,14 @@ static func _build_drone(v: Node3D) -> void:
 	skirt.height = 0.2
 	_mesh(v, skirt, body_mat, Vector3(0, 0.25, 0))
 
-# --- Wisp ---
 static func _build_wisp(v: Node3D) -> void:
 	var core_mat := _mat(Color(0.4, 0.85, 1.0), 2.0)
 	var outer_mat := _mat(Color(0.2, 0.55, 0.9), 1.2, BaseMaterial3D.TRANSPARENCY_ALPHA)
-	outer_mat.albedo_color.a = 0.55
 	_sphere(v, core_mat, 0.28, Vector3(0, 0.7, 0))
 	var kite := PrismMesh.new()
 	kite.size = Vector3(0.7, 0.9, 0.2)
 	_mesh(v, kite, outer_mat, Vector3(0, 0.75, 0), -0.4)
 
-# --- Golem ---
 static func _build_golem(v: Node3D) -> void:
 	var stone := _mat(Color(0.45, 0.42, 0.4))
 	var moss := _mat(Color(0.35, 0.55, 0.3))
@@ -114,7 +175,6 @@ static func _build_golem(v: Node3D) -> void:
 	_mesh(v, BoxMesh.new(), moss, Vector3(-0.55, 0.7, 0)).scale = Vector3(0.28, 0.55, 0.28)
 	_mesh(v, BoxMesh.new(), moss, Vector3(0.55, 0.7, 0)).scale = Vector3(0.28, 0.55, 0.28)
 
-# --- Turret ---
 static func _build_turret(v: Node3D) -> void:
 	var metal := _mat(Color(0.55, 0.58, 0.62))
 	var glow := _mat(Color(1.0, 0.4, 0.2), 1.5)
@@ -133,11 +193,9 @@ static func _build_turret(v: Node3D) -> void:
 	_mesh(v, barrel, metal, Vector3(0, 0.55, 0.35), PI / 2)
 	_sphere(v, glow, 0.08, Vector3(0, 0.72, 0))
 
-# --- Bat ---
 static func _build_bat(v: Node3D) -> void:
 	var body_mat := _mat(Color(0.35, 0.2, 0.4))
 	var wing_mat := _mat(Color(0.55, 0.25, 0.45), 0.0, BaseMaterial3D.TRANSPARENCY_ALPHA)
-	wing_mat.albedo_color.a = 0.85
 	_sphere(v, body_mat, 0.22, Vector3(0, 0.55, 0))
 	var wing_mesh := PrismMesh.new()
 	wing_mesh.size = Vector3(0.45, 0.12, 0.2)
@@ -152,7 +210,6 @@ static func _sphere(v: Node3D, mat: StandardMaterial3D, radius: float, pos: Vect
 	s.height = radius * 2.0
 	_mesh(v, s, mat, pos)
 
-## Per-frame micro-animation — LOD: callers should skip far enemies.
 static func animate(visual_root: Node3D, archetype_id: String, time: float, seed_val: float) -> void:
 	match archetype_id:
 		"swarm_bat", "swarm_bat_mini":
@@ -164,7 +221,7 @@ static func animate(visual_root: Node3D, archetype_id: String, time: float, seed
 				wr.rotation.z = -flap
 		"fast_wisp":
 			if visual_root.get_child_count() > 1:
-				var outer: MeshInstance3D = visual_root.get_child(1)
+				var outer: Node3D = visual_root.get_child(1)
 				var s := 1.0 + sin(time * 9.0 + seed_val) * 0.12
 				outer.scale = Vector3(s, s, s)
 		"basic_drone":

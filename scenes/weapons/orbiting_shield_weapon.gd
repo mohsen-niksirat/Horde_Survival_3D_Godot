@@ -7,23 +7,28 @@ const SHIELD_RADIUS_BASE := 2.2
 const HIT_COOLDOWN := 0.35
 ## P2 feel: the orbit breathes in and out while it spins.
 const RADIUS_PULSE := 0.35
+const SHIELD_SCENE_PATH := "res://assets/models/weapons/shield-round.glb"
 @export var shield_scene: PackedScene
 
 var _weapon: WeaponInstance
 var _player: Node3D
 var _shields: Array = []
 var _angle: float = 0.0
-var _hit_cooldowns: Dictionary = {}  # instance_id -> timestamp
+var _hit_cooldowns: Dictionary = {}
 var _enemy_manager: Node = null
 var _prune_accum: float = 0.0
 var _hit_tick: int = 0
+var _external_shield: PackedScene = null
 
 func setup(weapon: WeaponInstance, player: Node3D) -> void:
 	_weapon = weapon
 	_player = player
 	_enemy_manager = null
 	_hit_cooldowns.clear()
-	if shield_scene == null:
+	if PerformanceManager != null and PerformanceManager.quality >= PerformanceManager.Quality.LOW \
+			and ResourceLoader.exists(SHIELD_SCENE_PATH):
+		_external_shield = load(SHIELD_SCENE_PATH)
+	if shield_scene == null and _external_shield == null:
 		shield_scene = load("res://scenes/weapons/OrbitShield.tscn")
 	_sync_shields()
 
@@ -71,7 +76,14 @@ func _sync_shields(count: int = -1) -> void:
 	if count < 0:
 		count = _weapon.get_projectile_count() if _weapon != null else 1
 	while _shields.size() < count:
-		var s := shield_scene.instantiate()
+		var s: Node3D
+		if _external_shield != null:
+			s = _external_shield.instantiate()
+			s.scale = Vector3.ONE * 0.45
+		elif shield_scene != null:
+			s = shield_scene.instantiate()
+		else:
+			s = Node3D.new()
 		add_child(s)
 		_shields.append(s)
 	while _shields.size() > count:
