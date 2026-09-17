@@ -28,8 +28,9 @@
 9. Relic spawn presentation is subtle — may need beacon effect
 
 ## Deployment
-- GitHub Actions → Pages: green. Live: https://mohsen-niksirat.github.io/Horde_Survival_3D/
-- Custom loading shell (onProgress API fixed), Click-to-Play, WebGL fallback
+- GitHub Actions → Pages: green. Live: https://mohsen-niksirat.github.io/Horde_Survival_3D_Godot/
+- Custom loading shell (progress kept visible after PLAY), Click-to-Play, WebGL fallback
+- Phase 1 (bugs + browser FPS P0) landed — see docs/PHASE_PLAN.md
 
 ## Recommended Next Phases
 > See docs/POST_MVP_STATE.md §12 (authoritative P-phase order).

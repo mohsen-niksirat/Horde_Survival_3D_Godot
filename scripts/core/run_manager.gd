@@ -43,12 +43,14 @@ func register_kill() -> void:
 func add_gold(amount: float) -> void:
 	gold_earned += amount
 
-## Commit partial run rewards (used by pause->menu so progress isn't lost)
+## Commit partial run rewards (pause->menu / pause->restart).
+## Kills are already banked per-kill by AchievementSystem — do not re-add them.
 func commit_partial_rewards() -> void:
 	var gold := int(gold_earned)
-	var total: int = SaveManager.get_meta_data("gold", 0)
-	SaveManager.set_meta_data("gold", total + gold)
-	SaveManager.set_meta_data("total_kills", SaveManager.get_meta_data("total_kills", 0) + kills)
+	if gold > 0:
+		var total: int = SaveManager.get_meta_data("gold", 0)
+		SaveManager.set_meta_data("gold", total + gold)
+		gold_earned = 0.0
 	if elapsed_time > float(SaveManager.get_meta_data("best_time", 0.0)):
 		SaveManager.set_meta_data("best_time", elapsed_time)
 

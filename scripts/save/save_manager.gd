@@ -56,6 +56,7 @@ func _default_data() -> Dictionary:
 			"quality": 1,
 			"show_damage_numbers": true,
 			"screen_shake": true,
+			"tutorial_done": false,
 		},
 		"meta": {
 			"gold": 0,
@@ -66,14 +67,22 @@ func _default_data() -> Dictionary:
 			"best_level": 0,
 			"total_runs": 0,
 			"total_kills": 0,
+			"meta_upgrades": {},
 		},
 	}
 
 func _migrate(parsed: Dictionary) -> Dictionary:
 	var version: int = int(parsed.get("save_version", 0))
-	# Future migrations go here: match version, patch, then increment.
-	if version < SAVE_VERSION:
-		pass
+	var defaults := _default_data()
+	# Deep-merge missing keys so older saves pick up new defaults
+	for section in defaults:
+		if not parsed.has(section) or typeof(parsed[section]) != TYPE_DICTIONARY:
+			parsed[section] = defaults[section]
+		else:
+			for key in defaults[section]:
+				if not parsed[section].has(key):
+					parsed[section][key] = defaults[section][key]
+	parsed["save_version"] = max(version, SAVE_VERSION)
 	return parsed
 
 func get_setting(key: String, fallback = null):

@@ -22,9 +22,8 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 ## Features
 
 - Third-person 3D arena combat, camera-relative movement, zero aiming
-- 5 auto-firing weapons: Fireball (AOE), Magic Missile (homing), Orbiting Shield (orbit), Divine Spear (pierce/crit), Lightning (AOE strike)
-- 2 weapon evolutions: Hellfire (Fireball T5 + Spinach max) and Holy Bible (Magic Missile T5 + Tome max)
-- 5 enemy archetypes + 8 modular elite abilities + one complete 3-phase boss
+- 5 auto-firing weapons + 5 evolutions (Hellfire, Holy Bible, Aurora, Judgment, Thunderstorm)
+- 9 enemy archetypes + 8 modular elite abilities + one complete 3-phase boss
 - XP orbs with magnet pickup, level-ups with 3 rarity-colored choices, 8 passive items
 - Relics (rarity-weighted map pickups incl. Phoenix Feather revive), a pet (Dragon Welp), 2 active abilities (Meteor Strike, Time Freeze)
 - Combo system with XP multiplier and 6 visual tiers, 10 achievements with gold rewards
@@ -34,7 +33,7 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 
 ## How to Run Locally
 
-1. Install [Godot 4.3+](https://godotengine.org/download)
+1. Install [Godot 4.7+](https://godotengine.org/download) (project features pin `4.7`)
 2. Open `project.godot` in the Godot editor
 3. Press **F5** (Play)
 

@@ -1,24 +1,23 @@
 # PLAYTEST FEEDBACK LOG
 
-> طبق prompt 3 §18: هر بازخورد دسته‌بندی می‌شه (BUG/UX/BALANCE/VISUAL/AUDIO/
-> PERFORMANCE/FEATURE) و فیکس کوچک‌ safest گرفته می‌شه.
+> Per prompt 3 §18: each feedback is categorized (BUG/UX/BALANCE/VISUAL/AUDIO/
+> PERFORMANCE/FEATURE) and the safest small fix is taken.
 
-| # | بازخورد | دسته | وضعیت |
-|---|---|---|---|
-| 1 | spawn داخل بیکن | BUG | ✅ فیکس شد (A1) |
-| 2 | دوربین موقع حرکت می‌چرخه / گیج‌کننده | BUG | ✅ فیکس شد (top_level + حذف binding) |
-| 3 | آبجکت قرمز نوک‌تیز جدا | BUG | ✅ حذف شد (دم پت) |
-| 4 | دکمه pause نیست | UX | ✅ دکمه II + Esc/P |
-| 5 | زوم اسکرول/پینچ | FEATURE | ✅ اسکرول + دکمه‌های +/− (پینچ حذف شد به درخواست) |
-| 6 | شلیک به دشمن‌های نامرعی / دمیج الکی | BUG | ✅ pool visibility + nearest_visible + spawn ring 22-30m |
-| 7 | چرخش موس ۳۶۰ نیست | BUG | ✅ pointer lock |
-| 8 | موبایل: دو‌انگشتی تداخل | BUG | ✅ تفکیک کامل چپ/راست |
-| 9 | موبایل: پرش ~۱۸۰ درجه با انگشت دوم | BUG | ✅ نادیده‌گرفتن mouse-motion شبیه‌سازی‌شده در تاچ |
-| 10 | موبایل: رینگ تاچ نمایش داده بشه (هر دو طرف، knob کش‌سان) | UX | ✅ TouchIndicator |
-| 11 | موبایل: look کند وقتی همزمان حرکت | BUG | ✅ accumulate به‌جای assign در set_touch_look_delta (دلتاهای چندتایی در یک فریم قبلاً drop می‌شدن) |
-| 12 | موبایل: زوم با دکمه (پینچ تداخل داره) | UX | ✅ دکمه +/− (بازخورد 5 تکمیل شد) |
-
-| 13 | قلب‌ها با آهنربا جمع بشن (رد شدن دقیق کافیه نیست) | UX | OPEN — آهنربای pickup به HeartPickup/شارد XP اضافه شود |
-| 14 | تعداد قلب‌ها کمتر شود (با آهنربا راحت‌تر جمع می‌شوند) | BALANCE | OPEN — نرخ 10% به ~5% |
-| 15 | اشکال مثلث/مربع → فرم‌های واقعی‌تر برای شخصیت/دشمن/سلاح/گلوله | VISUAL | OPEN — V21 مدل‌های گل‌بیل |
-| 16 | تنظیمات گرافیک: تیرهای قوی + weak + AUTO (رندر سنگین → خودکار پایین) | FEATURE | OPEN — V24 auto-quality با FPS monitor |
+| # | Feedback | Category | Status |
+|---|----------|----------|--------|
+| 1 | spawn inside beacon | BUG | ✅ fixed (A1) |
+| 2 | camera rotates while moving | BUG | ✅ fixed (top_level + remove binding) |
+| 3 | stray red pointed object | BUG | ✅ removed (pet tail) |
+| 4 | no pause button | UX | ✅ II button + Esc/P |
+| 5 | scroll/pinch zoom | FEATURE | ✅ scroll + +/− buttons |
+| 6 | shooting invisible enemies | BUG | ✅ pool visibility + nearest_visible + spawn ring 22-30m |
+| 7 | mouse look not 360 | BUG | ✅ pointer lock |
+| 8 | mobile two-finger conflict | BUG | ✅ full left/right split |
+| 9 | mobile ~180° jump on 2nd finger | BUG | ✅ ignore simulated mouse-motion on touch |
+| 10 | mobile touch rings | UX | ✅ TouchIndicator |
+| 11 | mobile look slow while moving | BUG | ✅ accumulate touch look deltas |
+| 12 | mobile zoom via buttons | UX | ✅ +/− buttons |
+| 13 | hearts should magnet | UX | ✅ implemented (magnet d<6m + pick d<1.4m) |
+| 14 | fewer heart drops | BALANCE | ✅ drop rate 5% |
+| 15 | triangle/square shapes → real forms | VISUAL | OPEN — Phase 3 free GLB packs (KayKit/Quaternius/Kenney) |
+| 16 | graphics Auto quality on heavy render | FEATURE | ✅ Auto quality persists; web defaults MED + faster step-down; lights/MSAA/shadows gated (Phase 1) |

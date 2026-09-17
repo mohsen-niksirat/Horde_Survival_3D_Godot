@@ -44,12 +44,20 @@ func _process(_delta: float) -> void:
 ## Recycle enemies too far from the player — they would otherwise attack
 ## from off-screen invisibly.
 func _cull_far_enemies() -> void:
-	if player_ref == null:
+	if player_ref == null or not is_instance_valid(player_ref):
 		return
 	var cull2 := CULL_DISTANCE * CULL_DISTANCE
-	for enemy in active_enemies.duplicate():
-		if is_instance_valid(enemy) and enemy.global_position.distance_squared_to(player_ref.global_position) > cull2:
+	var player_pos := player_ref.global_position
+	var i := active_enemies.size() - 1
+	while i >= 0:
+		var enemy = active_enemies[i]
+		if not is_instance_valid(enemy):
+			active_enemies.remove_at(i)
+			i -= 1
+			continue
+		if enemy.global_position.distance_squared_to(player_pos) > cull2:
 			release_enemy(enemy)
+		i -= 1
 
 func _spawn_now(req: Dictionary) -> void:
 	var enemy := PoolManager.acquire(ENEMY_SCENE)
@@ -63,7 +71,8 @@ func _spawn_now(req: Dictionary) -> void:
 	# Elite promotion
 	if req.get("elite", []):
 		enemy.make_elite(req["elite"])
-		enemy.elite.request_minions.connect(_on_minions_requested)
+		if enemy.elite != null and not enemy.elite.request_minions.is_connected(_on_minions_requested):
+			enemy.elite.request_minions.connect(_on_minions_requested)
 	if not enemy.died.is_connected(_on_enemy_died):
 		enemy.died.connect(_on_enemy_died.bind(enemy))
 	active_enemies.append(enemy)

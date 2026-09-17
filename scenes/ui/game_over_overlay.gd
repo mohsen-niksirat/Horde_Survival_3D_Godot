@@ -24,8 +24,8 @@ func _commit_run() -> void:
 	SaveManager.set_meta_data("total_runs", SaveManager.get_meta_data("total_runs", 0) + 1)
 	if RunManager.elapsed_time > SaveManager.get_meta_data("best_time", 0.0):
 		SaveManager.set_meta_data("best_time", RunManager.elapsed_time)
-	if RunManager.kills > 0:
-		pass  # kills already counted per-kill in achievements
+	# Kills are already counted per-kill in achievements — do not re-add
+	RunManager.gold_earned = 0.0
 	stats_label.text = "Survived: %s\nKills: %d\nGold earned: %d" % [
 		RunManager.get_time_string(),
 		RunManager.kills,

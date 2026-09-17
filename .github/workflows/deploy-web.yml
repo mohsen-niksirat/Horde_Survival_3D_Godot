@@ -24,7 +24,7 @@ jobs:
       - name: Setup Godot
         uses: lihop/setup-godot@v2
         with:
-          version: "4.3-stable"
+          version: "4.7-stable"
           export-templates: true
 
       - name: Import assets (headless)

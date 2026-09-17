@@ -30,6 +30,15 @@ func setup_fireball(weapon: WeaponInstance, p_damage: float, p_area: float, p_cr
 	_active = true
 	visible = true
 	monitoring = true
+	_gate_vfx()
+
+func _gate_vfx() -> void:
+	var light := get_node_or_null("Light")
+	if light is Light3D:
+		light.visible = PerformanceManager.prefer_dynamic_lights() if PerformanceManager != null else true
+	var trail := get_node_or_null("Trail")
+	if trail is GPUParticles3D:
+		trail.amount = 10 if (PerformanceManager == null or PerformanceManager.quality >= PerformanceManager.Quality.MEDIUM) else 4
 
 func _physics_process(delta: float) -> void:
 	if not _active:
@@ -65,11 +74,14 @@ func _explode() -> void:
 		var hits: Array = em.get_enemies_in_radius(global_position, aoe_radius)
 		var is_crit := randf() < crit_chance
 		for enemy in hits:
+			if not is_instance_valid(enemy) or enemy.get("health") == null:
+				continue
 			var event := DamageEvent.new(damage * (2.0 if is_crit else 1.0), "fireball", is_crit)
 			if weapon_data != null and weapon_data.status_effect != "":
 				event.status_effect = weapon_data.status_effect
 				event.status_duration = weapon_data.status_duration
 			enemy.health.take_damage(event)
+			EventBus.enemy_damaged.emit(enemy, event.final_amount, is_crit)
 	_deactivate()
 
 func _get_enemy_manager() -> Node:

@@ -174,3 +174,6 @@ func _on_died() -> void:
 		get_parent().add_child(orb)
 		var angle := TAU * i / 12.0
 		orb.setup(4.0, player, global_position + Vector3(cos(angle), 0, sin(angle)) * 2.0)
+	# Free the boss body — endless respawns must not stack corpses
+	set_physics_process(false)
+	queue_free()

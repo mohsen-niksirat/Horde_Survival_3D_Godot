@@ -40,6 +40,9 @@ func setup_generic(p_damage: float, p_speed: float, p_pierce: int, p_crit: float
 	_active = true
 	visible = true
 	monitoring = true
+	var light := get_node_or_null("Light")
+	if light is Light3D:
+		light.visible = PerformanceManager.prefer_dynamic_lights() if PerformanceManager != null else true
 
 func _physics_process(delta: float) -> void:
 	if not _active:

@@ -30,6 +30,7 @@ var _ranged_timer: float = 2.0
 var _heal_timer: float = 2.0
 var _phase_timer: float = 0.0
 var _split_done: bool = false
+var _active_tweens: Array = []
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -55,7 +56,7 @@ func _hit_flash() -> void:
 			var restore: Color = mi.get_meta("base_color")
 			if was_phasing:
 				restore.a = 0.35
-			var tween := create_tween()
+			var tween := _track_tween(create_tween())
 			tween.tween_property(mi, "albedo_color", restore, 0.12)
 
 func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: float, p_spd_scale: float) -> void:
@@ -71,6 +72,8 @@ func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: 
 	_wobble_seed = randf() * TAU
 
 	# Reset pooled state from a previous life
+	_kill_tweens()
+	_clear_elite_ring()
 	elite = null
 	health.damage_interceptor = Callable()
 	status.clear_all()
@@ -83,7 +86,7 @@ func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: 
 	# V11A: fade/scale in — softens spawn pop-in
 	var target_scale := Vector3(s, s, s)
 	_mesh.scale = target_scale * 0.25
-	var tween := create_tween()
+	var tween := _track_tween(create_tween())
 	tween.tween_property(_mesh, "scale", target_scale, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 	_attack_timer = randf_range(0.0, data.attack_cooldown)
@@ -111,6 +114,7 @@ func _collect_flash_materials() -> void:
 func make_elite(p_abilities: Array) -> void:
 	if elite != null:
 		return
+	_clear_elite_ring()
 	health.set_scaled(data.max_hp, data.armor, hp_scale * 3.0)
 	dmg_mult = 2.0
 	xp_mult = 10.0
@@ -248,10 +252,16 @@ func _heal_allies() -> void:
 	var em: Node = get_tree().get_first_node_in_group("enemy_manager")
 	if em == null:
 		return
+	var heal_r2 := data.heal_radius * data.heal_radius
 	for ally in em.active_enemies:
-		if is_instance_valid(ally) and ally != self and ally.health.is_alive():
-			if ally.global_position.distance_to(global_position) <= data.heal_radius:
-				ally.health.heal(ally.health.max_hp * data.heal_pct)
+		if not is_instance_valid(ally) or ally == self:
+			continue
+		if ally.is_in_group("boss"):
+			continue
+		if ally.get("health") == null or not ally.health.is_alive():
+			continue
+		if ally.global_position.distance_squared_to(global_position) <= heal_r2:
+			ally.health.heal(ally.health.max_hp * data.heal_pct)
 
 func get_health_ratio() -> float:
 	return health.get_ratio()
@@ -279,11 +289,32 @@ func _on_died() -> void:
 	died.emit(self)
 	# Death shrink effect happens while the pooled node leaves the tree
 	if _mesh != null:
-		var tween := create_tween()
+		var tween := _track_tween(create_tween())
 		tween.tween_property(_mesh, "scale", Vector3(0.01, 0.01, 0.01), 0.18)
-		tween.tween_callback(func(): _mesh.scale = Vector3.ONE)
+		tween.tween_callback(func():
+			if is_instance_valid(_mesh):
+				_mesh.scale = Vector3.ONE)
 
 ## Called by the pool manager flow (or spawner) when recycled.
 func despawn() -> void:
 	_alive = false
 	velocity = Vector3.ZERO
+	_kill_tweens()
+	_clear_elite_ring()
+	elite = null
+
+func _track_tween(tween: Tween) -> Tween:
+	if tween != null:
+		_active_tweens.append(tween)
+	return tween
+
+func _kill_tweens() -> void:
+	for t in _active_tweens:
+		if t != null and t.is_valid():
+			t.kill()
+	_active_tweens.clear()
+
+func _clear_elite_ring() -> void:
+	var ring := get_node_or_null("EliteRing")
+	if ring != null:
+		ring.queue_free()

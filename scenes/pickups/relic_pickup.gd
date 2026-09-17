@@ -13,6 +13,7 @@ var _mesh: MeshInstance3D
 var _mat: StandardMaterial3D
 
 func _ready() -> void:
+	add_to_group("relics")
 	body_entered.connect(_on_body_entered)
 	_mesh = $Mesh
 	_mat = _mesh.get_surface_override_material(0)
@@ -71,6 +72,11 @@ func _on_body_entered(body: Node3D) -> void:
 	queue_free()
 
 func _find_relic_system() -> Node:
+	# RelicSystem is a sibling under Main, not an ancestor of Projectiles
+	if get_tree() != null:
+		var by_group := get_tree().get_first_node_in_group("relic_system")
+		if by_group != null:
+			return by_group
 	var parent := get_parent()
 	while parent != null:
 		if parent.has_method("apply_relic"):

@@ -88,6 +88,7 @@ func _ready() -> void:
 	combo_manager = Node.new()
 	combo_manager.set_script(COMBO_MANAGER)
 	combo_manager.name = "ComboManager"
+	combo_manager.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(combo_manager)
 	player.combo = combo_manager
 
@@ -95,12 +96,14 @@ func _ready() -> void:
 	var achievements := Node.new()
 	achievements.set_script(ACHIEVEMENT_SYSTEM)
 	achievements.name = "AchievementSystem"
+	achievements.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(achievements)
 
 	# Relics
 	relic_system = Node.new()
 	relic_system.set_script(RELIC_SYSTEM)
 	relic_system.name = "RelicSystem"
+	relic_system.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(relic_system)
 	relic_system.setup(player, $World, projectile_root)
 
@@ -108,6 +111,7 @@ func _ready() -> void:
 	ability_controller = Node.new()
 	ability_controller.set_script(preload("res://scripts/abilities/ability_controller.gd"))
 	ability_controller.name = "AbilityController"
+	ability_controller.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(ability_controller)
 	ability_controller.setup(player, enemy_manager, projectile_root)
 	player.ability_controller = ability_controller
@@ -172,6 +176,9 @@ func _ready() -> void:
 
 	# First-run tutorial: step-by-step controls before the action starts
 	$HUD/TutorialOverlay.show_if_needed()
+	# Headless tests: never leave the tree paused by tutorial/UI
+	if DisplayServer.get_name() == "headless" or OS.has_feature("headless"):
+		get_tree().paused = false
 
 func _on_game_state_changed_for_mouse(new_state: int, _old: int) -> void:
 	_apply_mouse_mode(new_state)

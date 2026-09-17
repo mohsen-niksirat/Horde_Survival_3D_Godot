@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Godot 4.3+ (matches `config/features` in project.godot)
+- Godot 4.7+ (matches `config/features` in project.godot; CI uses `4.7-stable`)
 - Godot Web export templates (Editor → Manage Export Templates → Download)
 
 ## Local Export
@@ -21,7 +21,7 @@ Note: WebGL builds require a server (file:// won't load WASM).
 `.github/workflows/deploy-web.yml` triggers on every push to `main`:
 
 1. Checkout
-2. Install Godot 4.3-stable + export templates (`lihop/setup-godot@v2`)
+2. Install Godot 4.7-stable + export templates (`lihop/setup-godot@v2`)
 3. Headless import (twice, for class cache stability)
 4. `godot --headless --export-release "Web" build/web/index.html`
 5. Upload + deploy `build/web` via actions/deploy-pages
@@ -36,6 +36,7 @@ The live URL becomes: `https://mohsen-niksirat.github.io/Horde_Survival_3D_Godot
 
 - Animated progress bar wired to `engine.setProgressFunc`
 - **Click-to-Play** gate: the game boots only after a user gesture (satisfies browser autoplay policies; the in-game boot scene also expects this)
+- Progress bar stays visible while the engine downloads after PLAY (Phase 1 fix)
 - WebGL support detection with a friendly fallback message
 - Mobile-friendly viewport (no zoom, full-bleed canvas)
 

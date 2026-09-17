@@ -29,6 +29,8 @@ func _on_resume() -> void:
 	GameManager.resume_game()
 
 func _on_restart() -> void:
+	# Bank run gold/best before start_run() zeroes gold_earned
+	run_commit()
 	GameManager.start_game()
 
 func _on_menu() -> void:

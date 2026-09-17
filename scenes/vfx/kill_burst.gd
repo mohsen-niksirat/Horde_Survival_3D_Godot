@@ -19,7 +19,9 @@ func trigger(pos: Vector3, color: Color) -> void:
 	if mat != null:
 		mat.albedo_color = Color(color.r, color.g, color.b, 0.8)
 		mat.emission = color
-	light.light_color = color
+	if light != null:
+		light.light_color = color
+		light.visible = PerformanceManager.prefer_dynamic_lights() if PerformanceManager != null else true
 	_life = 0.0
 	_active = true
 	visible = true
@@ -31,7 +33,8 @@ func _process(delta: float) -> void:
 	var t := _life / LIFETIME
 	ring.scale = Vector3.ONE * (0.5 + t * 2.5)
 	ring.get_surface_override_material(0).albedo_color.a = clampf(1.0 - t, 0.0, 1.0)
-	light.light_energy = clampf(3.0 * (1.0 - t), 0.0, 3.0)
+	if light != null and light.visible:
+		light.light_energy = clampf(3.0 * (1.0 - t), 0.0, 3.0)
 	if _life > LIFETIME:
 		_active = false
 		visible = false

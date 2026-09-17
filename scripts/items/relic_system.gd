@@ -17,6 +17,7 @@ var _pool: Array = []
 var _relic_scene: PackedScene
 
 func setup(p_player: Node3D, p_arena: Node3D, p_pickup_root: Node3D) -> void:
+	add_to_group("relic_system")
 	player = p_player
 	arena = p_arena
 	pickup_root = p_pickup_root
@@ -35,10 +36,12 @@ func _process(delta: float) -> void:
 func _try_spawn() -> void:
 	if _pool.is_empty():
 		return
-	# Count live relics
+	# Count only live relic pickups — pickup_root may also hold projectiles/VFX
 	var live := 0
-	for child in pickup_root.get_children():
-		live += 1
+	if get_tree() != null:
+		for child in get_tree().get_nodes_in_group("relics"):
+			if is_instance_valid(child) and child.is_inside_tree():
+				live += 1
 	if live >= MAX_ON_MAP:
 		return
 	# Rarity-weighted pick
@@ -55,6 +58,7 @@ func _try_spawn() -> void:
 	# Spawn on ring
 	var relic := _relic_scene.instantiate()
 	pickup_root.add_child(relic)
+	relic.add_to_group("relics")
 	var pos: Vector3 = arena.get_spawn_position(player.global_position)
 	relic.setup(chosen, player, pos, LIFETIME)
 

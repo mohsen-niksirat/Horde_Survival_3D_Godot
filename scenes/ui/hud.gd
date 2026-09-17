@@ -53,14 +53,23 @@ func bind_player(player: Node) -> void:
 	EventBus.combo_changed.connect(_on_combo)
 	EventBus.upgrade_applied.connect(_on_upgrade_applied)
 	pause_button.pressed.connect(_on_pause_pressed)
+	# Connect once here — not in the visibility handler (that re-ran every state change)
+	if not zoom_in_button.pressed.is_connected(_on_zoom_in):
+		zoom_in_button.pressed.connect(_on_zoom_in)
+	if not zoom_out_button.pressed.is_connected(_on_zoom_out):
+		zoom_out_button.pressed.connect(_on_zoom_out)
+	_refresh_weapon_icons()
 	# V-fix: hide gameplay HUD while paused/level-up so overlays read clean
 	EventBus.game_state_changed.connect(_on_hud_visibility)
 
+func _on_zoom_in() -> void:
+	InputManager.add_zoom_delta(-0.18)
+
+func _on_zoom_out() -> void:
+	InputManager.add_zoom_delta(0.18)
+
 func _on_hud_visibility(new_state: int, _old: int) -> void:
-	visible = not (new_state == GameManager.State.PAUSED or new_state == GameManager.State.LEVEL_UP)	# Zoom buttons (desktop wheel alternative + mobile main zoom)
-	zoom_in_button.pressed.connect(func(): InputManager.add_zoom_delta(-0.18))
-	zoom_out_button.pressed.connect(func(): InputManager.add_zoom_delta(0.18))
-	_refresh_weapon_icons()
+	visible = not (new_state == GameManager.State.PAUSED or new_state == GameManager.State.LEVEL_UP)
 
 func _on_upgrade_applied(_title: String) -> void:
 	_refresh_weapon_icons()

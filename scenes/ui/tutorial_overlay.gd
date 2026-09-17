@@ -45,6 +45,10 @@ func _ready() -> void:
 func show_if_needed() -> bool:
 	if SaveManager.get_setting(SAVE_KEY, false):
 		return false
+	# Headless CI/tests have no user to click NEXT — never trap the tree paused
+	if DisplayServer.get_name() == "headless" or OS.has_feature("headless"):
+		SaveManager.set_setting(SAVE_KEY, true)
+		return false
 	_index = 0
 	visible = true
 	get_tree().paused = true  # hold the horde until the player is ready
@@ -73,9 +77,9 @@ func _on_skip() -> void:
 func _finish() -> void:
 	visible = false
 	get_tree().paused = false
-	# Re-apply the mouse mode now that the run actually starts
 	_apply_mouse_mode()
 	SaveManager.set_setting(SAVE_KEY, true)
+
 func _apply_mouse_mode() -> void:
 	if DisplayServer.is_touchscreen_available():
 		return

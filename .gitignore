@@ -25,4 +25,9 @@ prompt*.txt
 Previous Versions/
 ScreenShots/*.import
 
-Previous Versions/
+# Test runner scratch
+to.txt
+te.txt
+tmp_out.txt
+tmp_err.txt
+test_results_phase1.csv

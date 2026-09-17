@@ -29,7 +29,9 @@ func _ready() -> void:
 	haptics_check.button_pressed = SaveManager.get_setting("haptics", false)
 	fullscreen_check.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 	shake_check.button_pressed = SaveManager.get_setting("screen_shake", true)
-	quality_option.selected = SaveManager.get_setting("quality", 1)
+	var q: int = int(SaveManager.get_setting("quality", 1))
+	# 3 = Auto preference; otherwise 0..2 fixed tier
+	quality_option.selected = 3 if q == 3 or PerformanceManager.auto_mode else clampi(q, 0, 2)
 
 	master_slider.value_changed.connect(_on_volume.bind("master_volume"))
 	music_slider.value_changed.connect(_on_volume.bind("music_volume"))
@@ -53,7 +55,6 @@ func _on_haptics(pressed: bool) -> void:
 	SaveManager.set_setting("haptics", pressed)
 
 func _on_fullscreen(pressed: bool) -> void:
-	# Fullscreen on desktop; on web this requests browser fullscreen.
 	if pressed:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 		if OS.get_name() == "Web":
@@ -77,11 +78,16 @@ func _on_shake(pressed: bool) -> void:
 	SaveManager.set_setting("screen_shake", pressed)
 
 func _on_quality(index: int) -> void:
-	PerformanceManager.auto_mode = index == 3
-	if index != 3:
-		PerformanceManager.set_quality(index)
-	if PerformanceManager.auto_mode:
-		PerformanceManager.set_quality(PerformanceManager.Quality.HIGH)
+	if index == 3:
+		# Auto: persist preference, start from a safe tier (MED on web/touch)
+		PerformanceManager.set_auto_mode(true)
+		var start_tier: int = PerformanceManager.Quality.MEDIUM
+		if OS.get_name() != "Web" and not DisplayServer.is_touchscreen_available() and not OS.has_feature("mobile"):
+			start_tier = PerformanceManager.Quality.HIGH
+		PerformanceManager.set_quality(start_tier, false)
+	else:
+		PerformanceManager.set_auto_mode(false)
+		PerformanceManager.set_quality(index, true)
 
 func _on_close() -> void:
 	visible = false

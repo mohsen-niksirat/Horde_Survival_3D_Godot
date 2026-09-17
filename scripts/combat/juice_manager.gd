@@ -1,12 +1,15 @@
 extends Node
 ## JuiceManager: pooled combat feedback — 3D damage numbers, kill bursts,
-## level-up rings. Listens to EventBus; per-frame cost is trivial.
+## level-up rings. Listens to EventBus; damage numbers respect quality caps.
 
 const DAMAGE_NUMBER_SCENE := "res://scenes/vfx/DamageNumber.tscn"
 const KILL_BURST_SCENE := "res://scenes/vfx/KillBurst.tscn"
 const POOL_SIZES := {DAMAGE_NUMBER_SCENE: 40, KILL_BURST_SCENE: 12}
 
 var _player: Node3D
+var _pools: Dictionary = {}
+var _indices: Dictionary = {}
+var _number_throttle_ms: int = 0
 
 func setup(player: Node3D) -> void:
 	_player = player
@@ -26,9 +29,6 @@ func setup(player: Node3D) -> void:
 	EventBus.enemy_died.connect(_on_enemy_died)
 	EventBus.player_leveled_up.connect(_on_level_up)
 
-var _pools: Dictionary = {}
-var _indices: Dictionary = {}
-
 func _acquire(scene_path: String) -> Node3D:
 	var pool: Array = _pools.get(scene_path, [])
 	if pool.is_empty():
@@ -38,9 +38,15 @@ func _acquire(scene_path: String) -> Node3D:
 	return pool[idx]
 
 func _on_enemy_damaged(enemy: Node, amount: float, is_crit: bool) -> void:
+	var now := Time.get_ticks_msec()
+	var cap: int = PerformanceManager.damage_number_cap() if PerformanceManager != null else 30
+	var min_gap := maxi(16, int(1000.0 / maxf(float(cap), 1.0)))
+	if not is_crit and now < _number_throttle_ms:
+		return
 	var number: Node3D = _acquire(DAMAGE_NUMBER_SCENE)
 	if number != null and is_instance_valid(enemy):
 		number.trigger(enemy.global_position, amount, is_crit)
+		_number_throttle_ms = now + min_gap
 
 func _on_enemy_died(enemy: Node, pos: Vector3) -> void:
 	var burst: Node3D = _acquire(KILL_BURST_SCENE)

@@ -14,6 +14,9 @@ func trigger(pos: Vector3, dir: Vector3) -> void:
 	_life = 0.0
 	_active = true
 	visible = true
+	var light := get_node_or_null("Light")
+	if light is Light3D:
+		light.visible = PerformanceManager.prefer_dynamic_lights() if PerformanceManager != null else true
 
 func _process(delta: float) -> void:
 	if not _active:

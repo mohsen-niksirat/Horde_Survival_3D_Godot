@@ -85,11 +85,17 @@
 			playBtn.style.display = 'block';
 			playBtn.addEventListener('click', () => {
 				playBtn.style.display = 'none';
-				loader.classList.add('hidden');
-				engine.startGame().catch(err => {
+				// Keep the loader (progress bar) visible until the engine
+				// actually downloads/boot — hiding it here left a blank screen.
+				statusEl.textContent = 'Starting engine...';
+				bar.style.width = '0%';
+				engine.startGame().then(() => {
+					loader.classList.add('hidden');
+				}).catch(err => {
 					errorEl.style.display = 'block';
 					errorEl.textContent = 'Failed to start: ' + err;
 					loader.classList.remove('hidden');
+					playBtn.style.display = 'block';
 				});
 			});
 		}

@@ -87,7 +87,10 @@ func _spawn_boss(stat_scale: float = 1.0) -> void:
 	if not enemy_manager.active_enemies.has(boss):
 		enemy_manager.active_enemies.append(boss)
 	PerformanceManager.active_enemies = enemy_manager.active_enemies.size()
-	boss.boss_died.connect(func(): enemy_manager.active_enemies.erase(boss))
+	boss.boss_died.connect(func():
+		enemy_manager.active_enemies.erase(boss)
+		PerformanceManager.active_enemies = enemy_manager.active_enemies.size()
+	)
 	RunManager.set_boss_active(true)
 	GameManager.change_state(GameManager.State.BOSS)
 	EventBus.boss_spawned.emit(boss)
