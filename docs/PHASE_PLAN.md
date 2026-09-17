@@ -69,6 +69,17 @@
 - Homing retarget every 0.15s ✅
 - New test: `tests/test_phase2_perf.gd` ✅
 
+## Phase 2.5 — Graphics tiers + FPS + horde stress — ✅ this session
+
+User requirements:
+- Quality options: Very Low / Low / Medium / High / Ultra / Auto
+- **Default = Very Low** so first browser load is fast; players raise if they want
+- On-screen **FPS** + quality tier (HUD top-right)
+- Horde stress: effective cap shrinks, Auto steps down faster, far-enemy physics LOD
+- Code optimization continues (spatial hash, MultiMesh, shared mats from Phase 2)
+
+Save migration: legacy quality 0..3 → new LOW..HIGH/Auto via `quality_schema=2`.
+
 ## Phase 3 — Free graphics integration
 
 Use verified CC0/QAL packs (commercial-safe, no attribution required for most):

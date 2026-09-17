@@ -103,7 +103,7 @@ func _tick_elites() -> void:
 		_spawn_elite()
 
 func _spawn_elite() -> void:
-	var cap: int = PerformanceManager.enemy_cap()
+	var cap: int = PerformanceManager.effective_enemy_cap()
 	if enemy_manager.enemy_count() >= cap:
 		return
 	var data: EnemyData = _pick_archetype(DifficultyManager.allowed_archetypes(RunManager.elapsed_time / 60.0))
@@ -121,8 +121,8 @@ func _spawn_elite() -> void:
 	enemy_manager.queue_spawn(data, pos, player, DifficultyManager.hp_scale(difficulty), DifficultyManager.damage_scale(difficulty), DifficultyManager.speed_scale(difficulty), abilities)
 
 func _spawn_wave(minutes: float) -> void:
-	# Population control first
-	var cap: int = PerformanceManager.enemy_cap()
+	# Population control first — effective cap shrinks under horde stress
+	var cap: int = PerformanceManager.effective_enemy_cap()
 	var current: int = enemy_manager.enemy_count()
 	if current >= cap:
 		return

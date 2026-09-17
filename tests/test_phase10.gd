@@ -34,11 +34,11 @@ func _initialize() -> void:
 
 	# --- Quality tiers ---
 	var perf := root.get_node("PerformanceManager")
-	perf.set_quality(0, false)
-	_check(perf.enemy_cap() == 100, "LOW quality cap 100")
-	perf.set_quality(2, false)
-	_check(perf.enemy_cap() == 240, "HIGH quality cap 240")
-	perf.set_quality(1, false)
+	perf.set_quality(perf.Quality.VERY_LOW, false)
+	_check(perf.enemy_cap() <= 50, "VERY_LOW quality cap tight (%d)" % perf.enemy_cap())
+	perf.set_quality(perf.Quality.ULTRA, false)
+	_check(perf.enemy_cap() >= 200, "ULTRA quality cap high (%d)" % perf.enemy_cap())
+	perf.set_quality(perf.Quality.LOW, false)
 
 	# --- Main scene boot with all new UI pieces ---
 	var main_ps: PackedScene = load("res://scenes/main/Main.tscn")

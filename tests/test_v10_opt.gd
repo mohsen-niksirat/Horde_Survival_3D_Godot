@@ -1,6 +1,5 @@
 extends SceneTree
-## V10 validation: quality auto-detection exists, LOW tier disables
-## directional shadows, saved quality still wins, meta defaults intact.
+## V10 validation: quality tiers valid, VERY_LOW disables shadows, HIGH/ULTRA enable.
 
 var failures := 0
 
@@ -14,23 +13,20 @@ func _initialize() -> void:
 
 	var perf: Node = root.get_node("PerformanceManager")
 	var perf_quality: int = perf.quality
-	_check(perf_quality >= 0 and perf_quality <= 2, "quality tier valid (%d)" % perf_quality)
+	_check(perf_quality >= 0 and perf_quality <= 4, "quality tier valid (%d)" % perf_quality)
 
-	# LOW disables shadows on directional lights
-	perf.set_quality(0, false)
+	perf.set_quality(perf.Quality.VERY_LOW, false)
 	for i in range(3):
 		await process_frame
 	var sun: DirectionalLight3D = main.get_node("World/Sun")
-	_check(sun.shadow_enabled == false, "LOW quality disables shadows")
+	_check(sun.shadow_enabled == false, "VERY_LOW quality disables shadows")
 
-	# HIGH re-enables
-	perf.set_quality(2, false)
+	perf.set_quality(perf.Quality.HIGH, false)
 	for i in range(3):
 		await process_frame
 	_check(sun.shadow_enabled == true, "HIGH quality re-enables shadows")
-	perf.set_quality(1, false)
+	perf.set_quality(perf.Quality.LOW, false)
 
-	# Android preset documented in BUILD_ANDROID
 	var f := FileAccess.open("res://docs/BUILD_ANDROID.md", FileAccess.READ)
 	var content := f.get_as_text()
 	f.close()

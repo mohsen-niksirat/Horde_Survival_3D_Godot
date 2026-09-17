@@ -159,9 +159,24 @@ func _physics_process(delta: float) -> void:
 	to_player.y = 0.0
 	var dist := to_player.length()
 
+	# Horde LOD: under stress/low quality, far enemies skip full physics ticks
+	var throttle := PerformanceManager != null and PerformanceManager.should_throttle_enemy_ai() and dist > 22.0
+	if throttle:
+		var stagger := int(absf(_wobble_seed) * 97.0) % 3
+		if Engine.get_physics_frames() % 3 != stagger:
+			# Cheap face + drift, no move_and_slide
+			if dist > 0.01:
+				var face_dir := to_player / dist
+				rotation.y = lerp_angle(rotation.y, atan2(face_dir.x, face_dir.z), 4.0 * delta)
+				velocity.x = face_dir.x * 2.0
+				velocity.z = face_dir.z * 2.0
+				global_position += velocity * delta
+			if dist < 32.0:
+				PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
+			return
+
 	if dist > 0.01:
 		var dir := to_player / dist
-		# Movement behavior variants
 		match data.movement_type:
 			"wobble":
 				var wobble := Vector3.UP.cross(dir).normalized()
@@ -172,25 +187,20 @@ func _physics_process(delta: float) -> void:
 			"stationary":
 				dir = Vector3.ZERO
 			"kite":
-				# Keep mid range: flee when close, approach when far
 				if dist < 10.0:
 					dir = -dir
 				elif dist > 16.0:
-					pass  # keep approaching
+					pass
 				else:
 					var strafe := Vector3.UP.cross(dir).normalized()
 					dir = strafe * (1.0 if _wobble_seed > PI else -1.0)
 
-		# No enemy may outrun the player (player base 6 m/s)
 		var speed: float = minf(data.move_speed * spd_scale * status.get_speed_factor(), 5.5)
 		velocity.x = dir.x * speed
 		velocity.z = dir.z * speed
 		move_and_slide()
-
-		# Face player
 		rotation.y = lerp_angle(rotation.y, atan2(dir.x, dir.z), 8.0 * delta)
 
-	# Contact attack
 	_attack_timer -= delta
 	if dist <= data.attack_range * 1.5 and _attack_timer <= 0.0:
 		_attack_timer = data.attack_cooldown
@@ -199,21 +209,18 @@ func _physics_process(delta: float) -> void:
 			if elite != null:
 				elite.on_hit_player()
 
-	# Ranged volley (mage archetype)
 	if data.ranged_attack:
 		_ranged_timer -= delta
 		if _ranged_timer <= 0.0 and dist < 18.0:
 			_ranged_timer = data.ranged_cooldown
 			_fire_volley()
 
-	# Healer aura
 	if data.heal_radius > 0.0:
 		_heal_timer -= delta
 		if _heal_timer <= 0.0:
 			_heal_timer = data.heal_cooldown
 			_heal_allies()
 
-	# Ghost phasing — only touch materials when the archetype can phase
 	if data.phase_interval > 0.0:
 		_phase_timer -= delta
 		if _phase_timer <= -data.phase_duration:
@@ -222,10 +229,8 @@ func _physics_process(delta: float) -> void:
 		if phasing != _last_phasing:
 			_last_phasing = phasing
 			_set_phasing_alpha(phasing)
-	# Overlay system time only when debug overlay is cheap enough (skip far LOD)
 	if dist < 32.0:
 		PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
-	# Archetype micro-animation LOD — far enemies skip per-frame anim
 	if dist < 28.0:
 		EnemyVisuals.animate(_mesh, data.id, Time.get_ticks_msec() / 1000.0, _wobble_seed)
 

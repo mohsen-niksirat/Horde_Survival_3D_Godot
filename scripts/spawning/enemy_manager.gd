@@ -112,6 +112,8 @@ func _spawn_now(req: Dictionary) -> void:
 	active_enemies.append(enemy)
 	_grid_dirty = true
 	PerformanceManager.active_enemies = active_enemies.size()
+	if PerformanceManager != null:
+		PerformanceManager.update_horde_pressure(active_enemies.size())
 	enemy_registered.emit(enemy)
 
 func _on_minions_requested(count: int, position: Vector3) -> void:
@@ -135,6 +137,8 @@ func release_enemy(enemy: Node) -> void:
 	active_enemies.erase(enemy)
 	_grid_dirty = true
 	PerformanceManager.active_enemies = active_enemies.size()
+	if PerformanceManager != null:
+		PerformanceManager.update_horde_pressure(active_enemies.size())
 	enemy_released.emit(enemy)
 	enemy.despawn()
 	PoolManager.release(enemy)

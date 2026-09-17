@@ -7,6 +7,7 @@ extends Control
 @onready var level_label: Label = $TopLeft/LevelLabel
 @onready var timer_label: Label = $Top/TimerLabel
 @onready var kills_label: Label = $TopRight/KillsLabel
+@onready var fps_label: Label = $TopRight/FpsLabel
 @onready var combo_label: Label = $Combo
 @onready var ability1_button: Button = $Abilities/AbilityRow/Ability1
 @onready var ability2_button: Button = $Abilities/AbilityRow/Ability2
@@ -36,6 +37,7 @@ var _hints_active: bool = false
 var _player: Node
 var _ability_controller: Node
 var _last_tier: String = ""
+var _fps_accum: float = 0.0
 
 const TIER_COLORS := {
 	"BRONZE": Color(0.8, 0.65, 0.4),
@@ -128,6 +130,10 @@ func bind_abilities(controller: Node) -> void:
 
 func _process(delta: float) -> void:
 	timer_label.text = RunManager.get_time_string()
+	_fps_accum += delta
+	if _fps_accum >= 0.25:
+		_fps_accum = 0.0
+		_update_fps_label()
 	if _player == null:
 		return
 	# V7: bars ease toward their true values (animated feel)
@@ -147,6 +153,23 @@ func _process(delta: float) -> void:
 			var ratio: float = _ability_controller.get_cooldown_ratio(data.id)
 			var btn := ability1_button if data.id == "meteor_strike" else ability2_button
 			btn.modulate = Color(1, 1, 1, 0.4 if ratio > 0.0 else 1.0)
+
+func _update_fps_label() -> void:
+	if fps_label == null:
+		return
+	var fps := Engine.get_frames_per_second()
+	var q := ""
+	if PerformanceManager != null:
+		q = PerformanceManager.quality_name()
+		if PerformanceManager.stress_mode:
+			q += " STRESS"
+	fps_label.text = "FPS %d  %s" % [fps, q]
+	if fps >= 50:
+		fps_label.add_theme_color_override("font_color", Color(0.55, 0.95, 0.55, 0.95))
+	elif fps >= 30:
+		fps_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.45, 0.95))
+	else:
+		fps_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.4, 0.95))
 
 func _on_level_up(_level: int) -> void:
 	pass

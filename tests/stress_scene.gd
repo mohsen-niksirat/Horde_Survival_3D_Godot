@@ -11,7 +11,7 @@ const RING_RADIUS := 12.0
 
 func _ready() -> void:
 	# Force HIGH quality tier so caps don't interfere with measurement.
-	PerformanceManager.set_quality(PerformanceManager.Quality.HIGH, false)
+	PerformanceManager.set_quality(PerformanceManager.Quality.ULTRA, false)
 
 	var em: Node = get_node_or_null("EnemyManager")
 	if em == null:

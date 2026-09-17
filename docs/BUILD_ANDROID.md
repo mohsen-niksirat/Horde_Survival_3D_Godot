@@ -4,8 +4,9 @@ The project is Android-export-ready:
 - Compatibility (GL) renderer works on GLES3 devices
 - Touch input fully abstracted (floating joystick + right-half look +
   zoom buttons — all via InputManager)
-- PerformanceManager auto-detects touch devices and defaults to MEDIUM
-  quality (LOW drops shadows via _process sweep)
+- PerformanceManager defaults to **Very Low** graphics on first run (fast load);
+  players raise to Low/Medium/High/Ultra/Auto in Settings. Touch devices still
+  auto-detect; Auto steps quality down under FPS/horde stress.
 - No native-only plugins or GDExtensions
 
 ## Steps

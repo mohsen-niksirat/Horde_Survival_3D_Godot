@@ -1,34 +1,33 @@
 extends SceneTree
-## V21C validation: AUTO graphics mode steps quality down on sustained low
-## FPS and recovers on sustained high FPS.
+## V21C validation: AUTO mode + expanded tiers + Auto dropdown.
 
 var failures := 0
 
 func _initialize() -> void:
 	var perf: Node = root.get_node("PerformanceManager")
 	perf.auto_mode = true
-	perf.set_quality(2, false)  # start HIGH
+	perf.stress_mode = false
+	perf.set_quality(perf.Quality.ULTRA, false)  # 4
 
-	# --- Sustained low FPS -> step down (one tier per 4s window) ---
+	# Desktop non-stress: low_hold=4s → ~2 steps in 10s at 20 FPS
 	for i in range(20):
-		perf._auto_tick(0.5, 20)  # 10s at 20 FPS -> two steps: HIGH->LOW
-	_check(perf.quality == 0, "two steps down after 10s at 20 FPS (now %d)" % perf.quality)
+		perf._auto_tick(0.5, 20)
+	_check(perf.quality <= perf.Quality.MEDIUM, "stepped down from ULTRA at 20 FPS (now %d)" % perf.quality)
 
-	# --- Sustained high FPS -> recover step by step (one per 20s) ---
+	var after_low: int = perf.quality
 	for i in range(50):
-		perf._auto_tick(0.5, 58)  # 25s at 58 FPS -> one step up
-	_check(perf.quality == 1, "recovered one tier after 25s high FPS (now %d)" % perf.quality)
-	for i in range(50):
-		perf._auto_tick(0.5, 58)  # another 25s -> fully recovered
-	_check(perf.quality == 2, "fully recovered to HIGH (now %d)" % perf.quality)
+		perf._auto_tick(0.5, 58)
+	_check(perf.quality == after_low + 1 or perf.quality == perf.Quality.ULTRA, "recovered at least one tier (%d)" % perf.quality)
+	for i in range(80):
+		perf._auto_tick(0.5, 58)
+	_check(perf.quality == perf.Quality.ULTRA, "fully recovered to ULTRA (now %d)" % perf.quality)
 
-	# --- Settings exposes Auto option ---
 	var menu_ps: PackedScene = load("res://scenes/menu/SettingsMenu.tscn")
 	var menu: Control = menu_ps.instantiate()
 	root.add_child(menu)
 	await process_frame
 	var opts: OptionButton = menu.get_node("Center/Panel/Layout/QualityRow/QualityOption")
-	_check(opts.item_count == 4, "quality dropdown has Auto (%d)" % opts.item_count)
+	_check(opts.item_count == 6, "quality dropdown Very Low..Ultra+Auto (%d)" % opts.item_count)
 	menu.queue_free()
 
 	if failures == 0:

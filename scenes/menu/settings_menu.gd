@@ -1,5 +1,6 @@
 extends Control
-## Settings: volume sliders + quality + shake toggle. Persisted via SaveManager.
+## Settings: volume, look, quality tiers (Very Low → Ultra + Auto), toggles.
+## Quality default is the lowest tier so first browser load is fast.
 
 @onready var master_slider: HSlider = $Center/Panel/Layout/MasterRow/MasterSlider
 @onready var music_slider: HSlider = $Center/Panel/Layout/MusicRow/MusicSlider
@@ -12,14 +13,14 @@ extends Control
 @onready var quality_option: OptionButton = $Center/Panel/Layout/QualityRow/QualityOption
 @onready var close_button: Button = $Center/Panel/Layout/CloseButton
 
+const Q_ITEMS := ["Very Low (fastest)", "Low", "Medium", "High", "Ultra", "Auto"]
+
 func _ready() -> void:
 	visible = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	quality_option.clear()
-	quality_option.add_item("Low")
-	quality_option.add_item("Medium")
-	quality_option.add_item("High")
-	quality_option.add_item("Auto")
+	for item in Q_ITEMS:
+		quality_option.add_item(item)
 
 	master_slider.value = SaveManager.get_setting("master_volume", 0.8)
 	music_slider.value = SaveManager.get_setting("music_volume", 0.7)
@@ -29,9 +30,13 @@ func _ready() -> void:
 	haptics_check.button_pressed = SaveManager.get_setting("haptics", false)
 	fullscreen_check.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 	shake_check.button_pressed = SaveManager.get_setting("screen_shake", true)
-	var q: int = int(SaveManager.get_setting("quality", 1))
-	# 3 = Auto preference; otherwise 0..2 fixed tier
-	quality_option.selected = 3 if q == 3 or PerformanceManager.auto_mode else clampi(q, 0, 2)
+	var q: int = int(SaveManager.get_setting("quality", 0))
+	if PerformanceManager != null and PerformanceManager.auto_mode:
+		quality_option.selected = 5
+	elif q == 5:
+		quality_option.selected = 5
+	else:
+		quality_option.selected = clampi(int(PerformanceManager.quality if PerformanceManager != null else q), 0, 4)
 
 	master_slider.value_changed.connect(_on_volume.bind("master_volume"))
 	music_slider.value_changed.connect(_on_volume.bind("music_volume"))
@@ -78,13 +83,10 @@ func _on_shake(pressed: bool) -> void:
 	SaveManager.set_setting("screen_shake", pressed)
 
 func _on_quality(index: int) -> void:
-	if index == 3:
-		# Auto: persist preference, start from a safe tier (MED on web/touch)
+	if index == 5:
+		# Auto: start from lowest, let FPS monitor climb if the machine can
 		PerformanceManager.set_auto_mode(true)
-		var start_tier: int = PerformanceManager.Quality.MEDIUM
-		if OS.get_name() != "Web" and not DisplayServer.is_touchscreen_available() and not OS.has_feature("mobile"):
-			start_tier = PerformanceManager.Quality.HIGH
-		PerformanceManager.set_quality(start_tier, false)
+		PerformanceManager.set_quality(PerformanceManager.Quality.VERY_LOW, false)
 	else:
 		PerformanceManager.set_auto_mode(false)
 		PerformanceManager.set_quality(index, true)

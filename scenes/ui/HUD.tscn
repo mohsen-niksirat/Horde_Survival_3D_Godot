@@ -96,6 +96,13 @@ theme_override_font_sizes/font_size=18
 text="Kills: 0"
 horizontal_alignment=2
 
+[node name="FpsLabel" type="Label" parent="TopRight"]
+layout_mode=2
+theme_override_font_sizes/font_size=14
+theme_override_colors/font_color=Color(0.75, 0.9, 1, 0.9)
+text="FPS: --"
+horizontal_alignment=2
+
 [node name="PauseButton" type="Button" parent="."]
 layout_mode=1
 anchors_preset=1
