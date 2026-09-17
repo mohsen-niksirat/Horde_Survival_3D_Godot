@@ -1,9 +1,7 @@
 extends Node3D
-## V4 arena decoration: procedurally scatters cheap primitive props around
-## the arena — grass tufts, extra rocks, simple trees, wall pillars, check
-## pattern overlay via large flat quads. All decorative, no colliders, so
-## horde flow is unaffected. Budget-conscious (static, merged into one
-## parent node).
+## V4 arena decoration — MultiMesh batched props to cut draw calls on web.
+## Grass/trees/pillars/rocks use MultiMeshInstance3D; rocks keep colliders
+## as a small set of StaticBody3D siblings (not per-blade nodes).
 
 const GRASS_COUNT := 90
 const TREE_COUNT := 14
@@ -16,7 +14,7 @@ const TRUNK_COLOR := Color(0.38, 0.27, 0.17)
 const LEAF_COLOR := Color(0.3, 0.55, 0.28)
 const STONE_COLOR := Color(0.55, 0.52, 0.48)
 
-@onready var arena: Node3D = get_parent()
+var _mat_cache: Dictionary = {}
 
 func _ready() -> void:
 	_build_grass()
@@ -29,24 +27,50 @@ func _random_ring_pos(min_r: float, max_r: float) -> Vector3:
 	var r := randf_range(min_r, max_r)
 	return Vector3(cos(angle) * r, 0, sin(angle) * r)
 
+func _baked_mat(color: Color) -> StandardMaterial3D:
+	var key := color.to_html()
+	if not _mat_cache.has(key):
+		var m := StandardMaterial3D.new()
+		m.albedo_color = color
+		m.roughness = 0.9
+		_mat_cache[key] = m
+	return _mat_cache[key]
+
+func _make_mmi(mesh: Mesh, mat: StandardMaterial3D, transforms: Array, parent: Node3D, n: String) -> MultiMeshInstance3D:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = mesh
+	mm.instance_count = transforms.size()
+	for i in range(transforms.size()):
+		mm.set_instance_transform(i, transforms[i])
+	var mmi := MultiMeshInstance3D.new()
+	mmi.name = n
+	mmi.multimesh = mm
+	mmi.material_override = mat
+	parent.add_child(mmi)
+	return mmi
+
+func _xform(pos: Vector3, rot_y: float = 0.0, rot_z: float = 0.0, scale: Vector3 = Vector3.ONE) -> Transform3D:
+	var basis := Basis.from_euler(Vector3(0.0, rot_y, rot_z))
+	basis = basis.scaled(scale)
+	return Transform3D(basis, pos)
+
 func _build_grass() -> void:
 	var parent := Node3D.new()
 	parent.name = "Grass"
 	add_child(parent)
 	var blade := PrismMesh.new()
 	blade.size = Vector3(0.16, 0.45, 0.16)
+	var t_a: Array = []
+	var t_b: Array = []
 	for i in range(GRASS_COUNT):
-		var tuft := Node3D.new()
-		tuft.position = _random_ring_pos(6.0, 56.0)
-		parent.add_child(tuft)
-		var mat := _baked_mat(GRASS_COLOR if i % 2 == 0 else GRASS_COLOR2)
+		var base := _random_ring_pos(6.0, 56.0)
+		var bucket: Array = t_a if i % 2 == 0 else t_b
 		for b in range(3):
-			var mi := MeshInstance3D.new()
-			mi.mesh = blade
-			mi.material_override = mat
-			mi.position = Vector3(randf_range(-0.3, 0.3), 0.2, randf_range(-0.3, 0.3))
-			mi.rotation.z = randf_range(-0.3, 0.3)
-			tuft.add_child(mi)
+			var offset := Vector3(randf_range(-0.3, 0.3), 0.2, randf_range(-0.3, 0.3))
+			bucket.append(_xform(base + offset, 0.0, randf_range(-0.3, 0.3)))
+	_make_mmi(blade, _baked_mat(GRASS_COLOR), t_a, parent, "GrassA")
+	_make_mmi(blade, _baked_mat(GRASS_COLOR2), t_b, parent, "GrassB")
 
 func _build_trees() -> void:
 	var parent := Node3D.new()
@@ -59,22 +83,21 @@ func _build_trees() -> void:
 	var crown := SphereMesh.new()
 	crown.radius = 1.3
 	crown.height = 2.2
+	var trunks: Array = []
+	var crowns_a: Array = []
+	var crowns_b: Array = []
 	for i in range(TREE_COUNT):
-		var tree := Node3D.new()
-		# Keep trees near the edges so combat space stays open
-		tree.position = _random_ring_pos(38.0, 56.0)
-		parent.add_child(tree)
-		var trunk_mi := MeshInstance3D.new()
-		trunk_mi.mesh = trunk
-		trunk_mi.material_override = _baked_mat(TRUNK_COLOR)
-		trunk_mi.position = Vector3(0, 1.1, 0)
-		tree.add_child(trunk_mi)
-		var crown_mi := MeshInstance3D.new()
-		crown_mi.mesh = crown
-		crown_mi.material_override = _baked_mat(LEAF_COLOR if i % 2 == 0 else LEAF_COLOR.lightened(0.08))
-		crown_mi.position = Vector3(0, 2.9, 0)
-		crown_mi.scale = Vector3.ONE * randf_range(0.85, 1.25)
-		tree.add_child(crown_mi)
+		var base := _random_ring_pos(38.0, 56.0)
+		trunks.append(_xform(base + Vector3(0, 1.1, 0)))
+		var s := randf_range(0.85, 1.25)
+		var ct := _xform(base + Vector3(0, 2.9, 0), 0.0, 0.0, Vector3(s, s, s))
+		if i % 2 == 0:
+			crowns_a.append(ct)
+		else:
+			crowns_b.append(ct)
+	_make_mmi(trunk, _baked_mat(TRUNK_COLOR), trunks, parent, "Trunks")
+	_make_mmi(crown, _baked_mat(LEAF_COLOR), crowns_a, parent, "CrownsA")
+	_make_mmi(crown, _baked_mat(LEAF_COLOR.lightened(0.08)), crowns_b, parent, "CrownsB")
 
 func _build_rocks() -> void:
 	var parent := Node3D.new()
@@ -83,6 +106,7 @@ func _build_rocks() -> void:
 	var rock := SphereMesh.new()
 	rock.radius = 0.7
 	rock.height = 1.0
+	# Rocks need colliders — keep a few MeshInstance bodies, not MultiMesh
 	for i in range(EXTRA_ROCKS):
 		var rock_mi := MeshInstance3D.new()
 		rock_mi.mesh = rock
@@ -107,38 +131,20 @@ func _build_wall_pillars() -> void:
 	pillar.size = Vector3(1.6, 4.2, 1.6)
 	var cap := BoxMesh.new()
 	cap.size = Vector3(2.0, 0.4, 2.0)
+	var pillars: Array = []
+	var caps: Array = []
+	var per_side := WALL_PILLARS / 4
 	for i in range(WALL_PILLARS):
-		var t := float(i) / WALL_PILLARS
-		# Along each wall: 4 pillars + corners share
-		var pos: Vector3
-		var per_side := WALL_PILLARS / 4
 		var side := i / per_side
-		var k := float(i % per_side) / (per_side - 1)
+		var k := float(i % per_side) / maxf(float(per_side - 1), 1.0)
 		var spread := lerpf(-57.0, 57.0, k)
+		var pos: Vector3
 		match side:
 			0: pos = Vector3(spread, 2.1, -59.5)
 			1: pos = Vector3(spread, 2.1, 59.5)
 			2: pos = Vector3(-59.5, 2.1, spread)
 			_: pos = Vector3(59.5, 2.1, spread)
-		var p := MeshInstance3D.new()
-		p.mesh = pillar
-		p.material_override = _baked_mat(STONE_COLOR.darkened(0.1))
-		p.position = pos
-		parent.add_child(p)
-		var c := MeshInstance3D.new()
-		c.mesh = cap
-		c.material_override = _baked_mat(STONE_COLOR.lightened(0.1))
-		c.position = pos + Vector3(0, 2.1, 0)
-		parent.add_child(c)
-
-## Bake a shared material (cached by color so props share instances).
-func _baked_mat(color: Color) -> StandardMaterial3D:
-	var key := color.to_html()
-	if not _mat_cache.has(key):
-		var m := StandardMaterial3D.new()
-		m.albedo_color = color
-		m.roughness = 0.9
-		_mat_cache[key] = m
-	return _mat_cache[key]
-
-var _mat_cache: Dictionary = {}
+		pillars.append(_xform(pos))
+		caps.append(_xform(pos + Vector3(0, 2.1, 0)))
+	_make_mmi(pillar, _baked_mat(STONE_COLOR.darkened(0.1)), pillars, parent, "Pillars")
+	_make_mmi(cap, _baked_mat(STONE_COLOR.lightened(0.1)), caps, parent, "Caps")

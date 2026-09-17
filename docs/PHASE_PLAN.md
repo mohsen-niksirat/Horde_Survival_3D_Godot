@@ -55,17 +55,19 @@
 - F3 overlay works; quality Auto survives browser refresh
 - Push to `main` → GitHub Actions deploys Pages
 
-## Phase 2 — Browser FPS deep (P1) — next after Phase 1 push
+## Phase 2 — Browser FPS deep (P1) — ✅ implemented
 
-- Spatial hash targeting (replace O(n) scans)
-- Enemies: reduce physics cost / optional Node3D path
-- Shared enemy materials + archetype pool segregation
-- XP MultiMesh batching
-- Orbit shield: cache EnemyManager, throttle queries
-- Arena decor MultiMesh
-- Render scale (`scaling_3d_scale`) on web LOW/MED
-- Wave spawn scheduling (max N per frame)
-- Prewarm pools at run start
+- Spatial hash targeting ✅ (`enemy_manager.gd` uniform grid, linear fallback <20)
+- Enemies: AI/anim LOD + phasing write gate + health process only when invincible
+- Shared enemy materials + instance-unique flash/elite mats ✅
+- XP orbs: far/settled poll LOD (full MultiMesh deferred to later phase)
+- Orbit shield: cached EM + staggered hit checks on LOW/MED ✅
+- Arena decor MultiMesh (grass/trees/pillars; rocks keep colliders) ✅
+- Render scale web LOW 0.6 / MED 0.75 ✅
+- Wave spawn scheduling max 8/frame + queue cap 48 ✅
+- Prewarm enemy pool at run start ✅
+- Homing retarget every 0.15s ✅
+- New test: `tests/test_phase2_perf.gd` ✅
 
 ## Phase 3 — Free graphics integration
 

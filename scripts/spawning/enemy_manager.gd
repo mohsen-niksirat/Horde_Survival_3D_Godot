@@ -1,22 +1,34 @@
 extends Node
-## Enemy registry: owns the active enemy list, the Enemy scene pool, and
-## lookup queries for targeting. Created per-run by Main.
+## Enemy registry: owns the active enemy list, pool queries, and a uniform
+## spatial hash so weapons don't O(n) scan every enemy every query.
+## Created per-run by Main.
 
 signal enemy_registered(enemy: Node)
 signal enemy_released(enemy: Node)
 
 const ENEMY_SCENE := "res://scenes/enemies/Enemy.tscn"
+const CELL_SIZE := 8.0
+## Cap how many enemies can enter the tree in a single frame (hitch guard).
+const MAX_SPAWNS_PER_FRAME := 8
+const MAX_SPAWN_QUEUE := 48
+## Grid rebuilds when dirty or older than this (ms).
+const GRID_REBUILD_MS := 40
+## Below this count a linear scan is cheaper than grid bookkeeping.
+const LINEAR_THRESHOLD := 20
 
 var active_enemies: Array = []
 var _spawn_queue: Array = []
 var arena_ref: Node3D = null
 var player_ref: Node3D = null
-## Enemies beyond this distance from the player are recycled.
 const CULL_DISTANCE := 55.0
 
-## Queue a spawn (deferred to next frame to keep spawner cheap).
-## elite: optional Array of ability ids.
+var _grid: Dictionary = {}  # Vector2i -> Array[Node]
+var _grid_dirty: bool = true
+var _grid_time_ms: int = -100000
+
 func queue_spawn(data: EnemyData, position: Vector3, player: Node3D, hp_scale: float, dmg_scale: float, spd_scale: float, elite: Array = []) -> void:
+	if _spawn_queue.size() >= MAX_SPAWN_QUEUE:
+		return
 	_spawn_queue.append({
 		"data": data,
 		"position": position,
@@ -29,20 +41,42 @@ func queue_spawn(data: EnemyData, position: Vector3, player: Node3D, hp_scale: f
 
 func _ready() -> void:
 	add_to_group("enemy_manager")
+	prewarm_pool(16)
+
+func prewarm_pool(count: int) -> void:
+	PoolManager.create_pool(ENEMY_SCENE, count)
 
 func _process(_delta: float) -> void:
-	if _spawn_queue.is_empty():
-		# Still run culling even without spawns pending
-		_cull_far_enemies()
-		return
-	var queue := _spawn_queue
-	_spawn_queue = []
-	for req in queue:
+	# Spawn budget: max N new enemies per frame to avoid load spikes
+	var budget := MAX_SPAWNS_PER_FRAME
+	while budget > 0 and not _spawn_queue.is_empty():
+		var req = _spawn_queue.pop_front()
 		_spawn_now(req)
+		budget -= 1
 	_cull_far_enemies()
+	_ensure_grid()
 
-## Recycle enemies too far from the player — they would otherwise attack
-## from off-screen invisibly.
+func mark_grid_dirty() -> void:
+	_grid_dirty = true
+
+func _ensure_grid() -> void:
+	var now := Time.get_ticks_msec()
+	if _grid_dirty or now - _grid_time_ms >= GRID_REBUILD_MS:
+		_rebuild_grid(now)
+
+func _rebuild_grid(now: int = -1) -> void:
+	_grid.clear()
+	for e in active_enemies:
+		if not is_instance_valid(e):
+			continue
+		var p: Vector3 = e.global_position
+		var key := Vector2i(int(floor(p.x / CELL_SIZE)), int(floor(p.z / CELL_SIZE)))
+		if not _grid.has(key):
+			_grid[key] = []
+		_grid[key].append(e)
+	_grid_dirty = false
+	_grid_time_ms = now if now >= 0 else Time.get_ticks_msec()
+
 func _cull_far_enemies() -> void:
 	if player_ref == null or not is_instance_valid(player_ref):
 		return
@@ -53,6 +87,7 @@ func _cull_far_enemies() -> void:
 		var enemy = active_enemies[i]
 		if not is_instance_valid(enemy):
 			active_enemies.remove_at(i)
+			_grid_dirty = true
 			i -= 1
 			continue
 		if enemy.global_position.distance_squared_to(player_pos) > cull2:
@@ -68,7 +103,6 @@ func _spawn_now(req: Dictionary) -> void:
 	container.add_child(enemy)
 	enemy.global_position = req["position"]
 	enemy.setup(req["data"], req["player"], req["hp"], req["dmg"], req["spd"])
-	# Elite promotion
 	if req.get("elite", []):
 		enemy.make_elite(req["elite"])
 		if enemy.elite != null and not enemy.elite.request_minions.is_connected(_on_minions_requested):
@@ -76,6 +110,7 @@ func _spawn_now(req: Dictionary) -> void:
 	if not enemy.died.is_connected(_on_enemy_died):
 		enemy.died.connect(_on_enemy_died.bind(enemy))
 	active_enemies.append(enemy)
+	_grid_dirty = true
 	PerformanceManager.active_enemies = active_enemies.size()
 	enemy_registered.emit(enemy)
 
@@ -98,23 +133,49 @@ func _on_enemy_died(_enemy: Node, enemy: Node) -> void:
 
 func release_enemy(enemy: Node) -> void:
 	active_enemies.erase(enemy)
+	_grid_dirty = true
 	PerformanceManager.active_enemies = active_enemies.size()
 	enemy_released.emit(enemy)
 	enemy.despawn()
 	PoolManager.release(enemy)
 
-## --- Queries (used by TargetingSystem at weapon cadence) ---
-
+## Spatial-hash radius query. Falls back to linear scan for small hordes.
 func get_enemies_in_radius(center: Vector3, radius: float, max_count: int = 0) -> Array:
 	var out := []
 	var r2 := radius * radius
-	for e in active_enemies:
-		if not is_instance_valid(e):
-			continue
-		if e.global_position.distance_squared_to(center) <= r2:
-			out.append(e)
-			if max_count > 0 and out.size() >= max_count:
-				break
+	if active_enemies.size() < LINEAR_THRESHOLD:
+		for e in active_enemies:
+			if not is_instance_valid(e):
+				continue
+			if e.global_position.distance_squared_to(center) <= r2:
+				out.append(e)
+				if max_count > 0 and out.size() >= max_count:
+					break
+		return out
+	_ensure_grid()
+	var min_c := Vector2i(
+		int(floor((center.x - radius) / CELL_SIZE)),
+		int(floor((center.z - radius) / CELL_SIZE))
+	)
+	var max_c := Vector2i(
+		int(floor((center.x + radius) / CELL_SIZE)),
+		int(floor((center.z + radius) / CELL_SIZE))
+	)
+	var seen := {}
+	for cx in range(min_c.x, max_c.x + 1):
+		for cz in range(min_c.y, max_c.y + 1):
+			var cell: Array = _grid.get(Vector2i(cx, cz), [])
+			for e in cell:
+				if not is_instance_valid(e):
+					continue
+				var id: int = e.get_instance_id()
+				if seen.has(id):
+					continue
+				seen[id] = true
+				if e.global_position.distance_squared_to(center) <= r2:
+					out.append(e)
+					if max_count > 0 and out.size() >= max_count:
+						return out
 	return out
 
 func get_all_enemies() -> Array:
@@ -128,3 +189,5 @@ func clear_all() -> void:
 		if is_instance_valid(e):
 			release_enemy(e)
 	_spawn_queue.clear()
+	_grid.clear()
+	_grid_dirty = true

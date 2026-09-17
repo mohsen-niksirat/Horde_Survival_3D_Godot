@@ -16,6 +16,7 @@ var _angle: float = 0.0
 var _hit_cooldowns: Dictionary = {}  # instance_id -> timestamp
 var _enemy_manager: Node = null
 var _prune_accum: float = 0.0
+var _hit_tick: int = 0
 
 func setup(weapon: WeaponInstance, player: Node3D) -> void:
 	_weapon = weapon
@@ -43,11 +44,18 @@ func _process(delta: float) -> void:
 	if _prune_accum > 2.0:
 		_prune_accum = 0.0
 		_prune_cooldowns(now)
+	_hit_tick = (_hit_tick + 1) % 2
+	var safe_count: int = maxi(count, 1)
 	for i in range(_shields.size()):
 		var shield: Node3D = _shields[i]
-		var a := _angle + TAU * i / count
+		var a: float = _angle + TAU * float(i) / float(safe_count)
 		shield.position = Vector3(cos(a) * radius, 1.0, sin(a) * radius)
-		_check_hits(shield, now)
+		# Stagger hit checks across frames on LOW/MED quality
+		var check_now := true
+		if PerformanceManager != null and PerformanceManager.quality < PerformanceManager.Quality.HIGH:
+			check_now = (_hit_tick + i) % 2 == 0
+		if check_now:
+			_check_hits(shield, now)
 
 func _prune_cooldowns(now: float) -> void:
 	if _hit_cooldowns.is_empty():

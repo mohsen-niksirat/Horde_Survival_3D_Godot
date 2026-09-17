@@ -23,6 +23,13 @@ func _process(_delta: float) -> void:
 ## Create (or get) a pool for a scene with an initial prewarm size.
 func create_pool(scene_path: String, prewarm: int = 0) -> void:
 	if _pools.has(scene_path):
+		# Pool exists — top up free list to prewarm target if short
+		var pool: Dictionary = _pools[scene_path]
+		var deficit := prewarm - int(pool["free"].size())
+		for i in range(maxi(deficit, 0)):
+			var node := _instantiate(pool)
+			node.visible = false
+			pool["free"].append(node)
 		return
 	var pool := {
 		"scene": load(scene_path),

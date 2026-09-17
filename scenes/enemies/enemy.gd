@@ -31,6 +31,7 @@ var _heal_timer: float = 2.0
 var _phase_timer: float = 0.0
 var _split_done: bool = false
 var _active_tweens: Array = []
+var _last_phasing: bool = false
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -95,16 +96,17 @@ func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: 
 	_phase_timer = data.phase_interval
 	_split_done = false
 	_alive = true
+	_last_phasing = false
 
 ## Cache the part materials for hit flashes; elites get a gold tint.
 func _collect_flash_materials() -> void:
 	_flash_materials.clear()
 	for part in _mesh.get_children():
 		if part is MeshInstance3D:
-			var mat: StandardMaterial3D = part.get_surface_override_material(0)
+			# Duplicate shared cache mats so elite tint / hit flash stay per-instance
+			var mat: StandardMaterial3D = EnemyVisuals.ensure_unique_material(part)
 			if mat == null:
 				continue
-			var base: Color = data.color if data != null else Color.WHITE
 			if elite != null:
 				mat.albedo_color = Color(1.0, 0.8, 0.2)
 			mat.set_meta("base_color", mat.albedo_color)
@@ -211,16 +213,21 @@ func _physics_process(delta: float) -> void:
 			_heal_timer = data.heal_cooldown
 			_heal_allies()
 
-	# Ghost phasing
+	# Ghost phasing — only touch materials when the archetype can phase
 	if data.phase_interval > 0.0:
 		_phase_timer -= delta
 		if _phase_timer <= -data.phase_duration:
 			_phase_timer = data.phase_interval
-	_set_phasing_alpha(_is_phasing())
-	# Aggregate AI time into the performance overlay (cheap u64 add)
-	PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
-	# Archetype micro-animation (wings, hover, flame pulse)
-	EnemyVisuals.animate(_mesh, data.id, Time.get_ticks_msec() / 1000.0, _wobble_seed)
+		var phasing := _is_phasing()
+		if phasing != _last_phasing:
+			_last_phasing = phasing
+			_set_phasing_alpha(phasing)
+	# Overlay system time only when debug overlay is cheap enough (skip far LOD)
+	if dist < 32.0:
+		PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
+	# Archetype micro-animation LOD — far enemies skip per-frame anim
+	if dist < 28.0:
+		EnemyVisuals.animate(_mesh, data.id, Time.get_ticks_msec() / 1000.0, _wobble_seed)
 
 ## Ghost phasing: periodically untargetable.
 func _is_phasing() -> bool:

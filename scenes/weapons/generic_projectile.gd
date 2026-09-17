@@ -18,6 +18,8 @@ var _life: float = 0.0
 var _active: bool = false
 var _weapon_id: String = "projectile"
 var _hit_enemies: Array = []
+var _retarget_left: float = 0.0
+var _cached_target: Node3D = null
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -40,6 +42,8 @@ func setup_generic(p_damage: float, p_speed: float, p_pierce: int, p_crit: float
 	_active = true
 	visible = true
 	monitoring = true
+	_retarget_left = 0.0
+	_cached_target = null
 	var light := get_node_or_null("Light")
 	if light is Light3D:
 		light.visible = PerformanceManager.prefer_dynamic_lights() if PerformanceManager != null else true
@@ -53,8 +57,12 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if homing:
-		var target := _find_nearest_enemy()
-		if target != null:
+		_retarget_left -= delta
+		if _retarget_left <= 0.0:
+			_retarget_left = 0.15
+			_cached_target = _find_nearest_enemy()
+		var target := _cached_target
+		if target != null and is_instance_valid(target):
 			var desired := (target.global_position + Vector3(0, 0.5, 0) - global_position).normalized() * speed
 			_velocity = _velocity.slerp(desired, minf(HOMING_TURN_RATE * delta, 1.0))
 

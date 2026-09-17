@@ -1,10 +1,13 @@
 extends Area3D
 ## XP orb: drops on enemy death, magnetizes toward the player inside pickup
-## radius, collected on contact. Pooled.
+## radius, collected on contact. Pooled. Far/settled orbs poll at a lower
+## rate so 100+ shards don't cost a full _process each.
 
 const GRAVITY := 18.0
 const MAGNET_SPEED := 14.0
 const LIFETIME := 30.0
+## How often far settled orbs re-check magnet range (seconds).
+const FAR_POLL_INTERVAL := 0.25
 
 var value: float = 1.0
 var _player: Node3D
@@ -12,6 +15,7 @@ var _magnetized: bool = false
 var _life: float = 0.0
 var _vertical_velocity: float = 0.0
 var _settled: bool = false
+var _far_poll: float = 0.0
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -22,6 +26,7 @@ func setup(p_value: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	_magnetized = false
 	_life = 0.0
 	_settled = false
+	_far_poll = 0.0
 	_vertical_velocity = randf_range(2.5, 5.0)
 	global_position = spawn_pos + Vector3(randf_range(-0.6, 0.6), 0.6, randf_range(-0.6, 0.6))
 	set_deferred("monitoring", true)
@@ -41,6 +46,16 @@ func _process(delta: float) -> void:
 	var pickup_radius: float = 3.0
 	if _player.has_method("get_pickup_radius"):
 		pickup_radius = _player.get_pickup_radius()
+
+	# LOD: settled + far from magnet → poll slowly
+	if not _magnetized and _settled and dist > pickup_radius + 2.0:
+		_far_poll -= delta
+		if _far_poll > 0.0:
+			return
+		_far_poll = FAR_POLL_INTERVAL
+		# Re-check magnet after poll; fall through if still far
+		if dist > pickup_radius:
+			return
 
 	if _magnetized or dist <= pickup_radius:
 		_magnetized = true

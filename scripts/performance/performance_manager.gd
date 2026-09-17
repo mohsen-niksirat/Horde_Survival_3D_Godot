@@ -79,6 +79,22 @@ func _apply_render_settings() -> void:
 		return
 	var msaa := RenderingServer.VIEWPORT_MSAA_2X if (quality == Quality.HIGH and not _is_web()) else RenderingServer.VIEWPORT_MSAA_DISABLED
 	RenderingServer.viewport_set_msaa_3d(vp.get_viewport_rid(), msaa)
+	# Internal render scale — big WebGL fill-rate win on LOW/MED web
+	var scale := 1.0
+	if _is_web():
+		match quality:
+			Quality.LOW:
+				scale = 0.6
+			Quality.MEDIUM:
+				scale = 0.75
+			_:
+				scale = 1.0
+	if scale < 1.0:
+		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+		vp.scaling_3d_scale = scale
+	else:
+		# Scale 1.0 = native res; BILINEAR at 1.0 is a no-op upscale
+		vp.scaling_3d_scale = 1.0
 
 func _get_suns(force: bool = false) -> Array:
 	var tree := get_tree()

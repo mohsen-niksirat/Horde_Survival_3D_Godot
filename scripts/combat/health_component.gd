@@ -23,14 +23,19 @@ func setup(p_max_hp: float, p_armor: float = 0.0) -> void:
 	current_hp = max_hp
 	alive = true
 	invincible_timer = 0.0
+	set_process(false)
 
 func set_scaled(p_max_hp: float, p_armor: float, scale: float) -> void:
 	hp_scale = scale
 	setup(p_max_hp * scale, p_armor)
 
 func _process(delta: float) -> void:
-	if invincible_timer > 0.0:
-		invincible_timer -= delta
+	if invincible_timer <= 0.0:
+		set_process(false)
+		return
+	invincible_timer -= delta
+	if invincible_timer <= 0.0:
+		set_process(false)
 
 func take_damage(event: DamageEvent) -> float:
 	if not alive or invincible_timer > 0.0:
@@ -64,8 +69,10 @@ func is_alive() -> bool:
 
 func set_invincible(duration: float) -> void:
 	invincible_timer = duration
+	set_process(duration > 0.0)
 
 func reset() -> void:
 	current_hp = max_hp
 	alive = true
 	invincible_timer = 0.0
+	set_process(false)
