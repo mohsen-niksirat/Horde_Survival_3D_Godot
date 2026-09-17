@@ -82,7 +82,7 @@ Save migration: legacy quality 0..3 → new LOW..HIGH/Auto via `quality_schema=2
 
 ## Phase 3 — Free graphics integration
 
-Use verified CC0/QAL packs (commercial-safe, no attribution required for most):
+**Detailed build sheet:** `docs/PHASE3_GRAPHICS.md`
 
 | Category | Pack | License | URL |
 |----------|------|---------|-----|
@@ -105,6 +105,15 @@ Sub-phases:
 5. **3E Polish** — per-character skins (Mage/Paladin/Rogue), relic beacon VFX
 
 Rules: prefer `.glb`, atlas textures, keep poly budgets for WebGL; record license per pack; never use CC-NC.
+Quality gates: Very Low stays primitive/light; Medium+ uses full GLB + sky.
+
+### Pointer lock / browser cursor
+
+Browser infobar “press Esc to see mouse” is Pointer Lock. Game now:
+- Releases lock on menu/pause/level-up/game-over/focus-out/tab-hide/pagehide
+- Self-heals in `Main._process` if not PLAYING/BOSS but lock is held
+- Shell JS exits lock on blur/visibilitychange/pagehide
+If the tab is fully closed, any leftover message is the browser UI itself.
 
 ## Phase 4 — Content + UX polish
 

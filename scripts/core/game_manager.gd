@@ -1,5 +1,6 @@
 extends Node
 ## Global game-state machine and scene flow orchestration.
+## Also owns pointer capture policy: lock only while PLAYING/BOSS.
 
 enum State {
 	BOOT,
@@ -30,15 +31,27 @@ func change_state(new_state: int) -> void:
 	var old := state
 	state = new_state
 	EventBus.game_state_changed.emit(new_state, old)
+	_sync_pointer(new_state)
+
+func _sync_pointer(s: int) -> void:
+	match s:
+		State.PLAYING, State.BOSS:
+			if not DisplayServer.is_touchscreen_available() and not OS.has_feature("mobile"):
+				InputManager.capture_pointer()
+		_:
+			# Menus, pause, level-up, game over — always free the browser cursor
+			InputManager.release_pointer()
 
 func start_game() -> void:
 	change_state(State.GAME_START)
 	get_tree().paused = false
+	InputManager.release_pointer()
 	get_tree().change_scene_to_file(MAIN_SCENE)
 
 func goto_menu() -> void:
 	change_state(State.MAIN_MENU)
 	get_tree().paused = false
+	InputManager.release_pointer()
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 func pause_game() -> void:
@@ -70,12 +83,8 @@ func close_level_up() -> void:
 func game_over(victory: bool) -> void:
 	get_tree().paused = false
 	change_state(State.GAME_OVER)
+	InputManager.release_pointer()
 	EventBus.run_ended.emit(victory)
 
-func _on_game_state_changed(new_state: int, _old: int) -> void:
-	# Keep autoload-only nodes paused with the tree; managers marked ALWAYS keep working.
-	match new_state:
-		State.PAUSED, State.LEVEL_UP:
-			pass
-		_:
-			pass
+func _on_game_state_changed(_new_state: int, _old: int) -> void:
+	pass

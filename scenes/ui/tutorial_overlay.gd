@@ -84,6 +84,6 @@ func _apply_mouse_mode() -> void:
 	if DisplayServer.is_touchscreen_available():
 		return
 	if GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		InputManager.capture_pointer()
 	else:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		InputManager.release_pointer()

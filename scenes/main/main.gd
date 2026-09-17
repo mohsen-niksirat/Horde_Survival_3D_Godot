@@ -188,9 +188,9 @@ func _apply_mouse_mode(state: int) -> void:
 		return
 	match state:
 		GameManager.State.PLAYING, GameManager.State.BOSS:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			InputManager.capture_pointer()
 		_:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			InputManager.release_pointer()
 
 func get_enemy_manager() -> Node:
 	return enemy_manager
@@ -212,11 +212,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventMouseButton and event.pressed:
-		# Click-to-recapture: web pointer lock can be exited by the browser
-		# (Esc); re-lock on the next click during active gameplay.
+		# Click-to-recapture only during active gameplay (browser Esc unlocks)
 		if not DisplayServer.is_touchscreen_available():
-			if GameManager.state == GameManager.State.PLAYING and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-				_apply_mouse_mode(GameManager.State.PLAYING)
+			if (GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS) \
+					and not InputManager.is_pointer_captured():
+				InputManager.capture_pointer()
 
 func _toggle_pause() -> void:
 	if GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS:
@@ -225,6 +225,24 @@ func _toggle_pause() -> void:
 		GameManager.resume_game()
 
 func _process(_delta: float) -> void:
+	# Self-heal: if we are not in gameplay, Pointer Lock must never stick
+	# (browser shows "press Esc for mouse" at the top of the window).
+	if GameManager.state != GameManager.State.PLAYING and GameManager.state != GameManager.State.BOSS:
+		if InputManager.is_pointer_captured():
+			InputManager.release_pointer()
 	if _debug_enabled:
 		debug_label.text = PerformanceManager.get_debug_info()
-		debug_label.size.y = 0  # let multi-line text size itself
+		debug_label.size.y = 0
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT, \
+		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_GO_BACK_REQUEST:
+			InputManager.release_pointer()
+		NOTIFICATION_EXIT_TREE, NOTIFICATION_PREDELETE:
+			InputManager.release_pointer()
+		NOTIFICATION_VISIBILITY_CHANGED:
+			# Main is a Node3D — only release when the run scene goes away
+			if not is_inside_tree():
+				InputManager.release_pointer()
+

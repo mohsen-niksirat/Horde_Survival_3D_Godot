@@ -1,6 +1,7 @@
 extends Node
 ## Input abstraction. Gameplay code calls ONLY this manager — never Input directly
 ## for gameplay actions. Supports keyboard+mouse, gamepad, and touch (virtual joystick).
+## Owns pointer capture/release so browser Pointer Lock never sticks after leaving play.
 
 var _move_vector: Vector2 = Vector2.ZERO
 var _look_delta: Vector2 = Vector2.ZERO
@@ -12,10 +13,56 @@ var _using_touch: bool = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if OS.get_name() == "Web":
+		_install_web_pointer_release()
 
-## Register a touch UI provider (virtual joystick + look region).
-func register_touch_provider(_provider: Node) -> void:
-	pass
+## Release mouse capture / browser Pointer Lock. Safe to call anytime.
+func release_pointer() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if OS.get_name() == "Web":
+		JavaScriptBridge.eval("try{if(window.__hordePointerRelease)window.__hordePointerRelease();else if(document.exitPointerLock)document.exitPointerLock();}catch(e){}", true)
+
+## Capture mouse for gameplay camera look (desktop only).
+func capture_pointer() -> void:
+	if DisplayServer.is_touchscreen_available() or OS.has_feature("mobile"):
+		return
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func is_pointer_captured() -> bool:
+	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+
+## Shell + engine hooks: always drop Pointer Lock when the tab loses focus.
+func _install_web_pointer_release() -> void:
+	var js := """
+	(function(){
+		if (!window.__hordePointerRelease) {
+			window.__hordePointerRelease = function(){
+				try {
+					if (document.exitPointerLock) document.exitPointerLock();
+				} catch (e) {}
+			};
+		}
+		window.__hordePointerRelease();
+		if (!window.__hordePointerHooks) {
+			window.__hordePointerHooks = true;
+			document.addEventListener('visibilitychange', function(){
+				if (document.hidden) window.__hordePointerRelease();
+			});
+			window.addEventListener('blur', function(){ window.__hordePointerRelease(); });
+			window.addEventListener('pagehide', function(){ window.__hordePointerRelease(); });
+			window.addEventListener('beforeunload', function(){ window.__hordePointerRelease(); });
+		}
+	})();
+	"""
+	JavaScriptBridge.eval(js, true)
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT, \
+		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_GO_BACK_REQUEST:
+			release_pointer()
+		NOTIFICATION_EXIT_TREE, NOTIFICATION_PREDELETE:
+			release_pointer()
 
 func set_touch_move_vector(vec: Vector2) -> void:
 	_touch_move_vector = vec
@@ -23,7 +70,6 @@ func set_touch_move_vector(vec: Vector2) -> void:
 
 func set_touch_look_delta(delta: Vector2) -> void:
 	# ACCUMULATE: multiple drag events can arrive within one frame
-	# (touch sample rate > frame rate). Assignment would drop rotation.
 	_touch_look_delta += delta
 	_using_touch = true
 
@@ -42,7 +88,6 @@ func get_move_vector() -> Vector2:
 	return vec
 
 func get_look_delta() -> Vector2:
-	# Touch look only — desktop uses captured mouse directly in CameraRig.
 	return _touch_look_delta
 
 func consume_look_delta() -> Vector2:
@@ -50,7 +95,6 @@ func consume_look_delta() -> Vector2:
 	_touch_look_delta = Vector2.ZERO
 	return d
 
-## Pinch zoom from the touch controls (negative = zoom in).
 func add_zoom_delta(delta: float) -> void:
 	_zoom_delta += delta
 
@@ -79,7 +123,6 @@ func _touch_action_pressed(_action: String) -> bool:
 func _touch_action_just_pressed(_action: String) -> bool:
 	return false
 
-## Called by the game scene to route pause input (Esc / touch button).
 func is_pause_just_pressed() -> bool:
 	return Input.is_action_just_pressed("pause")
 

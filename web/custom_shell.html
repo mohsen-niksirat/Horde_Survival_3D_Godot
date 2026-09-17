@@ -59,6 +59,24 @@
 		const errorEl = document.getElementById('error');
 		let engine = null;
 
+		// Drop Pointer Lock whenever the tab/page is left or backgrounded.
+		// Otherwise the browser keeps showing "press Esc to see your mouse".
+		function forceUnlockPointer() {
+			try {
+				if (document.exitPointerLock) document.exitPointerLock();
+			} catch (e) {}
+		}
+		window.__hordePointerRelease = forceUnlockPointer;
+		document.addEventListener('visibilitychange', function () {
+			if (document.hidden) forceUnlockPointer();
+		});
+		window.addEventListener('blur', forceUnlockPointer);
+		window.addEventListener('pagehide', forceUnlockPointer);
+		window.addEventListener('beforeunload', forceUnlockPointer);
+		document.addEventListener('pointerlockchange', function () {
+			if (document.hidden && document.pointerLockElement) forceUnlockPointer();
+		});
+
 		function webglSupported() {
 			try {
 				const c = document.createElement('canvas');
@@ -72,23 +90,19 @@
 			errorEl.textContent = 'WebGL is not available in this browser. Please use a modern browser with hardware acceleration enabled.';
 			document.getElementById('bar-outer').style.display = 'none';
 		} else {
-			// Progress callback goes in the config (Godot 4.3 API):
 			GODOT_CONFIG['onProgress'] = function (current, total) {
 				const pct = total > 0 ? (current / total) * 100 : 0;
 				bar.style.width = pct + '%';
 				statusEl.textContent = 'Loading assets... ' + Math.round(pct) + '%';
 			};
 			engine = new Engine(GODOT_CONFIG);
-			// PLAY appears immediately: startGame() triggers the actual
-			// download inside a user gesture (browser audio unlock).
 			statusEl.textContent = 'Ready!';
 			playBtn.style.display = 'block';
 			playBtn.addEventListener('click', () => {
 				playBtn.style.display = 'none';
-				// Keep the loader (progress bar) visible until the engine
-				// actually downloads/boot — hiding it here left a blank screen.
 				statusEl.textContent = 'Starting engine...';
 				bar.style.width = '0%';
+				forceUnlockPointer();
 				engine.startGame().then(() => {
 					loader.classList.add('hidden');
 				}).catch(err => {
@@ -96,6 +110,7 @@
 					errorEl.textContent = 'Failed to start: ' + err;
 					loader.classList.remove('hidden');
 					playBtn.style.display = 'block';
+					forceUnlockPointer();
 				});
 			});
 		}

@@ -49,3 +49,4 @@ The export preset enables `progressive_web_app/enabled=true` (display: standalon
 - **Blank page after deploy**: check the browser console; ensure Pages source is "GitHub Actions", not "Deploy from a branch".
 - **Class cache errors in CI**: the workflow runs `--import` twice deliberately; keep that if editing the workflow.
 - **Audio doesn't start**: audio unlocks on the PLAY click; don't remove the gate.
+- **Browser says “press Esc to see mouse” after leaving the game**: that is Pointer Lock. The shell + InputManager now exit lock on blur/tab-hide/pagehide and on every non-play game state. If the **tab is still open** in the background, close it fully; after a hard tab close any leftover toast is browser UI, not the game.
