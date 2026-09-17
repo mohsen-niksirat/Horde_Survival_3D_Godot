@@ -60,14 +60,9 @@ func _on_haptics(pressed: bool) -> void:
 	SaveManager.set_setting("haptics", pressed)
 
 func _on_fullscreen(pressed: bool) -> void:
-	if pressed:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-		if OS.get_name() == "Web":
-			JavaScriptBridge.eval("if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen()}", true)
-	else:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-		if OS.get_name() == "Web":
-			JavaScriptBridge.eval("if(document.exitFullscreen){document.exitFullscreen()}", true)
+	var is_fs: bool = InputManager.is_fullscreen()
+	if pressed != is_fs:
+		InputManager.toggle_fullscreen()
 
 func _on_state_changed(_new_state: int, _old: int) -> void:
 	pass

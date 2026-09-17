@@ -68,6 +68,7 @@ Architecture is Android-compatible (Compatibility renderer, touch-first input ab
 | Camera | Mouse (captured) / Arrow keys | Right touch drag | Right stick |
 | Ability 1 (Meteor) | Q | Button | Trigger |
 | Ability 2 (Freeze) | E | Button | Trigger |
+| Fullscreen toggle | F11 or Alt+Enter | FS button (next to zoom) | — |
 | Pause | Esc | — | Start |
 | Debug overlay | F3 | — | — |
 

@@ -13,11 +13,21 @@ var _number_throttle_ms: int = 0
 
 func setup(player: Node3D) -> void:
 	_player = player
-	for scene_path in POOL_SIZES:
+	# First-load budget: Very Low / web prewarm fewer VFX nodes
+	var dmg_n: int = POOL_SIZES[DAMAGE_NUMBER_SCENE]
+	var burst_n: int = POOL_SIZES[KILL_BURST_SCENE]
+	if PerformanceManager != null and PerformanceManager.quality <= PerformanceManager.Quality.VERY_LOW:
+		dmg_n = 14
+		burst_n = 6
+	if OS.get_name() == "Web":
+		dmg_n = mini(dmg_n, 20)
+		burst_n = mini(burst_n, 8)
+	for scene_path in [DAMAGE_NUMBER_SCENE, KILL_BURST_SCENE]:
 		if ResourceLoader.exists(scene_path):
 			var scene: PackedScene = load(scene_path)
 			var base_name: String = scene_path.get_file().get_basename()
-			for i in range(POOL_SIZES[scene_path]):
+			var n: int = dmg_n if scene_path == DAMAGE_NUMBER_SCENE else burst_n
+			for i in range(n):
 				var inst := scene.instantiate()
 				inst.visible = false
 				inst.name = "%s_%d" % [base_name, i]

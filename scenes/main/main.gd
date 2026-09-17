@@ -170,6 +170,10 @@ func _ready() -> void:
 		touch_controls.visible = true
 	else:
 		touch_controls.visible = false
+	# Show fullscreen toggle next to zoom (especially useful on mobile)
+	var fs_btn: Button = $HUD/Hud.get_node_or_null("Abilities/ZoomRow/Fullscreen")
+	if fs_btn != null:
+		fs_btn.text = "Win" if InputManager.is_fullscreen() else "FS"
 	_apply_mouse_mode(GameManager.state)
 	# Release/capture the cursor as game states change (menus/level-up need
 	# a visible cursor; gameplay locks it for unbounded camera rotation).

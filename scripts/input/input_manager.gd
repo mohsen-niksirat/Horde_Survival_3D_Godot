@@ -64,6 +64,12 @@ func _notification(what: int) -> void:
 		NOTIFICATION_EXIT_TREE, NOTIFICATION_PREDELETE:
 			release_pointer()
 
+func _unhandled_input(event: InputEvent) -> void:
+	# Works in menus and gameplay (autoload ALWAYS)
+	if event.is_action_pressed("fullscreen"):
+		toggle_fullscreen()
+		get_viewport().set_input_as_handled()
+
 func set_touch_move_vector(vec: Vector2) -> void:
 	_touch_move_vector = vec
 	_using_touch = true
@@ -128,3 +134,25 @@ func is_pause_just_pressed() -> bool:
 
 func is_using_touch() -> bool:
 	return _using_touch
+
+func is_fullscreen_just_pressed() -> bool:
+	return Input.is_action_just_pressed("fullscreen")
+
+## Toggle windowed <-> fullscreen. Works on desktop and web (browser FS API).
+func toggle_fullscreen() -> void:
+	var mode := DisplayServer.window_get_mode()
+	var going_fs := mode != DisplayServer.WINDOW_MODE_FULLSCREEN \
+		and mode != DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN
+	if going_fs:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		if OS.get_name() == "Web":
+			JavaScriptBridge.eval("try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}", true)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		if OS.get_name() == "Web":
+			JavaScriptBridge.eval("try{if(document.exitFullscreen)document.exitFullscreen();}catch(e){}", true)
+	EventBus.settings_changed.emit()
+
+func is_fullscreen() -> bool:
+	var mode := DisplayServer.window_get_mode()
+	return mode == DisplayServer.WINDOW_MODE_FULLSCREEN or mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN

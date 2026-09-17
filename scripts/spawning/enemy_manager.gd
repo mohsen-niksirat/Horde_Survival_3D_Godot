@@ -44,6 +44,11 @@ func _ready() -> void:
 	prewarm_pool(16)
 
 func prewarm_pool(count: int) -> void:
+	# First-load budget: Very Low / web start with a smaller free list
+	if PerformanceManager != null and PerformanceManager.quality <= PerformanceManager.Quality.VERY_LOW:
+		count = mini(count, 8)
+	if OS.get_name() == "Web" and count > 12:
+		count = 12
 	PoolManager.create_pool(ENEMY_SCENE, count)
 
 func _process(_delta: float) -> void:

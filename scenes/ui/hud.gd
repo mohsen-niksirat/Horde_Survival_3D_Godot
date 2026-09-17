@@ -13,6 +13,7 @@ extends Control
 @onready var ability2_button: Button = $Abilities/AbilityRow/Ability2
 @onready var zoom_in_button: Button = $Abilities/ZoomRow/ZoomIn
 @onready var zoom_out_button: Button = $Abilities/ZoomRow/ZoomOut
+@onready var fullscreen_button: Button = $Abilities/ZoomRow/Fullscreen
 @onready var pause_button: Button = $PauseButton
 @onready var weapon_icons: HBoxContainer = $TopLeft/WeaponIcons
 @onready var boss_bar: ProgressBar = $BossBar
@@ -60,6 +61,8 @@ func bind_player(player: Node) -> void:
 		zoom_in_button.pressed.connect(_on_zoom_in)
 	if not zoom_out_button.pressed.is_connected(_on_zoom_out):
 		zoom_out_button.pressed.connect(_on_zoom_out)
+	if fullscreen_button != null and not fullscreen_button.pressed.is_connected(_on_fullscreen_pressed):
+		fullscreen_button.pressed.connect(_on_fullscreen_pressed)
 	_refresh_weapon_icons()
 	# V-fix: hide gameplay HUD while paused/level-up so overlays read clean
 	EventBus.game_state_changed.connect(_on_hud_visibility)
@@ -69,6 +72,12 @@ func _on_zoom_in() -> void:
 
 func _on_zoom_out() -> void:
 	InputManager.add_zoom_delta(0.18)
+
+func _on_fullscreen_pressed() -> void:
+	AudioManager.play_game_sfx("ui_click")
+	InputManager.toggle_fullscreen()
+	if fullscreen_button != null:
+		fullscreen_button.text = "Win" if InputManager.is_fullscreen() else "FS"
 
 func _on_hud_visibility(new_state: int, _old: int) -> void:
 	visible = not (new_state == GameManager.State.PAUSED or new_state == GameManager.State.LEVEL_UP)

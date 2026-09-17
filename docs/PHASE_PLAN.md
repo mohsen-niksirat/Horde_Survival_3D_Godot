@@ -80,6 +80,13 @@ User requirements:
 
 Save migration: legacy quality 0..3 → new LOW..HIGH/Auto via `quality_schema=2`.
 
+## Phase 2.7 — Magnet UX + first-load + fullscreen — ✅ this session
+
+- Magnet pickup looks like a **horseshoe magnet** (red/blue poles), not a gem
+- Magnet triggers a **soft 5s XP wave**: staggered pull, ease-in speed, slight swirl
+- First-load: smaller pool/VFX prewarm on Very Low/web; export excludes `assets/models/external/*`
+- **Fullscreen toggle**: F11 / Alt+Enter on desktop; **FS** button next to zoom on mobile; Settings checkbox kept in sync
+
 ## Phase 3 — Free graphics integration
 
 **Detailed build sheet:** `docs/PHASE3_GRAPHICS.md`

@@ -100,7 +100,7 @@
 			playBtn.style.display = 'block';
 			playBtn.addEventListener('click', () => {
 				playBtn.style.display = 'none';
-				statusEl.textContent = 'Starting engine...';
+				statusEl.textContent = 'Downloading game (first visit is slower)...';
 				bar.style.width = '0%';
 				forceUnlockPointer();
 				engine.startGame().then(() => {
