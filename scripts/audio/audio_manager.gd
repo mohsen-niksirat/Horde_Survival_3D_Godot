@@ -2,6 +2,8 @@
 ## Audio playback: music + pooled SFX players, volume buses.
 ## Web-safe: playback only starts after user gesture (Click-to-Play) in the web shell.
 
+enum SfxTier { CRITICAL, IMPORTANT, AMBIENT, LOW }
+
 var master_volume: float = 0.8
 var music_volume: float = 0.7
 var sfx_volume: float = 0.8
@@ -9,6 +11,38 @@ var sfx_volume: float = 0.8
 var _music_player: AudioStreamPlayer
 var _sfx_players: Array[AudioStreamPlayer] = []
 const SFX_POOL_SIZE := 12
+
+## Audio importance metadata per SFX id — used for culling/ducking under load.
+const SFX_IMPORTANCE := {
+	"weapon_fire": SfxTier.IMPORTANT,
+	"enemy_hit": SfxTier.AMBIENT,
+	"enemy_death": SfxTier.IMPORTANT,
+	"xp_pickup": SfxTier.AMBIENT,
+	"level_up": SfxTier.CRITICAL,
+	"boss_warn": SfxTier.CRITICAL,
+	"boss_die": SfxTier.CRITICAL,
+	"player_hurt": SfxTier.CRITICAL,
+	"relic_pickup": SfxTier.CRITICAL,
+	"ability": SfxTier.IMPORTANT,
+	"ui_click": SfxTier.LOW,
+}
+
+## Per-tier volume multipliers under stress / low quality.
+const TIER_VOLUME_SCALE := {
+	SfxTier.CRITICAL: 1.0,
+	SfxTier.IMPORTANT: 0.85,
+	SfxTier.AMBIENT: 0.6,
+	SfxTier.LOW: 0.3,
+}
+
+## Dynamic SFX rate limiter: avoids audio spam under heavy load.
+var _sfx_gate: Dictionary = {}
+const _GATE_THRESHOLDS := {
+	SfxTier.CRITICAL: 0.0,   # always
+	SfxTier.IMPORTANT: 0.08, # ~12/sec
+	SfxTier.AMBIENT: 0.15,   # ~6/sec
+	SfxTier.LOW: 0.25,       # ~4/sec
+}
 
 ## Procedural tone cache (web-friendly, zero assets): id -> AudioStreamWAV
 var _tone_cache: Dictionary = {}
@@ -23,6 +57,8 @@ func _ready() -> void:
 		add_child(p)
 		_sfx_players.append(p)
 	_apply_volumes()
+	PerformanceManager.quality_changed.connect(_on_performance_tier_changed)
+	PerformanceManager.quality_changed.connect(_on_stress_changed)
 
 ## Simple procedural SFX: short synthesized tone, cached per sound id.
 ## No external audio assets needed â€” layered, swept, soft-clipped synthesis.
@@ -38,6 +74,14 @@ func play_recipe(id: String, layers: Array, volume_db_offset: float = 0.0) -> vo
 		stream = _build_wav(layers)
 		_tone_cache[id] = stream
 	play_sfx(stream, volume_db_offset, randf_range(0.96, 1.05))
+
+## Tier-aware recipe playback.
+func play_recipe_tiered(id: String, layers: Array, tier: int, volume_db_offset: float = 0.0) -> void:
+	var stream: AudioStreamWAV = _tone_cache.get(id, null)
+	if stream == null:
+		stream = _build_wav(layers)
+		_tone_cache[id] = stream
+	play_sfx_tiered(stream, tier, volume_db_offset, randf_range(0.96, 1.05))
 
 const _SR := 32000
 
@@ -120,11 +164,28 @@ func stop_music() -> void:
 	_music_player.stop()
 
 func play_sfx(stream: AudioStream, volume_db_offset: float = 0.0, pitch: float = 1.0) -> void:
+	play_sfx_tiered(stream, SfxTier.IMPORTANT, volume_db_offset, pitch)
+
+## Play an SFX with importance-tier-based gating and volume ducking.
+func play_sfx_tiered(stream: AudioStream, tier: int, volume_db_offset: float = 0.0, pitch: float = 1.0) -> void:
+	# Rate-limit ambient/low-tier sounds under load
+	if _GATE_THRESHOLDS[tier] > 0.0:
+		var key := stream.get_instance_id()
+		var last := _sfx_gate.get(key, -999.0)
+		if Time.get_ticks_msec() - last < _GATE_THRESHOLDS[tier] * 1000.0:
+			return
+		_sfx_gate[key] = Time.get_ticks_msec()
 	var player := _free_sfx_player()
 	if player == null:
-		return
+		if tier < SfxTier.AMBIENT:
+			# Critical/important: steal the loudest non-critical player
+			player = _sfx_players[0]
+		else:
+			return
+	# Apply tier-based volume scaling (ducking under stress)
+	var vol_scale := TIER_VOLUME_SCALE.get(tier, 1.0)
 	player.stream = stream
-	player.volume_db = linear_to_db(clampf(sfx_volume, 0.001, 1.0)) + volume_db_offset
+	player.volume_db = linear_to_db(clampf(sfx_volume * master_volume * vol_scale, 0.001, 1.0)) + volume_db_offset
 	player.pitch_scale = pitch
 	player.play()
 
@@ -138,36 +199,37 @@ func _free_sfx_player() -> AudioStreamPlayer:
 
 ## Named SFX presets used across the game.
 func play_game_sfx(id: String) -> void:
+	var tier := SFX_IMPORTANCE.get(id, SfxTier.IMPORTANT)
 	match id:
 		"weapon_fire":
-			play_recipe("shoot_fb", [
+			play_recipe_tiered("shoot_fb", [
 				{"freq": 300.0, "glide": 0.35, "dur": 0.09, "kind": "saw", "gain": 0.9},
 				{"freq": 0.0, "glide": 1.0, "dur": 0.025, "kind": "noise", "gain": 0.4},
-			], -6.0)
+			], tier, -6.0)
 		"enemy_hit":
-			play_recipe("hit", [
+			play_recipe_tiered("hit", [
 				{"freq": 520.0, "glide": 0.4, "dur": 0.045, "kind": "square", "gain": 0.7},
 				{"freq": 0.0, "glide": 1.0, "dur": 0.02, "kind": "noise", "gain": 0.6},
-			], -9.0)
+			], tier, -9.0)
 		"enemy_death":
-			play_recipe("death", [
+			play_recipe_tiered("death", [
 				{"freq": 180.0, "glide": 0.25, "dur": 0.2, "kind": "saw", "gain": 0.8},
 				{"freq": 0.0, "glide": 1.0, "dur": 0.14, "kind": "noise", "gain": 0.55},
-			], -7.0)
+			], tier, -7.0)
 		"xp_pickup":
-			play_recipe("xp", [
+			play_recipe_tiered("xp", [
 				{"freq": 900.0, "glide": 1.65, "dur": 0.07, "kind": "sine", "gain": 0.8},
 				{"freq": 1800.0, "glide": 1.4, "dur": 0.05, "delay": 0.03, "kind": "sine", "gain": 0.3},
-			], -11.0)
+			], tier, -11.0)
 		"level_up":
-			play_recipe("lvlup", [
+			play_recipe_tiered("lvlup", [
 				{"freq": 660.0, "dur": 0.13, "kind": "sine", "gain": 0.9},
 				{"freq": 880.0, "dur": 0.13, "delay": 0.09, "kind": "sine", "gain": 0.9},
 				{"freq": 1320.0, "dur": 0.3, "delay": 0.18, "kind": "sine", "gain": 1.0, "decay": 2.2},
 				{"freq": 1651.0, "dur": 0.26, "delay": 0.18, "kind": "sine", "gain": 0.35, "decay": 2.2},
-			], -4.0)
+			], tier, -4.0)
 		"boss_warn":
-			play_recipe("boss_w", [
+			play_recipe_tiered("boss_w", [
 				{"freq": 110.0, "glide": 0.85, "dur": 0.18, "kind": "square", "gain": 1.0},
 				{"freq": 110.0, "glide": 0.85, "dur": 0.18, "delay": 0.24, "kind": "square", "gain": 1.0},
 				{"freq": 55.0, "glide": 0.7, "dur": 0.5, "kind": "sine", "gain": 0.8, "decay": 1.6},
@@ -177,27 +239,27 @@ func play_game_sfx(id: String) -> void:
 				{"freq": 160.0, "glide": 0.15, "dur": 0.9, "kind": "saw", "gain": 1.0, "decay": 1.8},
 				{"freq": 0.0, "glide": 1.0, "dur": 0.55, "kind": "noise", "gain": 0.7, "decay": 2.0},
 				{"freq": 48.0, "glide": 0.5, "dur": 1.0, "kind": "sine", "gain": 1.0, "decay": 1.2},
-			], -1.0)
+			], tier, -1.0)
 		"ui_click":
-			play_recipe("ui", [
+			play_recipe_tiered("ui", [
 				{"freq": 1050.0, "glide": 0.75, "dur": 0.035, "kind": "sine", "gain": 0.8},
-			], -10.0)
+			], tier, -10.0)
 		"player_hurt":
-			play_recipe("hurt", [
+			play_recipe_tiered("hurt", [
 				{"freq": 170.0, "glide": 0.3, "dur": 0.14, "kind": "saw", "gain": 1.0},
 				{"freq": 0.0, "glide": 1.0, "dur": 0.05, "kind": "noise", "gain": 0.7},
-			], -5.0)
+			], tier, -5.0)
 		"ability":
-			play_recipe("abil", [
+			play_recipe_tiered("abil", [
 				{"freq": 420.0, "glide": 2.6, "dur": 0.28, "kind": "zap", "gain": 0.8},
 				{"freq": 220.0, "glide": 1.5, "dur": 0.34, "kind": "sine", "gain": 0.7, "decay": 2.0},
-			], -4.0)
+			], tier, -4.0)
 		"relic_pickup":
-			play_recipe("relic", [
+			play_recipe_tiered("relic", [
 				{"freq": 1320.0, "dur": 0.45, "kind": "sine", "gain": 0.9, "decay": 2.0},
 				{"freq": 1980.0, "dur": 0.38, "delay": 0.05, "kind": "sine", "gain": 0.4, "decay": 2.0},
 				{"freq": 2640.0, "dur": 0.3, "delay": 0.11, "kind": "sine", "gain": 0.22, "decay": 2.0},
-			], -8.0)
+			], tier, -8.0)
 
 ## Volume loading from save on demand.
 func apply_saved_volumes() -> void:
@@ -220,3 +282,22 @@ func _apply_volumes() -> void:
 		_music_player.volume_db = music_db
 	for p in _sfx_players:
 		p.volume_db = sfx_db
+
+## Under stress or low quality, reduce SFX pool size and shorten gate thresholds.
+func _on_performance_tier_changed(tier: int) -> void:
+	var pm: Node = PerformanceManager
+	var reduce := pm.stress_mode or pm.quality <= pm.Quality.LOW
+	# Shrink SFX pool under pressure to free audio voices
+	var target_size := SFX_POOL_SIZE if not reduce else 6
+	while _sfx_players.size() > target_size:
+		var p: AudioStreamPlayer = _sfx_players.pop_back()
+		p.queue_free()
+	while _sfx_players.size() < target_size:
+		var p := AudioStreamPlayer.new()
+		add_child(p)
+		_sfx_players.append(p)
+	_apply_volumes()
+
+## Stress state changed — re-apply settings.
+func _on_stress_changed(_tier: int) -> void:
+	_on_performance_tier_changed(_tier)
