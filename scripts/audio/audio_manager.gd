@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 ## Audio playback: music + pooled SFX players, volume buses.
 ## Web-safe: playback only starts after user gesture (Click-to-Play) in the web shell.
 
@@ -25,40 +25,87 @@ func _ready() -> void:
 	_apply_volumes()
 
 ## Simple procedural SFX: short synthesized tone, cached per sound id.
-## No external audio assets needed for the MVP pass.
-func play_tone(id: String, freq: float, duration: float, kind: String = "sine", volume_db_offset: float = 0.0) -> void:
-	var stream: AudioStreamWAV = _get_tone(id, freq, duration, kind)
-	play_sfx(stream, volume_db_offset, 1.0)
+## No external audio assets needed â€” layered, swept, soft-clipped synthesis.
+func play_tone(id: String, freq: float, duration: float, kind: String = "sine", volume_db_offset: float = 0.0, glide_ratio: float = 1.0) -> void:
+	var stream: AudioStreamWAV = _get_tone(id, freq, duration, kind, glide_ratio)
+	play_sfx(stream, volume_db_offset, randf_range(0.96, 1.05))
 
-func _get_tone(id: String, freq: float, duration: float, kind: String) -> AudioStreamWAV:
+## Layered one-shot: each layer = {freq, glide, dur, delay, kind, gain}.
+## glide = end/start frequency ratio (sweep), delay in seconds.
+func play_recipe(id: String, layers: Array, volume_db_offset: float = 0.0) -> void:
+	var stream: AudioStreamWAV = _tone_cache.get(id, null)
+	if stream == null:
+		stream = _build_wav(layers)
+		_tone_cache[id] = stream
+	play_sfx(stream, volume_db_offset, randf_range(0.96, 1.05))
+
+const _SR := 32000
+
+func _get_tone(id: String, freq: float, duration: float, kind: String, glide: float = 1.0) -> AudioStreamWAV:
 	if _tone_cache.has(id):
 		return _tone_cache[id]
-	var sample_rate := 22050
-	var count := int(duration * sample_rate)
+	var stream := _build_wav([{ "freq": freq, "glide": glide, "dur": duration, "delay": 0.0, "kind": kind, "gain": 1.0 }])
+	_tone_cache[id] = stream
+	return stream
+
+func _build_wav(layers: Array) -> AudioStreamWAV:
+	var total := 0.0
+	for l in layers:
+		total = maxf(total, float(l.get("delay", 0.0)) + float(l.get("dur", 0.1)))
+	var count := maxi(int(total * _SR), 32)
+	var mix := PackedFloat32Array()
+	mix.resize(count)
+	for l in layers:
+		var freq := float(l["freq"])
+		var glide := maxf(float(l.get("glide", 1.0)), 0.02)
+		var dur := maxf(float(l["dur"]), 0.005)
+		var delay := float(l.get("delay", 0.0))
+		var kind := String(l.get("kind", "sine"))
+		var gain := float(l.get("gain", 1.0))
+		var start := int(delay * _SR)
+		var n := int(dur * _SR)
+		var decay := float(l.get("decay", 3.6))
+		var phase := 0.0
+		var lp := 0.0
+		for i in range(n):
+			var idx := start + i
+			if idx >= count:
+				break
+			var progress := float(i) / float(n)
+			var f := freq * pow(glide, progress)
+			phase += f / _SR
+			var raw := 0.0
+			match kind:
+				"sine":
+					raw = sin(TAU * phase)
+				"square":
+					raw = sin(TAU * phase) + 0.5 * sin(TAU * 3.0 * phase) + 0.25 * sin(TAU * 5.0 * phase)
+					raw = clampf(raw * 0.7, -1.0, 1.0)
+				"saw":
+					raw = 2.0 * fmod(phase, 1.0) - 1.0
+				"noise":
+					raw = randf_range(-1.0, 1.0)
+				"zap":
+					# FM crackle for electric / magic zaps
+					raw = sin(TAU * phase * 4.0 + sin(TAU * phase * 2.3) * 5.0)
+				_:
+					raw = sin(TAU * phase)
+			# One-pole lowpass: tames aliasing fizz on square/saw
+			lp += (raw - lp) * 0.5
+			var env := minf(progress * 28.0, 1.0) * exp(-decay * progress)
+			# Sub-millisecond noise attack = percussive punch
+			if i < 140:
+				env *= 0.4 + randf() * 0.9
+			mix[idx] += lp * env * gain
 	var data := PackedByteArray()
 	data.resize(count * 2)
 	for i in range(count):
-		var t := float(i) / sample_rate
-		var progress := float(i) / count
-		# Envelope: fast attack, exponential decay
-		var envelope := minf(progress * 30.0, 1.0) * exp(-3.0 * progress)
-		var sample := 0.0
-		match kind:
-			"sine":
-				sample = sin(TAU * freq * t)
-			"square":
-				sample = 1.0 if fmod(t * freq, 1.0) < 0.5 else -1.0
-			"saw":
-				sample = 2.0 * fmod(t * freq, 1.0) - 1.0
-			"noise":
-				sample = randf_range(-1.0, 1.0)
-		var value := int(clampf(sample * envelope, -1.0, 1.0) * 32000.0)
-		data.encode_s16(i * 2, value)
+		var v := tanh(mix[i] * 1.6)
+		data.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32000.0))
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = sample_rate
+	stream.mix_rate = _SR
 	stream.data = data
-	_tone_cache[id] = stream
 	return stream
 
 func play_music(stream: AudioStream, loop: bool = true) -> void:
@@ -93,28 +140,64 @@ func _free_sfx_player() -> AudioStreamPlayer:
 func play_game_sfx(id: String) -> void:
 	match id:
 		"weapon_fire":
-			play_tone("shoot_fb", 220.0, 0.08, "saw", -6.0)
+			play_recipe("shoot_fb", [
+				{"freq": 300.0, "glide": 0.35, "dur": 0.09, "kind": "saw", "gain": 0.9},
+				{"freq": 0.0, "glide": 1.0, "dur": 0.025, "kind": "noise", "gain": 0.4},
+			], -6.0)
 		"enemy_hit":
-			play_tone("hit", 300.0, 0.05, "square", -10.0)
+			play_recipe("hit", [
+				{"freq": 520.0, "glide": 0.4, "dur": 0.045, "kind": "square", "gain": 0.7},
+				{"freq": 0.0, "glide": 1.0, "dur": 0.02, "kind": "noise", "gain": 0.6},
+			], -9.0)
 		"enemy_death":
-			play_tone("death", 150.0, 0.12, "noise", -8.0)
+			play_recipe("death", [
+				{"freq": 180.0, "glide": 0.25, "dur": 0.2, "kind": "saw", "gain": 0.8},
+				{"freq": 0.0, "glide": 1.0, "dur": 0.14, "kind": "noise", "gain": 0.55},
+			], -7.0)
 		"xp_pickup":
-			play_tone("xp", 1046.0, 0.06, "sine", -12.0)
+			play_recipe("xp", [
+				{"freq": 900.0, "glide": 1.65, "dur": 0.07, "kind": "sine", "gain": 0.8},
+				{"freq": 1800.0, "glide": 1.4, "dur": 0.05, "delay": 0.03, "kind": "sine", "gain": 0.3},
+			], -11.0)
 		"level_up":
-			play_tone("lvlup_a", 660.0, 0.15, "sine", -4.0)
-			play_tone("lvlup_b", 880.0, 0.2, "sine", -4.0)
+			play_recipe("lvlup", [
+				{"freq": 660.0, "dur": 0.13, "kind": "sine", "gain": 0.9},
+				{"freq": 880.0, "dur": 0.13, "delay": 0.09, "kind": "sine", "gain": 0.9},
+				{"freq": 1320.0, "dur": 0.3, "delay": 0.18, "kind": "sine", "gain": 1.0, "decay": 2.2},
+				{"freq": 1651.0, "dur": 0.26, "delay": 0.18, "kind": "sine", "gain": 0.35, "decay": 2.2},
+			], -4.0)
 		"boss_warn":
-			play_tone("boss_w", 110.0, 0.4, "square", -2.0)
+			play_recipe("boss_w", [
+				{"freq": 110.0, "glide": 0.85, "dur": 0.18, "kind": "square", "gain": 1.0},
+				{"freq": 110.0, "glide": 0.85, "dur": 0.18, "delay": 0.24, "kind": "square", "gain": 1.0},
+				{"freq": 55.0, "glide": 0.7, "dur": 0.5, "kind": "sine", "gain": 0.8, "decay": 1.6},
+			], -2.0)
 		"boss_die":
-			play_tone("boss_d", 90.0, 0.6, "saw", -2.0)
+			play_recipe("boss_d", [
+				{"freq": 160.0, "glide": 0.15, "dur": 0.9, "kind": "saw", "gain": 1.0, "decay": 1.8},
+				{"freq": 0.0, "glide": 1.0, "dur": 0.55, "kind": "noise", "gain": 0.7, "decay": 2.0},
+				{"freq": 48.0, "glide": 0.5, "dur": 1.0, "kind": "sine", "gain": 1.0, "decay": 1.2},
+			], -1.0)
 		"ui_click":
-			play_tone("ui", 800.0, 0.04, "sine", -10.0)
+			play_recipe("ui", [
+				{"freq": 1050.0, "glide": 0.75, "dur": 0.035, "kind": "sine", "gain": 0.8},
+			], -10.0)
 		"player_hurt":
-			play_tone("hurt", 180.0, 0.1, "square", -6.0)
+			play_recipe("hurt", [
+				{"freq": 170.0, "glide": 0.3, "dur": 0.14, "kind": "saw", "gain": 1.0},
+				{"freq": 0.0, "glide": 1.0, "dur": 0.05, "kind": "noise", "gain": 0.7},
+			], -5.0)
 		"ability":
-			play_tone("abil", 440.0, 0.3, "saw", -4.0)
+			play_recipe("abil", [
+				{"freq": 420.0, "glide": 2.6, "dur": 0.28, "kind": "zap", "gain": 0.8},
+				{"freq": 220.0, "glide": 1.5, "dur": 0.34, "kind": "sine", "gain": 0.7, "decay": 2.0},
+			], -4.0)
 		"relic_pickup":
-			play_tone("relic", 1320.0, 0.2, "sine", -8.0)
+			play_recipe("relic", [
+				{"freq": 1320.0, "dur": 0.45, "kind": "sine", "gain": 0.9, "decay": 2.0},
+				{"freq": 1980.0, "dur": 0.38, "delay": 0.05, "kind": "sine", "gain": 0.4, "decay": 2.0},
+				{"freq": 2640.0, "dur": 0.3, "delay": 0.11, "kind": "sine", "gain": 0.22, "decay": 2.0},
+			], -8.0)
 
 ## Volume loading from save on demand.
 func apply_saved_volumes() -> void:

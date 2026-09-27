@@ -47,7 +47,10 @@ static func attach_glb(parent: Node, path: String, target_height: float, node_na
 		var s := target_height / h
 		inst.scale = Vector3.ONE * s
 		# Rest the rig's lowest point on the parent origin (feet on floor).
-		inst.position = Vector3(-aab.position.x * s, -aab.position.y * s, -aab.position.z * s)
+		# X/Z stay at the pivot: the skeleton's own axis IS the rotation
+		# center — centering by mesh AABB would include weapons/capes and
+		# make the body swing sideways whenever it turns.
+		inst.position = Vector3(0, -aab.position.y * s, 0)
 	return inst
 
 

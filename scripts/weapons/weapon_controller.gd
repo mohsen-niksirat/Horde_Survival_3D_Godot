@@ -165,13 +165,26 @@ func _muzzle_flash(player: Node3D, dir: Vector3, weapon_id: String) -> void:
 func _play_fire_sfx(weapon_id: String) -> void:
 	match weapon_id:
 		"fireball", "hellfire":
-			AudioManager.play_tone("shoot_fireball", 170.0, 0.1, "saw", -8.0)
+			AudioManager.play_recipe("shoot_fireball", [
+				{"freq": 260.0, "glide": 0.28, "dur": 0.2, "kind": "saw", "gain": 1.0},
+				{"freq": 0.0, "glide": 1.0, "dur": 0.08, "kind": "noise", "gain": 0.45},
+			], -6.0)
 		"magic_missile", "holy_bible":
-			AudioManager.play_tone("shoot_missile", 880.0, 0.07, "sine", -12.0)
-		"divine_spear":
-			AudioManager.play_tone("shoot_spear", 480.0, 0.12, "square", -10.0)
-		"lightning":
-			AudioManager.play_tone("shoot_lightning", 100.0, 0.14, "noise", -6.0)
+			AudioManager.play_recipe("shoot_missile", [
+				{"freq": 1400.0, "glide": 0.22, "dur": 0.11, "kind": "sine", "gain": 0.9},
+				{"freq": 2800.0, "glide": 0.3, "dur": 0.05, "kind": "sine", "gain": 0.25},
+			], -10.0)
+		"divine_spear", "judgment":
+			AudioManager.play_recipe("shoot_spear", [
+				{"freq": 950.0, "glide": 0.12, "dur": 0.07, "kind": "square", "gain": 0.8},
+				{"freq": 0.0, "glide": 1.0, "dur": 0.03, "kind": "noise", "gain": 0.6},
+			], -8.0)
+		"lightning", "thunderstorm":
+			AudioManager.play_recipe("shoot_lightning", [
+				{"freq": 0.0, "glide": 1.0, "dur": 0.17, "kind": "noise", "gain": 0.75},
+				{"freq": 95.0, "glide": 0.45, "dur": 0.24, "kind": "sine", "gain": 0.95, "decay": 2.4},
+				{"freq": 700.0, "glide": 0.3, "dur": 0.09, "kind": "zap", "gain": 0.5},
+			], -5.0)
 		_:
 			AudioManager.play_game_sfx("weapon_fire")
 
