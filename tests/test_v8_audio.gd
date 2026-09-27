@@ -32,6 +32,27 @@ func _initialize() -> void:
 	await process_frame
 	_check(music._current == 0, "back to calm on PLAYING")
 
+	# --- V8 FIX: music respects master_volume via Master bus ---
+	var audio: Node = root.get_node("AudioManager")
+	# All music players must route through Master bus
+	for key in music._players:
+		var p: AudioStreamPlayer = music._players[key]
+		_check(p.bus == "Master", "music layer %s on Master bus" % str(key))
+	# Setting master_volume=0 must mute everything
+	audio.set_volumes(0.0, 0.5, 0.5)
+	await process_frame
+	var muted_db := linear_to_db(clampf(0.0 * 0.5, 0.001, 1.0))
+	for key in music._players:
+		var p: AudioStreamPlayer = music._players[key]
+		if not p.playing:
+			continue
+		_check(p.volume_db <= -70.0, "music layer %s muted at master=0" % str(key))
+	# Restore volumes
+	audio.set_volumes(1.0, 0.7, 0.8)
+
+	# --- V8 FIX: notes are not sub-bass (no muddy drone) ---
+	_check(music.CALM_NOTES.min() >= 110.0, "calm notes start at A2+ (no 55Hz drone)")
+
 	if failures == 0:
 		print("V8_AUDIO_PASS")
 	else:

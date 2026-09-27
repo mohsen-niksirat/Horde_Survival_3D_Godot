@@ -12,11 +12,12 @@ const LAYER_FADE := 1.5
 var _players: Dictionary = {}   # Intensity -> AudioStreamPlayer
 var _current: int = -1
 var _built: bool = false
+var _bus: String = "Master"  # Connected to AudioManager's volume bus
 
 ## Layer frequencies (dark-synth pads, A-minor family)
-const CALM_NOTES := [110.0, 164.81, 220.0]
-const TENSE_NOTES := [110.0, 146.83, 174.61, 220.0]
-const BOSS_NOTES := [82.41, 110.0, 155.56, 207.65]
+const CALM_NOTES := [220.0, 330.0, 440.0]
+const TENSE_NOTES := [220.0, 293.66, 349.23, 440.0]
+const BOSS_NOTES := [164.81, 220.0, 311.11, 415.30]
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -54,6 +55,7 @@ func _make_layer(cache_id: String, notes: Array, gain: float) -> AudioStreamPlay
 	stream.loop_begin = 0
 	stream.loop_end = loop_len
 	var p := AudioStreamPlayer.new()
+	p.bus = _bus  # Route through AudioManager's volume bus
 	p.stream = stream
 	p.volume_db = -60.0
 	add_child(p)
@@ -66,9 +68,14 @@ func set_intensity(state: int) -> void:
 	_current = state
 	for key in _players:
 		var p: AudioStreamPlayer = _players[key]
-		var target_db := -60.0
+		var target_db := -80.0  # effectively silent
 		if key == state:
-			target_db = linear_to_db(1.0)
+			# Use AudioManager's music volume as the ceiling
+			var audio_mgr: Node = get_node("/root/AudioManager")
+			if audio_mgr != null and audio_mgr.has_method("get_music_db"):
+				target_db = audio_mgr.get_music_db()
+			else:
+				target_db = linear_to_db(1.0)
 		var tween := create_tween()
 		tween.tween_property(p, "volume_db", target_db, LAYER_FADE)
 		if key == state and not p.playing:
@@ -77,5 +84,7 @@ func set_intensity(state: int) -> void:
 
 func stop_music() -> void:
 	for key in _players:
-		_players[key].stop()
+		var p: AudioStreamPlayer = _players[key]
+		if p.playing:
+			p.stop()
 	_current = -1

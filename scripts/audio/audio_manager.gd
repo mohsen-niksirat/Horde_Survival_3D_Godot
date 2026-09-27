@@ -283,6 +283,10 @@ func _apply_volumes() -> void:
 	for p in _sfx_players:
 		p.volume_db = sfx_db
 
+## Query function: MusicDirector uses this to cross-fade to the right ceiling.
+func get_music_db() -> float:
+	return linear_to_db(clampf(music_volume * master_volume, 0.001, 1.0))
+
 ## Under stress or low quality, reduce SFX pool size and shorten gate thresholds.
 func _on_performance_tier_changed(tier: int) -> void:
 	var pm: Node = PerformanceManager
