@@ -2,6 +2,7 @@ extends Node3D
 ## Arena environment: spawn helpers + decor + optional Kenney skybox (Medium+).
 
 const DECOR_SCRIPT := preload("res://scenes/world/arena_decor.gd")
+const DUNGEON_SCRIPT := preload("res://scenes/world/arena_dungeon.gd")
 const HALF_SIZE := 60.0
 const SPAWN_RING_MIN := 22.0
 const SPAWN_RING_MAX := 30.0
@@ -13,6 +14,10 @@ func _ready() -> void:
 	decor.name = "ArenaDecor"
 	decor.set_script(DECOR_SCRIPT)
 	add_child(decor)
+	var dungeon := Node3D.new()
+	dungeon.name = "ArenaDungeon"
+	dungeon.set_script(DUNGEON_SCRIPT)
+	add_child(dungeon)
 	_apply_skybox()
 	if PerformanceManager != null:
 		if not PerformanceManager.quality_changed.is_connected(_on_quality_changed):

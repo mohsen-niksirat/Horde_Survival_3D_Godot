@@ -14,6 +14,15 @@ var _settled: bool = false
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	# Potion bottle drop instead of the sphere-trio heart.
+	if _mesh.get_child_count() == 3:
+		var rig := RigUtil.attach_glb(_mesh, "res://assets/models/weapons/potion.glb", 0.6, "PotionRig")
+		if rig != null:
+			_mesh.mesh = null
+			for cname in ["LobeL", "LobeR", "Tip"]:
+				var lobe := _mesh.get_node_or_null(cname)
+				if lobe != null:
+					lobe.visible = false
 
 func setup(heal: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	heal_amount = heal

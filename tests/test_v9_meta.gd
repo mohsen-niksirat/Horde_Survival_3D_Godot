@@ -25,7 +25,7 @@ func _initialize() -> void:
 	var stats := StatBlock.new({"max_hp": 100.0})
 	var hp0: float = stats.get_stat("max_hp")
 	shop.apply_to(stats)
-	_check(absf(stats.get_stat("max_hp") - (hp0 * 1.05)) < 0.01, "meta upgrade +5% max_hp (%.1f)" % stats.get_stat("max_hp"))
+	_check(absf(stats.get_stat("max_hp") - (hp0 * 1.05)) < 0.01, "meta upgrade +5%% max_hp (%.1f)" % stats.get_stat("max_hp"))
 
 	# --- Save round-trip ---
 	save.save_game()

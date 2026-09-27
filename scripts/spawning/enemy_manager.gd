@@ -26,9 +26,11 @@ var _grid: Dictionary = {}  # Vector2i -> Array[Node]
 var _grid_dirty: bool = true
 var _grid_time_ms: int = -100000
 
-func queue_spawn(data: EnemyData, position: Vector3, player: Node3D, hp_scale: float, dmg_scale: float, spd_scale: float, elite: Array = []) -> void:
+## Queue a spawn. Returns false when the hitch-guard queue is full, so
+## callers (dev tools, burst spawners) can retry on a later frame.
+func queue_spawn(data: EnemyData, position: Vector3, player: Node3D, hp_scale: float, dmg_scale: float, spd_scale: float, elite: Array = []) -> bool:
 	if _spawn_queue.size() >= MAX_SPAWN_QUEUE:
-		return
+		return false
 	_spawn_queue.append({
 		"data": data,
 		"position": position,
@@ -38,6 +40,7 @@ func queue_spawn(data: EnemyData, position: Vector3, player: Node3D, hp_scale: f
 		"spd": spd_scale,
 		"elite": elite,
 	})
+	return true
 
 func _ready() -> void:
 	add_to_group("enemy_manager")

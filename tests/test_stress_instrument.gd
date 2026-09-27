@@ -8,14 +8,19 @@ func _initialize() -> void:
 	var stress_ps: PackedScene = load("res://tests/StressScene.tscn")
 	var stress := stress_ps.instantiate()
 	root.add_child(stress)
-	for i in range(20):
+	# Spawn budget drains ~8 enemies/frame — wait until the feed finishes
+	# (or the frame budget runs out) instead of a fixed 20-frame window.
+	for i in range(240):
 		await process_frame
 		await physics_frame
+		if stress.get("_fed") == 250 and stress.get("_em").enemy_count() >= 240:
+			break
 
 	var em: Node = stress.get_node("EnemyManager")
 	_check(em.enemy_count() >= 240, "stress scene spawned 240+ enemies (%d)" % em.enemy_count())
 	var perf: Node = root.get_node("PerformanceManager")
-	_check(perf.quality == 2, "quality forced HIGH")
+	# Quality.ULTRA == 4 (scene forces it so caps don't interfere)
+	_check(perf.quality == 4, "quality forced ULTRA (%d)" % perf.quality)
 
 	# Let systems tick for profiling data accumulation
 	for i in range(30):

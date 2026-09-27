@@ -1,5 +1,6 @@
 extends SceneTree
-## Phase 3A: Kenney GLB assets exist, hero loads, enemies use GLB on Low+.
+## Phase 3A (+G-series upgrade): KayKit/Kenney GLB assets exist, hero loads
+## a rig, enemies use GLB/rig models at EVERY quality tier.
 
 var failures := 0
 
@@ -13,6 +14,17 @@ func _initialize() -> void:
 		"res://assets/models/enemies/enemy_golem.glb",
 		"res://assets/models/weapons/shield-round.glb",
 		"res://assets/models/env/skybox-day.png",
+		"res://assets/models/kaykit/heroes/adventurer_mage.glb",
+		"res://assets/models/kaykit/heroes/adventurer_knight.glb",
+		"res://assets/models/kaykit/heroes/adventurer_rogue.glb",
+		"res://assets/models/kaykit/monsters/skeleton_minion.glb",
+		"res://assets/models/kaykit/monsters/skeleton_warrior.glb",
+		"res://assets/models/kaykit/monsters/skeleton_mage.glb",
+		"res://assets/models/kaykit/monsters/barbarian.glb",
+		"res://assets/models/kaykit/env/floor_tile_large.glb",
+		"res://assets/models/kaykit/env/wall.glb",
+		"res://assets/models/kaykit/env/torch_lit.glb",
+		"res://assets/models/kaykit/env/chest.glb",
 	]:
 		_check(ResourceLoader.exists(p) or FileAccess.file_exists(p), "asset exists: %s" % p)
 
@@ -38,10 +50,14 @@ func _initialize() -> void:
 			await process_frame
 		_check(hero.use_external(), "hero loaded external GLB")
 		if hero.use_external():
-			var ext = player.get_node_or_null("Mesh/KenneyHero")
+			var ext = player.get_node_or_null("Mesh/HeroRig")
+			if ext == null:
+				ext = player.get_node_or_null("Mesh/KenneyHero")
+			if ext == null and hero.get_parent() != null:
+				ext = hero.get_parent().get_node_or_null("HeroRig")
 			if ext == null and hero.get_parent() != null:
 				ext = hero.get_parent().get_node_or_null("KenneyHero")
-			_check(ext != null, "KenneyHero child present")
+			_check(ext != null, "hero GLB child present (rig or Kenney)")
 
 	# Enemy GLB path
 	var em: Node = main.get_node("EnemyManager")
@@ -75,7 +91,7 @@ func _initialize() -> void:
 	else:
 		_check(false, "enemy spawned for GLB check")
 
-	# Very Low falls back to primitives
+	# Real models at Very Low too (G5 policy: primitives only if loads fail)
 	perf.set_quality(perf.Quality.VERY_LOW, false)
 	em.clear_all()
 	em.queue_spawn(drone, player.global_position + Vector3(4, 0, 0), player, 1.0, 1.0, 1.0)
@@ -86,14 +102,11 @@ func _initialize() -> void:
 		var e2 = em.get_all_enemies()[0]
 		var visual2 = e2.get_node_or_null("Visual")
 		var has_ext2 := false
-		var has_prim := false
 		if visual2 != null:
 			for c in visual2.get_children():
 				if c.name == "External":
 					has_ext2 = true
-				if c is MeshInstance3D:
-					has_prim = true
-		_check(not has_ext2 or has_prim, "Very Low prefers primitives (ext=%s prim=%s)" % [has_ext2, has_prim])
+		_check(has_ext2, "Very Low still uses real models")
 
 	# Arena is the World instance under Main
 	var arena: Node3D = main.get_node("World")

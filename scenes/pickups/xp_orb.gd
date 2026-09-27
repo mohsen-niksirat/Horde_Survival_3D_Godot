@@ -29,6 +29,13 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	if EventBus != null and not EventBus.magnet_pulse.is_connected(_on_magnet_pulse):
 		EventBus.magnet_pulse.connect(_on_magnet_pulse)
+	# Real crystal shard instead of a green prism (mesh cleared, node kept
+	# so any parent-node transforms still behave the same).
+	var m := get_node_or_null("Mesh") as MeshInstance3D
+	if m != null and m.get_child_count() == 0:
+		var rig := RigUtil.attach_glb(m, "res://assets/models/xp_shard.glb", 0.45, "ShardRig")
+		if rig != null:
+			m.mesh = null
 
 func setup(p_value: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	value = p_value

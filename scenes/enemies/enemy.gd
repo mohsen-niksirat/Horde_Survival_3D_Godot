@@ -228,7 +228,7 @@ func _physics_process(delta: float) -> void:
 	if dist < 32.0:
 		PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
 	if dist < 28.0:
-		EnemyVisuals.animate(_mesh, data.id, Time.get_ticks_msec() / 1000.0, _wobble_seed)
+		EnemyVisuals.animate(_mesh, data.id, Time.get_ticks_msec() / 1000.0, _wobble_seed, Vector2(velocity.x, velocity.z).length())
 
 ## Ghost phasing: periodically untargetable.
 func _is_phasing() -> bool:
@@ -248,7 +248,7 @@ func _fire_volley() -> void:
 	PoolManager.tag(proj, "res://scenes/weapons/BossProjectile.tscn")
 	# Attach under the Projectiles container when available for tidy stats
 	var container: Node = get_parent()
-	var proj_container: Node3D = container.get_node_or_null("Projectiles")
+	var proj_container: Node3D = get_tree().get_first_node_in_group("projectile_container")
 	if proj_container != null:
 		proj_container.add_child(proj)
 	else:

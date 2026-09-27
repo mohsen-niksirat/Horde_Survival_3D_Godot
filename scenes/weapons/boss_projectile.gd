@@ -41,5 +41,6 @@ func _on_body_entered(body: Node3D) -> void:
 
 func _deactivate() -> void:
 	_active = false
-	monitoring = false
+	# Deferred: _deactivate can run inside the body_entered physics callback
+	set_deferred("monitoring", false)
 	PoolManager.release(self)

@@ -30,35 +30,41 @@ func _initialize() -> void:
 		await physics_frame
 	_check(em.enemy_count() == 5, "5 archetypes spawned (%d)" % em.enemy_count())
 
-	# --- Distinct part counts per archetype ---
-	var counts := {}
+	# --- Distinct visual builds per archetype (GLB or primitive, quality-dependent) ---
+	var built := {}
 	for e in em.active_enemies:
 		var visual: Node3D = e.get_node("Visual")
-		counts[e.data.id] = visual.get_child_count()
-	_check(counts["basic_drone"] >= 6, "drone multi-part (%d)" % counts["basic_drone"])
-	_check(counts["fast_wisp"] >= 3, "wisp multi-part (%d)" % counts["fast_wisp"])
-	_check(counts["tank_golem"] >= 6, "golem multi-part (%d)" % counts["tank_golem"])
-	_check(counts["shooter_turret"] >= 5, "turret multi-part (%d)" % counts["shooter_turret"])
-	_check(counts["swarm_bat"] >= 4, "bat multi-part (%d)" % counts["swarm_bat"])
+		var key: String = visual.get_meta("built_for") if visual.has_meta("built_for") else ""
+		built[e.data.id] = key
+		var has_mesh: bool = not e._flash_materials.is_empty()
+		_check(has_mesh, "%s visual built (%s)" % [e.data.id, key])
+	_check(built.values().filter(func(k): return k.begins_with("fast_wisp|")).size() == 1, "wisp visual tagged (%s)" % built["fast_wisp"])
+	_check(built.values().filter(func(k): return k.begins_with("tank_golem|")).size() == 1, "golem visual tagged (%s)" % built["tank_golem"])
+	_check(built.values().filter(func(k): return k.begins_with("shooter_turret|")).size() == 1, "turret visual tagged (%s)" % built["shooter_turret"])
+	_check(built.values().filter(func(k): return k.begins_with("swarm_bat|")).size() == 1, "bat visual tagged (%s)" % built["swarm_bat"])
+	_check(built["basic_drone"] != built["tank_golem"], "archetypes build distinct models")
 
-	# --- Wing animation on bat ---
+	# --- Wing animation on bat (primitive fallback only) ---
 	var bat: CharacterBody3D = null
 	for e in em.active_enemies:
 		if e.data.id == "swarm_bat":
 			bat = e
-	var wing_l: Node3D = bat.get_node("Visual/WingL")
-	var rz0: float = wing_l.rotation.z
-	for i in range(10):
-		await physics_frame
-	var rz1: float = wing_l.rotation.z
-	_check(absf(rz1 - rz0) > 0.01, "bat wings flap (%.2f -> %.2f)" % [rz0, rz1])
+	var wing_l: Node3D = bat.get_node("Visual").get_node_or_null("WingL")
+	if wing_l != null:
+		var rz0: float = wing_l.rotation.z
+		for i in range(10):
+			await physics_frame
+		var rz1: float = wing_l.rotation.z
+		_check(absf(rz1 - rz0) > 0.01, "bat wings flap (%.2f -> %.2f)" % [rz0, rz1])
+	else:
+		print("SKIP: bat wings flap (GLB visual active)")
 
 	# --- Hit flash: material changes then restores ---
 	var drone_e: CharacterBody3D = null
 	for e in em.active_enemies:
 		if e.data.id == "basic_drone":
 			drone_e = e
-	var part_mat: StandardMaterial3D = drone_e.get_node("Visual").get_child(0).get_surface_override_material(0)
+	var part_mat: StandardMaterial3D = drone_e._flash_materials[0]
 	var base_col: Color = part_mat.get_meta("base_color")
 	drone_e.health.take_damage(DamageEvent.new(1.0, "test"))
 	_check(part_mat.albedo_color == Color(3, 3, 3), "hit flash white")
@@ -67,7 +73,6 @@ func _initialize() -> void:
 	_check(part_mat.albedo_color.is_equal_approx(base_col), "flash restores base color")
 
 	# --- Pool recycle with a DIFFERENT archetype rebuilds the model ---
-	var before_children: int = drone_e.get_node("Visual").get_child_count()
 	drone_e.health.take_damage(DamageEvent.new(9999.0, "test"))
 	await process_frame
 	await physics_frame
@@ -81,8 +86,9 @@ func _initialize() -> void:
 		if e == drone_e:
 			rebuilt = e
 	_check(rebuilt != null, "pooled instance re-spawned")
-	_check(rebuilt.data.id == "swarm_bat", "re-spawned as bat")
-	_check(rebuilt.get_node("Visual").get_child_count() >= 4, "bat model rebuilt on recycle")
+	_check(rebuilt != null and rebuilt.data.id == "swarm_bat", "re-spawned as bat")
+	var rb_visual: Node3D = rebuilt.get_node("Visual")
+	_check(rb_visual.get_meta("built_for").begins_with("swarm_bat|"), "bat model rebuilt on recycle")
 
 	if failures == 0:
 		print("V2_ENEMY_PASS")

@@ -15,16 +15,21 @@ func _initialize() -> void:
 	var decor: Node3D = main.get_node_or_null("World/ArenaDecor")
 	_check(decor != null, "decor layer exists")
 
-	_check(decor.get_node_or_null("Grass") != null and decor.get_node("Grass").get_child_count() >= 90, "grass tufts scattered (%d)" % (decor.get_node("Grass").get_child_count() if decor.get_node_or_null("Grass") else 0))
-	_check(decor.get_node_or_null("Trees") != null and decor.get_node("Trees").get_child_count() >= 14, "trees placed (%d)" % (decor.get_node("Trees").get_child_count() if decor.get_node_or_null("Trees") else 0))
+	# V12/Phase3: grass/trees/pillars are MultiMesh batches — count instances,
+	# not child nodes. Rocks stay per-mesh because they carry colliders.
+	_check(_instances_under(decor, "Grass") >= 90, "grass tufts scattered (%d)" % _instances_under(decor, "Grass"))
+	_check(_instances_under(decor, "Trees") >= 14, "trees placed (%d)" % _instances_under(decor, "Trees"))
 	_check(decor.get_node_or_null("Rocks") != null and decor.get_node("Rocks").get_child_count() >= 18, "rocks scattered (%d)" % (decor.get_node("Rocks").get_child_count() if decor.get_node_or_null("Rocks") else 0))
-	_check(decor.get_node_or_null("WallPillars") != null and decor.get_node("WallPillars").get_child_count() >= 40, "wall pillars + caps (%d)" % (decor.get_node("WallPillars").get_child_count() if decor.get_node_or_null("WallPillars") else 0))
+	_check(_instances_under(decor, "WallPillars") >= 40, "wall pillars + caps (%d)" % _instances_under(decor, "WallPillars"))
 
 	# --- Props keep combat space open: nothing decorative inside 6m of center ---
 	var too_close := 0
-	for tree in decor.get_node("Trees").get_children():
-		if tree.position.length() < 6.0:
-			too_close += 1
+	var trees: Node = decor.get_node("Trees")
+	for mmi in trees.get_children():
+		if mmi.has_meta("instance_origins"):
+			for o in mmi.get_meta("instance_origins"):
+				if (o as Vector3).length() < 6.0:
+					too_close += 1
 	_check(too_close == 0, "no trees near spawn beacon")
 
 	# --- Arena helpers intact ---
@@ -52,6 +57,18 @@ func _initialize() -> void:
 	else:
 		print("V4_ARENA_FAIL failures=", failures)
 	quit(0 if failures == 0 else 1)
+
+func _instances_under(decor: Node3D, group_name: String) -> int:
+	var node := decor.get_node_or_null(group_name)
+	if node == null:
+		return 0
+	var total := 0
+	for c in node.get_children():
+		if c is MultiMeshInstance3D and c.multimesh != null:
+			total += c.multimesh.instance_count
+		else:
+			total += 1
+	return total
 
 func _check(cond: bool, label: String) -> void:
 	if cond:

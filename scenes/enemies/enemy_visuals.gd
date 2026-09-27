@@ -1,8 +1,18 @@
 extends Node3D
-## Enemy visual builder — Kenney GLB meshes on Low+ quality, primitive
-## fallback on Very Low. Shared material cache for primitives.
+## Enemy visual builder — KayKit rigged skeletons/brutes for humanoids,
+## Kenney GLB props for the rest, primitive fallback only if loads fail.
 
 static var _mat_cache: Dictionary = {}
+
+## Humanoid archetypes get full rigged+animated KayKit models (CC0).
+const ENEMY_RIGS := {
+	"basic_drone": {"path": "res://assets/models/kaykit/monsters/skeleton_minion.glb", "height": 1.5},
+	"tank_golem": {"path": "res://assets/models/kaykit/monsters/skeleton_warrior.glb", "height": 2.2},
+	"shooter_turret": {"path": "res://assets/models/kaykit/monsters/skeleton_mage.glb", "height": 2.0},
+	"mage": {"path": "res://assets/models/kaykit/monsters/skeleton_mage.glb", "height": 1.9},
+	"splitter": {"path": "res://assets/models/kaykit/monsters/barbarian.glb", "height": 1.8},
+	"healer": {"path": "res://assets/models/kaykit/heroes/adventurer_rogue.glb", "height": 1.6},
+}
 
 const ENEMY_SCENES := {
 	"basic_drone": "res://assets/models/enemies/enemy_drone.glb",
@@ -31,17 +41,23 @@ const GLB_SCALES := {
 }
 
 static func prefer_glb() -> bool:
-	if PerformanceManager == null:
-		return true
-	return PerformanceManager.quality >= PerformanceManager.Quality.LOW
+	# Real models at every quality tier now — primitives remain only as a
+	# last-resort fallback when a GLB fails to load.
+	return true
 
 static func build(visual_root: Node3D, archetype_id: String) -> void:
-	var mode := "glb" if prefer_glb() else "prim"
+	var mode := "prim"
+	if ENEMY_RIGS.has(archetype_id) and ResourceLoader.exists(ENEMY_RIGS[archetype_id]["path"]):
+		mode = "rig"
+	elif ENEMY_SCENES.has(archetype_id) and ResourceLoader.exists(ENEMY_SCENES[archetype_id]):
+		mode = "glb"
 	var key := archetype_id + "|" + mode
 	if visual_root.has_meta("built_for") and visual_root.get_meta("built_for") == key:
 		return
 	_clear_parts(visual_root)
 	visual_root.set_meta("built_for", key)
+	if mode == "rig" and _try_rig(visual_root, archetype_id):
+		return
 	if mode == "glb" and _try_glb(visual_root, archetype_id):
 		return
 	match archetype_id:
@@ -56,6 +72,16 @@ static func build(visual_root: Node3D, archetype_id: String) -> void:
 		"mage": _build_mage(visual_root)
 		"swarm_bat_mini": _build_bat(visual_root)
 		_: _build_drone(visual_root)
+
+static func _try_rig(visual_root: Node3D, archetype_id: String) -> bool:
+	var spec: Dictionary = ENEMY_RIGS.get(archetype_id, {})
+	if spec.is_empty():
+		return false
+	var rig := RigUtil.attach_glb(visual_root, spec["path"], float(spec["height"]), "External")
+	if rig == null:
+		return false
+	rig.rotation.y = RigUtil.RIG_YAW
+	return true
 
 static func _try_glb(visual_root: Node3D, archetype_id: String) -> bool:
 	var path: String = ENEMY_SCENES.get(archetype_id, ENEMY_SCENES["basic_drone"])
@@ -78,6 +104,8 @@ static func clear(visual_root: Node3D) -> void:
 	_clear_parts(visual_root)
 
 static func _clear_parts(visual_root: Node3D) -> void:
+	if visual_root.has_meta("rig_ap"):
+		visual_root.remove_meta("rig_ap")
 	for child in visual_root.get_children():
 		child.queue_free()
 
@@ -210,7 +238,11 @@ static func _sphere(v: Node3D, mat: StandardMaterial3D, radius: float, pos: Vect
 	s.height = radius * 2.0
 	_mesh(v, s, mat, pos)
 
-static func animate(visual_root: Node3D, archetype_id: String, time: float, seed_val: float) -> void:
+static func animate(visual_root: Node3D, archetype_id: String, time: float, seed_val: float, move_speed: float = 0.0) -> void:
+	# Rigged KayKit models drive locomotion through their own AnimationPlayer.
+	if visual_root.has_meta("rig_ap") or RigUtil.animation_player(visual_root) != null:
+		RigUtil.play_locomotion(visual_root, move_speed)
+		return
 	match archetype_id:
 		"swarm_bat", "swarm_bat_mini":
 			var wl := visual_root.get_node_or_null("WingL")

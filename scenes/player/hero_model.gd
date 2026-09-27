@@ -1,12 +1,19 @@
 extends Node3D
-## Hero visual: Kenney Mini Characters GLB (CC0) when available, otherwise
-## the primitive hooded-mage fallback. Procedural idle/run bob + staff orb.
+## Hero visual: KayKit rigged adventurer GLBs (CC0, animated) when
+## available, Kenney mini heroes as secondary fallback, then the primitive
+## hooded-mage builder. Procedural idle/run bob only when no rig animates.
 
+const HERO_RIGS := {
+	"mage": "res://assets/models/kaykit/heroes/adventurer_mage.glb",
+	"paladin": "res://assets/models/kaykit/heroes/adventurer_knight.glb",
+	"rogue": "res://assets/models/kaykit/heroes/adventurer_rogue.glb",
+}
 const HERO_SCENES := {
 	"mage": "res://assets/models/heroes/hero_mage.glb",
 	"paladin": "res://assets/models/heroes/hero_paladin.glb",
 	"rogue": "res://assets/models/heroes/hero_rogue.glb",
 }
+const RIG_HEIGHT := 1.75
 
 @onready var root: Node3D = $"../Root"
 @onready var robe: MeshInstance3D = $"../Root/Robe"
@@ -21,6 +28,7 @@ var _bob_time: float = 0.0
 var _move_speed: float = 0.0
 var _external: Node3D = null
 var _external_base_y: float = 0.0
+var _rig := false
 
 func _ready() -> void:
 	# Parent Player may still be setting up children — defer the GLB attach
@@ -38,6 +46,23 @@ func _try_load_external_hero() -> void:
 	if use_external():
 		return
 	var id := _character_id()
+	var mesh_parent: Node3D = get_parent()
+	if mesh_parent == null:
+		return
+	# 1) KayKit rigged adventurer (animated idle/walk/run)
+	var rig_path: String = HERO_RIGS.get(id, "")
+	if rig_path != "" and ResourceLoader.exists(rig_path):
+		var rig := RigUtil.attach_glb(mesh_parent, rig_path, RIG_HEIGHT, "HeroRig")
+		if rig != null:
+			rig.rotation.y = RigUtil.RIG_YAW
+			_external = rig
+			_external_base_y = rig.position.y
+			_rig = true
+			if root != null and is_instance_valid(root):
+				root.visible = false
+			_apply_tint(id, rig)
+			return
+	# 2) Kenney mini character
 	var path: String = HERO_SCENES.get(id, HERO_SCENES["mage"])
 	if not ResourceLoader.exists(path):
 		return
@@ -48,9 +73,6 @@ func _try_load_external_hero() -> void:
 	if inst == null:
 		return
 	inst.name = "KenneyHero"
-	var mesh_parent: Node3D = get_parent()
-	if mesh_parent == null:
-		return
 	mesh_parent.add_child(inst)
 	_external = inst
 	_external_base_y = inst.position.y
@@ -92,6 +114,10 @@ func set_character_tint(character_id: String) -> void:
 func animate(delta: float, speed: float) -> void:
 	_move_speed = speed
 	if use_external():
+		if _rig:
+			# Rigged heroes animate through their own AnimationPlayer.
+			RigUtil.play_locomotion(_external, speed)
+			return
 		_animate_external(delta, speed)
 		return
 	if root == null or staff == null or orb == null:

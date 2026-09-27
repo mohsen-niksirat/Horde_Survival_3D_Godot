@@ -41,12 +41,18 @@ func _make_mmi(mesh: Mesh, mat: StandardMaterial3D, transforms: Array, parent: N
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.mesh = mesh
 	mm.instance_count = transforms.size()
+	var origins := PackedVector3Array()
 	for i in range(transforms.size()):
 		mm.set_instance_transform(i, transforms[i])
+		origins.append(transforms[i].origin)
 	var mmi := MultiMeshInstance3D.new()
 	mmi.name = n
 	mmi.multimesh = mm
-	mmi.material_override = mat
+	if mat != null:
+		mmi.material_override = mat
+	# MultiMesh is write-only at runtime (CPU data dropped after upload);
+	# keep origins as meta so layout invariants stay testable.
+	mmi.set_meta("instance_origins", origins)
 	parent.add_child(mmi)
 	return mmi
 
@@ -76,6 +82,16 @@ func _build_trees() -> void:
 	var parent := Node3D.new()
 	parent.name = "Trees"
 	add_child(parent)
+	var real: Dictionary = RigUtil.extract_mesh("res://assets/models/env/tree.glb")
+	if real["mesh"] != null:
+		var tscale := 4.0 / maxf(float(real["height"]), 0.1)
+		var tr: Array = []
+		for i in range(TREE_COUNT):
+			var base := _random_ring_pos(38.0, 56.0)
+			var rot := randf() * TAU
+			tr.append(_xform(base, rot, 0.0, Vector3.ONE * (tscale * randf_range(0.85, 1.15))))
+		_make_mmi(real["mesh"], null, tr, parent, "TreeRigs")
+		return
 	var trunk := CylinderMesh.new()
 	trunk.top_radius = 0.18
 	trunk.bottom_radius = 0.26
@@ -103,17 +119,23 @@ func _build_rocks() -> void:
 	var parent := Node3D.new()
 	parent.name = "Rocks"
 	add_child(parent)
+	var real: Dictionary = RigUtil.extract_mesh("res://assets/models/env/rock-large.glb")
 	var rock := SphereMesh.new()
 	rock.radius = 0.7
 	rock.height = 1.0
 	# Rocks need colliders — keep a few MeshInstance bodies, not MultiMesh
 	for i in range(EXTRA_ROCKS):
 		var rock_mi := MeshInstance3D.new()
-		rock_mi.mesh = rock
-		rock_mi.material_override = _baked_mat(STONE_COLOR.darkened(randf_range(0.0, 0.25)))
-		rock_mi.position = _random_ring_pos(14.0, 57.0) + Vector3(0, 0.3, 0)
+		if real["mesh"] != null:
+			rock_mi.mesh = real["mesh"]
+			var rs := 1.4 / maxf(float(real["height"]), 0.1)
+			rock_mi.scale = Vector3.ONE * rs
+			rock_mi.position = _random_ring_pos(14.0, 57.0) + Vector3(0, 0.1, 0)
+		else:
+			rock_mi.mesh = rock
+			rock_mi.material_override = _baked_mat(STONE_COLOR.darkened(randf_range(0.0, 0.25)))
+			rock_mi.position = _random_ring_pos(14.0, 57.0) + Vector3(0, 0.3, 0)
 		rock_mi.rotation.y = randf() * TAU
-		rock_mi.scale = Vector3(randf_range(0.9, 1.5), randf_range(0.6, 1.0), randf_range(0.9, 1.5))
 		parent.add_child(rock_mi)
 		var body := StaticBody3D.new()
 		var shape := CollisionShape3D.new()

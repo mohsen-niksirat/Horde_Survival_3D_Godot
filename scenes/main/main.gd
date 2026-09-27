@@ -66,8 +66,29 @@ func _ready() -> void:
 	projectile_root = Node3D.new()
 	projectile_root.name = "Projectiles"
 	projectile_root.process_mode = Node.PROCESS_MODE_PAUSABLE
+	projectile_root.add_to_group("projectile_container")
 	add_child(projectile_root)
 	player.bind_combat(enemy_manager, projectile_root)
+	_request_rig_preload()
+
+## Kick off threaded GLB loads so the first enemy/hero spawn doesn't pay
+## the full parse cost in one hitchy frame.
+func _request_rig_preload() -> void:
+	var rig_paths := [
+		"res://assets/models/kaykit/heroes/adventurer_mage.glb",
+		"res://assets/models/kaykit/heroes/adventurer_knight.glb",
+		"res://assets/models/kaykit/heroes/adventurer_rogue.glb",
+		"res://assets/models/kaykit/monsters/skeleton_minion.glb",
+		"res://assets/models/kaykit/monsters/skeleton_warrior.glb",
+		"res://assets/models/kaykit/monsters/skeleton_mage.glb",
+		"res://assets/models/kaykit/monsters/barbarian.glb",
+		"res://assets/models/kaykit/env/floor_tile_large.glb",
+		"res://assets/models/kaykit/env/wall.glb",
+		"res://assets/models/xp_shard.glb",
+	]
+	for p in rig_paths:
+		if ResourceLoader.exists(p):
+			ResourceLoader.load_threaded_request(p, "PackedScene", true)
 
 	# Horde spawning
 	wave_manager = Node.new()

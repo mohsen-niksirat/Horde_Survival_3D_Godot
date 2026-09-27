@@ -13,6 +13,9 @@ const GRAVITY := 25.0
 const SLAM_TELEGRAPH := 1.1
 const SLAM_RADIUS := 5.0
 
+const BOSS_RIG := "res://assets/models/kaykit/monsters/skeleton_warrior.glb"
+const BOSS_HEIGHT := 5.6
+
 @onready var health: Node = $HealthComponent
 @onready var mesh: MeshInstance3D = $Mesh
 
@@ -21,6 +24,7 @@ var enemy_manager: Node
 var arena: Node3D
 var phase: int = BossPhase.ONE
 var alive: bool = true
+var _rig: Node3D = null
 
 var _slam_timer: float = 4.0
 var _fan_timer: float = 5.0
@@ -35,6 +39,38 @@ func _ready() -> void:
 	health.died.connect(_on_died)
 	_telegraph = $Telegraph
 	_telegraph.visible = false
+	_attach_rig()
+
+## Swap the primitive sphere stack for a giant animated skeleton.
+func _attach_rig() -> void:
+	if not ResourceLoader.exists(BOSS_RIG):
+		return
+	_rig = RigUtil.attach_glb(self, BOSS_RIG, BOSS_HEIGHT, "BossRig")
+	if _rig == null:
+		return
+	_rig.rotation.y = RigUtil.RIG_YAW
+	mesh.visible = false
+	for c in mesh.get_children():
+		c.visible = false
+	_apply_phase_tint()
+
+func _apply_phase_tint() -> void:
+	if _rig == null:
+		return
+	var tint := Color(0.75, 0.7, 0.85)
+	match phase:
+		BossPhase.TWO: tint = Color(0.55, 0.8, 1.0)
+		BossPhase.ENRAGE: tint = Color(1.0, 0.35, 0.2)
+	for mi in _rig.find_children("*", "MeshInstance3D", true, false):
+		var active = mi.get_active_material(0)
+		if active is StandardMaterial3D:
+			var m: StandardMaterial3D = (active as StandardMaterial3D).duplicate()
+			m.albedo_color = m.albedo_color * tint
+			if phase == BossPhase.ENRAGE:
+				m.emission_enabled = true
+				m.emission = Color(1.0, 0.25, 0.1)
+				m.emission_energy_multiplier = 0.6
+			mi.set_surface_override_material(0, m)
 
 func setup(p_player: Node3D, p_enemy_manager: Node, p_arena: Node3D, level_scale: float) -> void:
 	player = p_player
@@ -84,15 +120,19 @@ func _physics_process(delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, atan2(dir.x, dir.z), 6.0 * delta)
 		move_and_slide()
 
+	if _rig != null:
+		RigUtil.play_locomotion(_rig, Vector2(velocity.x, velocity.z).length())
 	_tick_attacks(delta, dist)
 
 func _update_phase() -> void:
 	var ratio: float = health.get_ratio()
 	if ratio < 0.3 and phase != BossPhase.ENRAGE:
 		phase = BossPhase.ENRAGE
+		_apply_phase_tint()
 		EventBus.boss_spawned.emit(self)  # reuse as intensity signal
 	elif ratio < 0.6 and phase == BossPhase.ONE:
 		phase = BossPhase.TWO
+		_apply_phase_tint()
 
 func _tick_attacks(delta: float, dist: float) -> void:
 	# Ground slam (all phases, faster in enrage)
@@ -148,7 +188,10 @@ func _fire_fan() -> void:
 func _spawn_boss_projectile(dir: Vector3) -> void:
 	var proj := PoolManager.acquire("res://scenes/weapons/BossProjectile.tscn")
 	PoolManager.tag(proj, "res://scenes/weapons/BossProjectile.tscn")
-	get_parent().add_child(proj)
+	var container: Node = get_tree().get_first_node_in_group("projectile_container")
+	if container == null:
+		container = get_parent()
+	container.add_child(proj)
 	proj.setup(global_position + Vector3(0, 1.5, 0), dir, 14.0, player)
 
 func _summon_minions() -> void:

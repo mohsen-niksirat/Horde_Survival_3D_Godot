@@ -10,6 +10,9 @@ personal and commercial use. Credit is optional but appreciated.
 | [Fantasy Town Kit](https://kenney.nl/assets/fantasy-town-kit) | Kenney | CC0 | Trees, rocks, wall pieces for arena decor |
 | [Skyboxes](https://kenney.nl/assets/skyboxes) | Kenney | CC0 | Day/night panorama sky (`assets/models/env/skybox-*.png`) |
 | [Board Game Icons](https://kenney.nl/assets/board-game-icons) | Kenney | CC0 | Optional UI icons (reserved) |
+| [Character Pack: Adventures](https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0) | Kay Lousberg (KayKit) | CC0 | Rigged+animated heroes (Mage/Knight/Rogue) + brute & rogue enemy models (`assets/models/kaykit/heroes`, `monsters`) |
+| [Character Pack: Skeletons](https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0) | Kay Lousberg (KayKit) | CC0 | Rigged+animated skeleton horde (minion/warrior/mage) + giant boss (`assets/models/kaykit/monsters`) |
+| [Dungeon Remastered](https://github.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0) | Kay Lousberg (KayKit) | CC0 | Arena floor tiles, perimeter walls, pillars, torches, banners, treasure props (`assets/models/kaykit/env`) |
 
 Source ZIPs under `assets/models/external/` are **not** committed (large);
 only curated GLB/PNG copies used by the game are in git.

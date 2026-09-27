@@ -103,14 +103,25 @@ on Very Low; Medium+ looks like a place.
 
 Never add per-enemy unique materials; use kit atlas materials + unique copies only for elite/flash.
 
-## Order after this sheet is approved in-session
+## Next phase after magnet/load/fullscreen (user request)
 
-1. Pointer-lock fix + tests + push (done in this turn if green)
-2. 3A Hero GLB integration
-3. 3B Enemies
-4. 3C Weapons
-5. 3D Environment + sky
-6. 3E Credits/polish + Pages playtest
+### 3D — Arena environment MultiMesh (next ship)
+1. MultiMesh Kenney `tree*.glb` / `rock*.glb` in `arena_decor.gd` on Medium+
+2. Very Low/Low keep current cheap primitives
+3. Optional wall pieces from `assets/models/env/wall*.glb`
+4. Measure draw calls vs Phase 2 MultiMesh baseline
+5. Test: `test_phase2_perf` + new decor count assert
+
+### 3E — Polish after 3D
+- Character select uses hero GLB preview colors
+- Achievement icons from Kenney Board Game Icons
+- Endless balance soak on Pages with FPS HUD
+
+### Already done this session (2.7)
+- Magnet horseshoe look + soft 5s XP pull
+- Fullscreen F11/Alt+Enter + HUD FS button
+- First-load: smaller prewarms, export exclude external ZIPs
+
 
 ## Browser note (pointer lock)
 

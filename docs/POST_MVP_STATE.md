@@ -1,18 +1,18 @@
-# POST_MVP_STATE — authoritative post-V13 reconciliation
+﻿# POST_MVP_STATE â€” authoritative post-V13 reconciliation
 
-> Per prompt 5 §1. Code wins over any older document. Audit date: this commit.
+> Per prompt 5 Â§1. Code wins over any older document. Audit date: this commit.
 
 ## 1. Exact current HEAD
-`dcf183e` — polish(V15A): imposing boss model + phase8 test root-cause fix
+`dcf183e` â€” polish(V15A): imposing boss model + phase8 test root-cause fix
 
 ## 2. Actually implemented (code-verified)
 - Core: third-person controller (pointer-locked desktop look, wheel zoom,
   pitch clamp), CoD-style mobile controls (left floating joystick, right
-  look, zoom +/− buttons, touch rings indicator), pause (Esc/P/II button,
+  look, zoom +/âˆ’ buttons, touch rings indicator), pause (Esc/P/II button,
   Resume/Restart/Menu), 90s contextual onboarding hints (V14)
 - Combat: 5 weapons + 5 evolutions, unified DamageEvent pipeline (crit/
   armor/status), 3 weapon synergies (Firestorm/Storm Caller/Iron Tempest),
-  burn×lightning detonation (+50%), multi-shot spreads to N nearest
+  burnÃ—lightning detonation (+50%), multi-shot spreads to N nearest
   DISTINCT targets, muzzle flashes + per-weapon SFX, damage-number
   billboards, kill bursts, level-up ring
 - Enemies: 9 archetypes (drone/wisp/golem[rounded]/turret/bat/ghost/
@@ -24,9 +24,9 @@
   2 abilities (desktop keys + mobile buttons both execute), combo,
   10 achievements, heart pickups (magnet within 6 m, 5% drop, heal 25)
 - Meta: gold from every kill + HUD counter, permanent upgrade shop
-  (6 stats × 20 lvls, idempotent StatBlock keys), Endless checkbox,
-  3 characters (Mage balanced / Paladin +30%HP −10%spd / Rogue +20%spd
-  −20%HP) with distinct starting weapons + select screen
+  (6 stats Ã— 20 lvls, idempotent StatBlock keys), Endless checkbox,
+  3 characters (Mage balanced / Paladin +30%HP âˆ’10%spd / Rogue +20%spd
+  âˆ’20%HP) with distinct starting weapons + select screen
 - Presentation: hero mage model, per-archetype enemy models, arena decor
   (grass/trees/spherical rocks with colliders/wall pillars), procedural
   3-layer music (calm/tense/boss), soft low-HP vignette (25% threshold)
@@ -35,7 +35,7 @@
   fade-in, F3 overlay + 250-enemy stress scene
 - Settings: master/music/sfx, look sens, touch sens, haptics toggle,
   shake toggle, quality + Auto
-- Deploy: GitHub Actions → Pages, custom loading shell + Click-to-Play
+- Deploy: GitHub Actions â†’ Pages, custom loading shell + Click-to-Play
 
 ## 3. Partially implemented / placeholders
 - WEAPONS menu screen: still a notice-text placeholder
@@ -45,10 +45,10 @@
   all three (no per-character model/colors)
 
 ## 4. Only-placeholder items
-- None beyond §3.
+- None beyond Â§3.
 
 ## 5. Automatically tested (32 suites, green at audit)
-smoke_phase1, phase2–10, task_a1/a4/a5, mouse_look, v1_hero, v2_enemy,
+smoke_phase1, phase2â€“10, task_a1/a4/a5, mouse_look, v1_hero, v2_enemy,
 v3_weapons, v4_arena, v5_juice, v6_content, v7_ui, v8_audio, v9_meta,
 v11a_feel, v11b, v12_depth, v13_chars, touch_buttons, touch_look_accum,
 survival_balance, v21c_auto, visibility_fix, stress_instrument
@@ -58,7 +58,7 @@ survival_balance, v21c_auto, visibility_fix, stress_instrument
 - Multitouch rings + look independence (verified manually once by user)
 - Heart magnet feel + 5% rate balance
 - AUTO graphics on real load swings
-- Endless ≥15 min pacing/density/perf
+- Endless â‰¥15 min pacing/density/perf
 - Boss model readability in fight
 
 ## 7. Gameplay weaknesses
@@ -86,8 +86,16 @@ survival_balance, v21c_auto, visibility_fix, stress_instrument
 - CI green historically; Pages live
 
 ## 12. Recommended next development order (prompt 5 P-phases)
-P2 feel polish → P3 character identity (per-character visuals) →
-P4 menu/collection screens → P5 boss presentation beats (intro/phase
-moments) → P6 Endless balance passes with real device numbers →
-P7 mobile verification round → P8 measured perf → P9 meta polish →
+P2 feel polish â†’ P3 character identity (per-character visuals) â†’
+P4 menu/collection screens â†’ P5 boss presentation beats (intro/phase
+moments) â†’ P6 Endless balance passes with real device numbers â†’
+P7 mobile verification round â†’ P8 measured perf â†’ P9 meta polish â†’
 P10 release sweep
+
+## 13. G-series graphics overhaul (this commit)
+- Heroes: KayKit Adventures rigged+animated (Mage/Knight/Rogue) with AnimationPlayer locomotion
+- Enemies: KayKit Skeletons (minion/warrior/mage) + Barbarian/Rogue rigs; Kenney props for bat/wisp/ghost; rigs at EVERY quality tier
+- Boss: 5.6m Skeleton_Warrior rig with per-phase tint + enrage emission
+- Arena: KayKit Dungeon stone floor (900 tiles MM), perimeter walls, corner pillars, torches, banners, treasure props
+- Pickups: xp_shard crystal GLB, potion bottle hearts, treasure-chest relics
+- Fixes shipped in pass: projectile container group, set_deferred monitoring in body_entered, spawn queue bool + stress refit, muzzle-flash hitch guard, threaded rig preload

@@ -106,5 +106,6 @@ func _get_enemy_manager() -> Node:
 
 func _deactivate() -> void:
 	_active = false
-	monitoring = false
+	# Deferred: _deactivate can run inside the body_entered physics callback
+	set_deferred("monitoring", false)
 	PoolManager.release(self)

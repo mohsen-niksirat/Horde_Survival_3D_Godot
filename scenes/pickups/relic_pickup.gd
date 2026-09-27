@@ -20,6 +20,11 @@ func _ready() -> void:
 	if _mat == null:
 		_mat = StandardMaterial3D.new()
 		_mesh.set_surface_override_material(0, _mat)
+	# Treasure chest instead of the spinning diamond prism.
+	if _mesh.get_child_count() == 0:
+		var rig := RigUtil.attach_glb(_mesh, "res://assets/models/kaykit/env/chest.glb", 0.9, "ChestRig")
+		if rig != null:
+			_mesh.mesh = null
 
 func setup(p_data: RelicData, p_player: Node3D, pos: Vector3, lifetime: float) -> void:
 	data = p_data
@@ -31,6 +36,14 @@ func setup(p_data: RelicData, p_player: Node3D, pos: Vector3, lifetime: float) -
 	global_position = pos + Vector3(0, 0.8, 0)
 	_mat.albedo_color = _rarity_color(data.rarity)
 	_mat.emission = _rarity_color(data.rarity)
+	var rig := _mesh.get_node_or_null("ChestRig")
+	if rig != null:
+		for mi in rig.find_children("*", "MeshInstance3D", true, false):
+			var active = mi.get_active_material(0)
+			if active is StandardMaterial3D:
+				var tinted: StandardMaterial3D = (active as StandardMaterial3D).duplicate()
+				tinted.albedo_color = tinted.albedo_color.lerp(_rarity_color(data.rarity), 0.45)
+				mi.set_surface_override_material(0, tinted)
 	visible = true
 	monitoring = true
 
