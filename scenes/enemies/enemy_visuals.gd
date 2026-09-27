@@ -1,17 +1,23 @@
 extends Node3D
-## Enemy visual builder — KayKit rigged skeletons/brutes for humanoids,
-## Kenney GLB props for the rest, primitive fallback only if loads fail.
+## Enemy visual builder — Kenney GLB statics for the horde (cheap: no GPU
+## skinning per enemy), primitives only if a load fails. Rigged KayKit
+## models are reserved for the hero and the boss (one instance each).
 
 static var _mat_cache: Dictionary = {}
 
-## Humanoid archetypes get full rigged+animated KayKit models (CC0).
-const ENEMY_RIGS := {
-	"basic_drone": {"path": "res://assets/models/kaykit/monsters/skeleton_minion.glb", "height": 1.5},
-	"tank_golem": {"path": "res://assets/models/kaykit/monsters/skeleton_warrior.glb", "height": 2.2},
-	"shooter_turret": {"path": "res://assets/models/kaykit/monsters/skeleton_mage.glb", "height": 2.0},
-	"mage": {"path": "res://assets/models/kaykit/monsters/skeleton_mage.glb", "height": 1.9},
-	"splitter": {"path": "res://assets/models/kaykit/monsters/barbarian.glb", "height": 1.8},
-	"healer": {"path": "res://assets/models/kaykit/heroes/adventurer_rogue.glb", "height": 1.6},
+## Strong silhouette-color identity per archetype so the pale arena and
+## glowing projectiles never blur into one wash.
+const ENEMY_TINTS := {
+	"basic_drone": Color(0.35, 0.55, 0.95),
+	"fast_wisp": Color(0.1, 0.95, 1.0),
+	"tank_golem": Color(0.62, 0.4, 0.2),
+	"shooter_turret": Color(1.0, 0.5, 0.1),
+	"swarm_bat": Color(0.8, 0.3, 0.95),
+	"ghost": Color(0.5, 0.8, 1.0),
+	"splitter": Color(0.3, 0.95, 0.4),
+	"healer": Color(1.0, 0.9, 0.3),
+	"mage": Color(0.65, 0.3, 1.0),
+	"swarm_bat_mini": Color(0.8, 0.3, 0.95),
 }
 
 const ENEMY_SCENES := {
@@ -46,19 +52,14 @@ static func prefer_glb() -> bool:
 	return true
 
 static func build(visual_root: Node3D, archetype_id: String) -> void:
-	var mode := "prim"
-	if ENEMY_RIGS.has(archetype_id) and ResourceLoader.exists(ENEMY_RIGS[archetype_id]["path"]):
-		mode = "rig"
-	elif ENEMY_SCENES.has(archetype_id) and ResourceLoader.exists(ENEMY_SCENES[archetype_id]):
-		mode = "glb"
+	var mode := "glb" if (ENEMY_SCENES.has(archetype_id) and ResourceLoader.exists(ENEMY_SCENES[archetype_id])) else "prim"
 	var key := archetype_id + "|" + mode
 	if visual_root.has_meta("built_for") and visual_root.get_meta("built_for") == key:
 		return
 	_clear_parts(visual_root)
 	visual_root.set_meta("built_for", key)
-	if mode == "rig" and _try_rig(visual_root, archetype_id):
-		return
 	if mode == "glb" and _try_glb(visual_root, archetype_id):
+		_apply_identity_tint(visual_root, archetype_id, 0.85)
 		return
 	match archetype_id:
 		"basic_drone": _build_drone(visual_root)
@@ -73,15 +74,22 @@ static func build(visual_root: Node3D, archetype_id: String) -> void:
 		"swarm_bat_mini": _build_bat(visual_root)
 		_: _build_drone(visual_root)
 
-static func _try_rig(visual_root: Node3D, archetype_id: String) -> bool:
-	var spec: Dictionary = ENEMY_RIGS.get(archetype_id, {})
-	if spec.is_empty():
-		return false
-	var rig := RigUtil.attach_glb(visual_root, spec["path"], float(spec["height"]), "External")
-	if rig == null:
-		return false
-	rig.rotation.y = RigUtil.RIG_YAW
-	return true
+static func _apply_identity_tint(visual_root: Node3D, archetype_id: String, strength: float = 0.85) -> void:
+	var tint: Color = ENEMY_TINTS.get(archetype_id, Color.TRANSPARENT)
+	if tint.a <= 0.0:
+		return
+	_tint_recursive(visual_root, tint, strength)
+
+static func _tint_recursive(node: Node, tint: Color, strength: float) -> void:
+	if node is MeshInstance3D:
+		var mat := ensure_unique_material(node)
+		if mat != null:
+			var c: Color = mat.albedo_color
+			c = c.lerp(tint, strength)
+			mat.albedo_color = c
+			mat.set_meta("base_color", c)
+	for c in node.get_children():
+		_tint_recursive(c, tint, strength)
 
 static func _try_glb(visual_root: Node3D, archetype_id: String) -> bool:
 	var path: String = ENEMY_SCENES.get(archetype_id, ENEMY_SCENES["basic_drone"])
@@ -153,13 +161,13 @@ static func _mat(color: Color, emission: float = 0.0, transparency: int = BaseMa
 		return _mat_cache[key]
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
-	m.roughness = 0.7
+	m.roughness = 0.75
 	if transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
 		m.transparency = transparency
 	if emission > 0.0:
 		m.emission_enabled = true
 		m.emission = color
-		m.emission_energy_multiplier = emission
+		m.emission_energy_multiplier = emission * 0.6
 	m.set_meta("shared_base", true)
 	_mat_cache[key] = m
 	return m
@@ -239,9 +247,9 @@ static func _sphere(v: Node3D, mat: StandardMaterial3D, radius: float, pos: Vect
 	_mesh(v, s, mat, pos)
 
 static func animate(visual_root: Node3D, archetype_id: String, time: float, seed_val: float, move_speed: float = 0.0) -> void:
-	# Rigged KayKit models drive locomotion through their own AnimationPlayer.
-	if visual_root.has_meta("rig_ap") or RigUtil.animation_player(visual_root) != null:
-		RigUtil.play_locomotion(visual_root, move_speed)
+	# Rigged visuals (hero/boss only now) animate via their own player;
+	# statics fall through to the procedural micro-motion branches.
+	if RigUtil.play_locomotion(visual_root, move_speed):
 		return
 	match archetype_id:
 		"swarm_bat", "swarm_bat_mini":

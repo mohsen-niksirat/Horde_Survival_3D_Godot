@@ -198,7 +198,11 @@ func _physics_process(delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, atan2(dir.x, dir.z), 8.0 * delta)
 
 	_attack_timer -= delta
-	if dist <= data.attack_range * 1.5 and _attack_timer <= 0.0:
+	# Contact damage ONLY on real touch: player capsule 0.45 m + enemy body
+	# radius (scales with archetype size, elites are bulkier). Mere proximity
+	# no longer drains HP — hordes must physically reach the hero.
+	var contact_r := 0.92 + 0.45 * maxf(data.scale - 1.0, 0.0) + (0.5 if elite != null else 0.0)
+	if _attack_timer <= 0.0 and dist <= contact_r:
 		_attack_timer = data.attack_cooldown
 		if _player.has_method("take_contact_damage"):
 			_player.take_contact_damage(data.damage * dmg_scale * dmg_mult, global_position)

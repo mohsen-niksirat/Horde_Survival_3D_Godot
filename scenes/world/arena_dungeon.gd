@@ -35,7 +35,7 @@ func _hide_primitives() -> void:
 		if node is VisualInstance3D:
 			node.visible = false
 
-static func _batch(mesh: Mesh, transforms: Array, parent: Node, n: String) -> MultiMeshInstance3D:
+static func _batch(mesh: Mesh, transforms: Array, parent: Node, n: String, tint := Color.TRANSPARENT) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.mesh = mesh
@@ -45,6 +45,12 @@ static func _batch(mesh: Mesh, transforms: Array, parent: Node, n: String) -> Mu
 	var mmi := MultiMeshInstance3D.new()
 	mmi.name = n
 	mmi.multimesh = mm
+	if tint.a > 0.0:
+		var base = mesh.surface_get_material(0)
+		if base is StandardMaterial3D:
+			var m: StandardMaterial3D = (base as StandardMaterial3D).duplicate()
+			m.albedo_color = m.albedo_color * tint
+			mmi.material_override = m
 	parent.add_child(mmi)
 	return mmi
 
@@ -54,7 +60,7 @@ func _build_floor() -> void:
 	for ix in range(-half_n, half_n):
 		for iz in range(-half_n, half_n):
 			tr.append(Transform3D(Basis.IDENTITY, Vector3(float(ix) * TILE + TILE * 0.5, 0.01, float(iz) * TILE + TILE * 0.5)))
-	_batch(_tile_mesh, tr, self, "FloorTiles")
+	_batch(_tile_mesh, tr, self, "FloorTiles", Color(0.88, 0.8, 0.68))
 
 func _build_walls() -> void:
 	var tr: Array = []
@@ -66,12 +72,12 @@ func _build_walls() -> void:
 	for z in span:
 		tr.append(Transform3D(rot, Vector3(-60.5, 0.0, float(z))))
 		tr.append(Transform3D(rot, Vector3(60.5, 0.0, float(z))))
-	_batch(_wall_mesh, tr, self, "DungeonWalls")
+	_batch(_wall_mesh, tr, self, "DungeonWalls", Color(0.62, 0.7, 0.92))
 	var corners: Array = []
 	for sx in [-1.0, 1.0]:
 		for sz in [-1.0, 1.0]:
 			corners.append(Transform3D(Basis.IDENTITY, Vector3(sx * 60.0, 0.0, sz * 60.0)))
-	_batch(_pillar_mesh, corners, self, "CornerPillars")
+	_batch(_pillar_mesh, corners, self, "CornerPillars", Color(0.7, 0.68, 0.78))
 
 func _build_torches() -> void:
 	if _torch_mesh == null:

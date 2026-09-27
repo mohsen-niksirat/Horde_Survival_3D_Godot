@@ -13,7 +13,7 @@ height=0.6
 albedo_color=Color(1, 0.3, 0.2, 1)
 emission_enabled=true
 emission=Color(1, 0.25, 0.1, 1)
-emission_energy_multiplier=2.0
+emission_energy_multiplier=0.8
 
 [node name="BossProjectile" type="Area3D"]
 collision_layer=4

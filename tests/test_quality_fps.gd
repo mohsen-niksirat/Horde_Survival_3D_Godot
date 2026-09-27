@@ -22,6 +22,15 @@ func _initialize() -> void:
 	_check(stress_cap < base_cap, "stress reduces effective cap (%d < %d)" % [stress_cap, base_cap])
 	perf.stress_mode = false
 
+	# Touch device scaling applies tighter caps at MEDIUM
+	if perf._is_touch():
+		perf.set_quality(perf.Quality.MEDIUM, false)
+		var touch_cap: int = perf.enemy_cap()
+		_check(touch_cap <= 70, "touch MEDIUM enemy cap tight (%d)" % touch_cap)
+		perf.set_quality(perf.Quality.HIGH, false)
+		var touch_high: int = perf.projectile_cap()
+		_check(touch_high <= 90, "touch HIGH projectile cap tight (%d)" % touch_high)
+
 	# Auto settings option count
 	var menu_ps: PackedScene = load("res://scenes/menu/SettingsMenu.tscn")
 	var menu: Control = menu_ps.instantiate()

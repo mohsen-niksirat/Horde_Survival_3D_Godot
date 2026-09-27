@@ -43,6 +43,13 @@ func _initialize() -> void:
 	var inst := fireball_scene.instantiate()
 	var trail := inst.get_node_or_null("Trail")
 	_check(trail != null and trail is GPUParticles3D, "fireball has ember trail")
+	# V-fix: emission energy reduced so projectiles don't wash out to white
+	var fb_mat: StandardMaterial3D = inst.get_node("Mesh").get_surface_override_material(0)
+	if fb_mat != null and fb_mat.emission_enabled:
+		_check(fb_mat.emission_energy_multiplier <= 1.0, "fireball emission softened (%.1f)" % fb_mat.emission_energy_multiplier)
+	var fb_light: OmniLight3D = inst.get_node_or_null("Light")
+	if fb_light != null:
+		_check(fb_light.light_energy <= 1.0, "fireball light energy reduced (%.1f)" % fb_light.light_energy)
 	inst.queue_free()
 
 	# --- Missile + spear SFX tones cache on their next fire ---

@@ -47,6 +47,11 @@ const WEB_ENEMY_CAP_SCALE := 0.65
 const WEB_PROJECTILE_CAP_SCALE := 0.7
 const WEB_PARTICLE_CAP_SCALE := 0.7
 const WEB_DAMAGE_NUMBER_CAP_SCALE := 0.7
+## Native mobile (Android/iOS) is also GPU-bound — use the same tight web caps.
+const TOUCH_ENEMY_CAP_SCALE := 0.65
+const TOUCH_PROJECTILE_CAP_SCALE := 0.7
+const TOUCH_PARTICLE_CAP_SCALE := 0.7
+const TOUCH_DAMAGE_NUMBER_CAP_SCALE := 0.7
 
 ## Horde stress: when the arena is packed, temporarily shrink effective caps.
 const STRESS_PRESSURE := 0.75
@@ -145,6 +150,12 @@ func _render_scale() -> float:
 			Quality.LOW: return 0.6
 			Quality.MEDIUM: return 0.75
 			_: return 1.0
+	if _is_touch():
+		match quality:
+			Quality.VERY_LOW: return 0.6
+			Quality.LOW: return 0.7
+			Quality.MEDIUM: return 0.8
+			_: return 1.0
 	match quality:
 		Quality.VERY_LOW: return 0.75
 		Quality.LOW: return 0.85
@@ -208,9 +219,9 @@ func _auto_tick(delta: float, fps_override: int = -1) -> void:
 	var fps := Engine.get_frames_per_second()
 	if fps_override > 0:
 		fps = fps_override
-	# Stress/low FPS: step down faster. Web is harsher than desktop.
-	var low_threshold := 32 if (_is_web() or stress_mode) else 26
-	var low_hold := 0.75 if (_is_web() or stress_mode) else 4.0
+	# Stress/low FPS: step down faster. Web and mobile are harsher than desktop.
+	var low_threshold := 32 if (_is_web() or _is_touch() or stress_mode) else 26
+	var low_hold := 0.75 if (_is_web() or _is_touch() or stress_mode) else 4.0
 	if fps < low_threshold:
 		_low_time += delta
 		_high_time = 0.0
@@ -255,6 +266,8 @@ func enemy_cap() -> int:
 	var cap: int = ENEMY_CAPS.get(quality, 40)
 	if _is_web() and quality > Quality.VERY_LOW:
 		cap = maxi(25, int(cap * WEB_ENEMY_CAP_SCALE))
+	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
+		cap = maxi(25, int(cap * TOUCH_ENEMY_CAP_SCALE))
 	return cap
 
 ## Cap used by spawners — shrinks under horde stress so the sim stays alive.
@@ -268,6 +281,8 @@ func projectile_cap() -> int:
 	var cap: int = PROJECTILE_CAPS.get(quality, 40)
 	if _is_web() and quality > Quality.VERY_LOW:
 		cap = maxi(20, int(cap * WEB_PROJECTILE_CAP_SCALE))
+	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
+		cap = maxi(20, int(cap * TOUCH_PROJECTILE_CAP_SCALE))
 	if stress_mode:
 		cap = maxi(15, int(cap * 0.7))
 	return cap
@@ -276,12 +291,16 @@ func particle_cap() -> int:
 	var cap: int = PARTICLE_CAPS.get(quality, 25)
 	if _is_web() and quality > Quality.VERY_LOW:
 		cap = maxi(12, int(cap * WEB_PARTICLE_CAP_SCALE))
+	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
+		cap = maxi(12, int(cap * TOUCH_PARTICLE_CAP_SCALE))
 	return cap
 
 func damage_number_cap() -> int:
 	var cap: int = DAMAGE_NUMBER_CAPS.get(quality, 12)
 	if _is_web() and quality > Quality.VERY_LOW:
 		cap = maxi(8, int(cap * WEB_DAMAGE_NUMBER_CAP_SCALE))
+	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
+		cap = maxi(8, int(cap * TOUCH_DAMAGE_NUMBER_CAP_SCALE))
 	if stress_mode:
 		cap = maxi(6, int(cap * 0.5))
 	return cap

@@ -101,7 +101,7 @@ func _iter_mesh_tint(node: Node, tint: Color) -> void:
 			var mat = node.get_surface_override_material(i)
 			if mat is StandardMaterial3D:
 				var m: StandardMaterial3D = mat.duplicate()
-				m.albedo_color = m.albedo_color.lerp(tint, 0.35)
+				m.albedo_color = m.albedo_color.lerp(tint, 0.5)
 				node.set_surface_override_material(i, m)
 	for c in node.get_children():
 		_iter_mesh_tint(c, tint)

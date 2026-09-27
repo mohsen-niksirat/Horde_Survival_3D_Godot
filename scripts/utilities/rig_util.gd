@@ -77,11 +77,14 @@ static func animation_player(node: Node) -> AnimationPlayer:
 		return null
 	if node.has_meta("rig_ap"):
 		var cached = node.get_meta("rig_ap")
+		if cached == null:
+			return null  # negative cache: searched once, never again
 		if cached is AnimationPlayer and is_instance_valid(cached):
 			return cached
 		node.remove_meta("rig_ap")
 	var players: Array = node.find_children("*", "AnimationPlayer", true, false)
 	if players.is_empty():
+		node.set_meta("rig_ap", null)
 		return null
 	var ap := players[0] as AnimationPlayer
 	node.set_meta("rig_ap", ap)

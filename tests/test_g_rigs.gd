@@ -3,6 +3,8 @@ var pool: Node
 ## Graphics overhaul validation: rigged characters, animated enemies, GLB
 ## boss, KayKit dungeon arena layer, and model-based pickups.
 
+const EnemyVisuals := preload("res://scenes/enemies/enemy_visuals.gd")
+
 var failures := 0
 
 func _initialize() -> void:
@@ -47,10 +49,32 @@ func _initialize() -> void:
 	for e in em.get_all_enemies():
 		var visual: Node3D = e.get_node("Visual")
 		var built: String = visual.get_meta("built_for")
-		_check(built.ends_with("|rig"), "%s builds rigged model (%s)" % [e.data.id, built])
-		_check(not e._flash_materials.is_empty(), "%s flash materials collected" % e.data.id)
-		var ap := RigUtil.animation_player(visual)
-		_check(ap != null and ap.current_animation in ["Idle", "Walking_A", "Running_A"], "%s locomotion anim playing (%s)" % [e.data.id, ap.current_animation if ap != null else "none"])
+		# Horde stays on cheap static GLBs (no skinning) — rigs are hero+boss only.
+		_check(built.ends_with("|glb"), "%s builds static GLB horde model (%s)" % [e.data.id, built])
+		_check(not e._flash_materials.is_empty(), "%s tinted materials collected" % e.data.id)
+		var tinted: StandardMaterial3D = e._flash_materials[0]
+		_check(tinted.albedo_color != Color(1, 1, 1, 1), "%s has identity color" % e.data.id)
+		# V-fix: tint strength raised to 0.85 so white GLB materials pick up
+		# strong identity hues instead of staying gray/white.
+		if tinted.albedo_color.a > 0.5:
+			var tint_target: Color = EnemyVisuals.ENEMY_TINTS.get(e.data.id, Color.TRANSPARENT)
+			if tint_target.a > 0.0:
+				var dist := tinted.albedo_color.distance_to(tint_target)
+				_check(dist < 0.4, "%s tint is strong enough (Δ=%.2f)" % [e.data.id, dist])
+
+	# --- Contact damage: only on real touch, never from proximity ---
+	var drone_e = em.get_all_enemies()[0]
+	var hp_before: float = player.health.current_hp
+	for i in range(45):
+		drone_e.global_position = player.global_position + Vector3(2.0, 0, 0)
+		drone_e._attack_timer = 0.0
+		await physics_frame
+	_check(player.health.current_hp == hp_before, "no damage while 2 m away (was: proximity drain)")
+	for i in range(45):
+		drone_e.global_position = player.global_position + Vector3(0.5, 0, 0)
+		drone_e._attack_timer = 0.0
+		await physics_frame
+	_check(player.health.current_hp < hp_before, "damage when the enemy actually touches")
 	em.clear_all()
 
 	# --- Boss uses the giant skeleton rig ---

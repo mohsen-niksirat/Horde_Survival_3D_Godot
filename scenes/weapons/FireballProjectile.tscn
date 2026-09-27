@@ -13,7 +13,7 @@ height=0.5
 albedo_color=Color(1, 0.45, 0.15, 1)
 emission_enabled=true
 emission=Color(1, 0.42, 0.1, 1)
-emission_energy_multiplier=2.0
+emission_energy_multiplier=0.9
 
 [sub_resource type="ParticleProcessMaterial" id="trail_process"]
 direction=Vector3(0, 0, 0)
@@ -53,7 +53,7 @@ surface_material_override/0=SubResource("mat")
 [node name="Light" type="OmniLight3D" parent="."]
 omni_range=4.0
 light_color=Color(1, 0.5, 0.15, 1)
-light_energy=1.5
+light_energy=0.8
 
 [node name="Trail" type="GPUParticles3D" parent="."]
 amount=10

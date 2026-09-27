@@ -57,10 +57,10 @@ func _attach_rig() -> void:
 func _apply_phase_tint() -> void:
 	if _rig == null:
 		return
-	var tint := Color(0.75, 0.7, 0.85)
+	var tint := Color(0.55, 0.4, 0.8)
 	match phase:
-		BossPhase.TWO: tint = Color(0.55, 0.8, 1.0)
-		BossPhase.ENRAGE: tint = Color(1.0, 0.35, 0.2)
+		BossPhase.TWO: tint = Color(0.35, 0.7, 1.0)
+		BossPhase.ENRAGE: tint = Color(1.0, 0.3, 0.15)
 	for mi in _rig.find_children("*", "MeshInstance3D", true, false):
 		var active = mi.get_active_material(0)
 		if active is StandardMaterial3D:
