@@ -27,9 +27,9 @@ func build_music() -> void:
 	if _built:
 		return
 	_built = true
-	_players[Intensity.CALM] = _make_layer("music_calm", CALM_NOTES, 0.10)
-	_players[Intensity.TENSE] = _make_layer("music_tense", TENSE_NOTES, 0.12)
-	_players[Intensity.BOSS] = _make_layer("music_boss", BOSS_NOTES, 0.14)
+	_players[Intensity.CALM] = _make_layer("music_calm", CALM_NOTES, 0.06)
+	_players[Intensity.TENSE] = _make_layer("music_tense", TENSE_NOTES, 0.07)
+	_players[Intensity.BOSS] = _make_layer("music_boss", BOSS_NOTES, 0.08)
 
 func _make_layer(cache_id: String, notes: Array, gain: float) -> AudioStreamPlayer:
 	# Layer a detuned stack of slow tones into one looped WAV
@@ -44,7 +44,7 @@ func _make_layer(cache_id: String, notes: Array, gain: float) -> AudioStreamPlay
 			value += sin(TAU * n * t)
 			value += sin(TAU * n * 1.005 * t)  # detune shimmer
 		value /= float(notes.size()) * 2.0
-		var env := 0.6 + 0.4 * sin(TAU * t / 2.0)  # slow swell
+		var env := 0.85 + 0.15 * sin(TAU * t / 4.0)  # slower, gentler swell
 		var s := int(clampf(value * env * gain, -1.0, 1.0) * 32000.0)
 		data.encode_s16(i * 2, s)
 	var stream := AudioStreamWAV.new()
