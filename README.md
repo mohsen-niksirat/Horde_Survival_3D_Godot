@@ -37,17 +37,27 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 
 - Third-person 3D arena combat, camera-relative movement, zero aiming
 - **Standard run: survive 15 minutes for VICTORY** — or toggle **Endless** for infinite scaling
-- 5 auto-firing weapons + 5 evolutions (Hellfire, Holy Bible, Aurora, Judgment, Thunderstorm)
-- 6 weapon synergies + relic synergy hooks (Inferno Band, Favored Fortune, Mobile Bulwark)
+- 6 auto-firing weapons (incl. Void Lance) + 5 evolutions (Hellfire, Holy Bible, Aurora, Judgment, Thunderstorm)
+- 7 weapon synergies + relic synergy hooks (Inferno Band, Favored Fortune, Mobile Bulwark)
 - 9 enemy archetypes + 8 modular elite abilities + one complete 3-phase boss
+- Character unlocks: Mage free, Paladin (1 win), Rogue (3 wins)
 - XP orbs with magnet pickup, level-ups with 3 rarity-colored choices, 8 passive items
 - Relics (rarity-weighted map pickups incl. Phoenix Feather revive), a pet (Dragon Welp), 2 active abilities (Meteor Strike, Time Freeze)
-- Combo system with XP multiplier and 6 visual tiers, 10 achievements with gold rewards
+- Combo system with XP multiplier (capped) and 6 visual tiers, 12 achievements with gold rewards
 - Threat-budget horde spawning, difficulty timeline, quality-tier entity caps
-- Versioned meta save (gold, bests, wins, achievements) that persists in the browser
-- Responsive HUD; virtual joystick + touch camera on mobile
-- Settings: UI scale, reduced VFX, quality tiers, screen shake
+- Versioned meta save (gold, bests, wins, unlocks, achievements) that persists in the browser
+- Responsive HUD (boss HP bar with phase tint, ability cooldowns); virtual joystick + touch camera
+- Settings: UI scale, reduced VFX, damage numbers, quality tiers, screen shake
 - Kenney CC0 GLB heroes/enemies/weapons/skybox (see docs/ASSET_CREDITS.md); quality Very Low→Ultra + FPS counter
+
+## Win / Unlock Roadmap
+
+| Goal | Reward |
+|---|---|
+| Survive 15 min | VICTORY + 250 gold |
+| 1 win | Unlock **Paladin** |
+| 3 wins | Unlock **Rogue** |
+| Achievements | Bonus gold (see in-game list) |
 
 ## How to Run Locally
 
