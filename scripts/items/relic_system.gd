@@ -71,7 +71,7 @@ func apply_relic(data: RelicData) -> void:
 		player.grant_revive()
 	applied_relics[data.id] = true
 	_apply_relic_synergy(data)
-	EventBus.upgrade_applied.emit(data.display_name)
+	EventBus.upgrade_applied.emit("RELIC: " + data.display_name)
 
 ## V17: relic × weapon / relic × relic synergy hooks (once per pairing).
 func _apply_relic_synergy(data: RelicData) -> void:

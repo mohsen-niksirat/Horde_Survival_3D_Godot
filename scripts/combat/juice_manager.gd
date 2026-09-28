@@ -50,6 +50,9 @@ func _acquire(scene_path: String) -> Node3D:
 
 func _on_enemy_damaged(enemy: Node, amount: float, is_crit: bool) -> void:
 	var now := Time.get_ticks_msec()
+	# Settings toggle
+	if SaveManager != null and not SaveManager.get_setting("show_damage_numbers", true):
+		return
 	# V15A: skip cheap non-crits entirely when the horde is huge
 	if PerformanceManager != null and PerformanceManager.should_skip_damage_number(is_crit, amount):
 		return

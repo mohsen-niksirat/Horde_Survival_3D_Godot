@@ -175,6 +175,13 @@ func _process(delta: float) -> void:
 			var ratio: float = _ability_controller.get_cooldown_ratio(data.id)
 			var btn := ability1_button if data.id == "meteor_strike" else ability2_button
 			btn.modulate = Color(1, 1, 1, 0.4 if ratio > 0.0 else 1.0)
+			# R5: show remaining seconds while cooling down
+			var base := "Q Meteor" if data.id == "meteor_strike" else "E Freeze"
+			if ratio > 0.0:
+				var left: float = float(ab.get("cooldown_left", 0.0))
+				btn.text = "%s %.0f" % [base, ceil(left)]
+			else:
+				btn.text = base
 
 func _process_boss_bar() -> void:
 	if boss_bar == null:

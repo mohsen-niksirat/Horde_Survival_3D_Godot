@@ -92,6 +92,14 @@ func _build_v19_rows() -> void:
 	layout.add_child(reduced_vfx_check)
 	layout.move_child(reduced_vfx_check, close_button.get_index())
 
+	var dmg_check := CheckButton.new()
+	dmg_check.name = "DamageNumbersCheck"
+	dmg_check.text = "Damage Numbers"
+	dmg_check.button_pressed = SaveManager.get_setting("show_damage_numbers", true)
+	dmg_check.toggled.connect(func(p: bool): SaveManager.set_setting("show_damage_numbers", p))
+	layout.add_child(dmg_check)
+	layout.move_child(dmg_check, close_button.get_index())
+
 func _on_ui_scale(value: float) -> void:
 	SaveManager.set_setting("ui_scale", value)
 	_apply_ui_scale(value)
