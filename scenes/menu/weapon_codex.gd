@@ -29,6 +29,17 @@ const RELICS := [
 	"Power Ring — +15% might",
 	"Phoenix Feather — revive once at 50% HP",
 ]
+const PASSIVES := [
+	"Spinach — +10% damage / level",
+	"Empty Tome — cooldown reduction",
+	"Crown — XP gain",
+	"Wings — move speed",
+	"Magnet — pickup radius",
+	"Heart — max HP",
+	"Growth — XP / level scaling",
+	"Vampire — lifesteal",
+	"Hunter's Mark — +3% crit / level",
+]
 const RELIC_SYNS := [
 	"Power Ring + 2 fire weapons → Inferno Band (+10% might)",
 	"Crown + Clover → Favored Fortune (+10% luck, +10% XP)",
@@ -101,6 +112,10 @@ func _build() -> void:
 	_section("RELICS", Color(0.85, 0.55, 1.0))
 	for r in RELICS:
 		_line(r, Color(0.92, 0.85, 1.0))
+
+	_section("PASSIVES  (level-up picks)", Color(0.6, 1.0, 0.75))
+	for p in PASSIVES:
+		_line(p, Color(0.85, 1.0, 0.9))
 
 	_section("RELIC SYNERGIES", Color(1.0, 0.55, 0.7))
 	for r in RELIC_SYNS:

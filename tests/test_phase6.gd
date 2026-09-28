@@ -17,7 +17,7 @@ func _initialize() -> void:
 	var game_manager := root.get_node("GameManager")
 	game_manager.state = game_manager.State.PLAYING
 
-	_check(progression.passive_data.size() == 8, "8 passives loaded (got %d)" % progression.passive_data.size())
+	_check(progression.passive_data.size() == 9, "9 passives loaded (got %d)" % progression.passive_data.size())
 
 	# --- Level up via direct XP ---
 	var choices_container := {"list": []}

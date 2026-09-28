@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3 uid="uid://cpassive_hm1"]
+
+[ext_resource type="Script" path="res://scripts/progression/passive_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hunters_mark"
+display_name = "Hunter's Mark"
+description = "+3% crit chance per level"
+max_level = 5
+modifiers = [{"stat": "crit_chance", "flat": 0.03, "percent": 0.0}]

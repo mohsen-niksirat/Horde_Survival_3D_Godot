@@ -5,6 +5,7 @@ extends Node
 const PASSIVE_IDS := [
 	"spinach", "empty_tome", "crown", "wings",
 	"magnet", "heart", "growth", "vampire",
+	"hunters_mark",
 ]
 const MAX_WEAPON_SLOTS := 5
 const CHOICES := 3
