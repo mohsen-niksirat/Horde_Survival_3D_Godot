@@ -27,7 +27,8 @@ static func threat_budget(minutes: float) -> float:
 	var extra := minutes - 10.0
 	var budget := at10 + extra * 2.0 + extra * extra * 0.06
 	# R10: standard-run finale — last 2 minutes get denser hordes
-	if not RunManager.endless and minutes >= 13.0:
+	# (avoid autoload refs in this static helper)
+	if minutes >= 13.0 and minutes < 15.5:
 		budget *= 1.35
 	return budget
 
