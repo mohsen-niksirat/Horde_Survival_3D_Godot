@@ -157,6 +157,8 @@ func _on_died() -> void:
 		camera_rig.add_shake(0.3)
 		return
 	EventBus.player_died.emit()
+	if camera_rig != null and camera_rig.has_method("add_shake"):
+		camera_rig.add_shake(0.5)
 	GameManager.game_over(false)
 
 func grant_revive() -> void:

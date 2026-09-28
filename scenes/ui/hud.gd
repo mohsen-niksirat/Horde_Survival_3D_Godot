@@ -27,6 +27,8 @@ const HINTS := [
 	"Gold drops from every kill - spend it on UPGRADES",
 	"Abilities: Q / E (or touch buttons)",
 	"Hearts heal you - grab them!",
+	"Glowing chests give relics - walk over them",
+	"Survive 15 minutes to WIN",
 	"Pause: II button or Esc / P",
 	"Zoom: mouse wheel / + and - buttons",
 ]

@@ -13,8 +13,14 @@ func bind_player(player: Node) -> void:
 	EventBus.player_leveled_up.connect(_on_level_up)
 	EventBus.boss_spawned.connect(_on_boss_spawned)
 	EventBus.boss_phase_changed.connect(_on_boss_phase_changed)
+	EventBus.player_died.connect(_on_player_died)
 	vignette.modulate.a = 0.0
 	flash.modulate.a = 0.0
+
+func _on_player_died() -> void:
+	# R7: hard red flash on death
+	flash.color = Color(0.9, 0.05, 0.05)
+	flash.modulate.a = 0.85
 
 func _process(delta: float) -> void:
 	# Low-HP pulsing vignette (<25%, softer so the arena stays readable)
