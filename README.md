@@ -6,11 +6,23 @@
 
 A stylized third-person survival roguelite for the browser. Survive increasingly dangerous hordes, auto-attack weapons, collect XP, choose powerful upgrades, evolve weapons, fight elites and a phased boss — and build increasingly broken runs.
 
+## Gameplay — Version 2
+
+<p align="center">
+  <video src="ScreenShots/ScreenRecord%2001%20v2.0.0.mp4" controls width="720" playsinline>
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+## تصاویری از محیط بازی ورژن 1
+
+Game environment images from version 1.
+
 <p align="center">
   <table>
     <tr>
-      <td><img src="ScreenShots/ScreenShot 01_v2.0.jpg" alt="Gameplay 1" width="300"/></td>
-      <td><img src="ScreenShots/ScreenShot 02_v2.0.jpg" alt="Gameplay 2" width="300"/></td>
+      <td><img src="ScreenShots/ScreenShot 01_v2.0.jpg" alt="Version 1 gameplay 1" width="300"/></td>
+      <td><img src="ScreenShots/ScreenShot 02_v2.0.jpg" alt="Version 1 gameplay 2" width="300"/></td>
     </tr>
   </table>
 </p>
