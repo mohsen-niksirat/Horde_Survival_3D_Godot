@@ -24,6 +24,13 @@ func _ready() -> void:
 	how_to_play_button.pressed.connect(_on_placeholder_pressed.bind("WASD to move - survive the horde - weapons fire automatically - Q/E abilities"))
 	quit_button.pressed.connect(_on_quit_pressed)
 	notice_label.text = ""
+	# P9: full achievements panel (fallback notice if scene missing)
+	if get_node_or_null("AchievementPanel") == null:
+		var ps: PackedScene = load("res://scenes/menu/AchievementPanel.tscn")
+		if ps != null:
+			var panel := ps.instantiate()
+			panel.name = "AchievementPanel"
+			add_child(panel)
 	_update_stats()
 
 func _update_stats() -> void:
@@ -57,6 +64,11 @@ func _on_upgrades_pressed() -> void:
 	$MetaShop.open()
 
 func _on_achievements_pressed() -> void:
+	AudioManager.play_game_sfx("ui_click")
+	var panel := get_node_or_null("AchievementPanel")
+	if panel != null and panel.has_method("open"):
+		panel.open()
+		return
 	var achievements: Dictionary = SaveManager.get_meta_data("achievements", {})
 	notice_label.text = "Unlocked achievements: %s" % (", ".join(achievements.keys()) if achievements.size() > 0 else "none yet")
 

@@ -10,6 +10,7 @@ var _player: Node3D
 var _pools: Dictionary = {}
 var _indices: Dictionary = {}
 var _number_throttle_ms: int = 0
+var _burst_skip: bool = false
 
 func setup(player: Node3D) -> void:
 	_player = player
@@ -68,6 +69,11 @@ func _on_enemy_died(enemy: Node, pos: Vector3) -> void:
 	# V19: reduced-VFX skips kill bursts (damage numbers stay)
 	if SaveManager != null and SaveManager.get_setting("reduced_vfx", false):
 		return
+	# P8: under heavy horde load, only burst every other kill
+	if PerformanceManager != null and PerformanceManager.active_enemies >= 80:
+		_burst_skip = not _burst_skip
+		if _burst_skip:
+			return
 	var burst: Node3D = _acquire(KILL_BURST_SCENE)
 	if burst != null:
 		var color: Color = Color(1, 1, 1)
