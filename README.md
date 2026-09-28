@@ -9,9 +9,11 @@ A stylized third-person survival roguelite for the browser. Survive increasingly
 ## Gameplay — Version 2
 
 <p align="center">
-  <video src="ScreenShots/ScreenRecord%2001%20v2.0.0.mp4" controls width="720" playsinline>
-    Your browser does not support the video tag.
-  </video>
+  <img src="ScreenShots/gameplay_v2.gif" alt="HordeSurvival 3D gameplay — Version 2" width="720"/>
+</p>
+
+<p align="center">
+  <a href="ScreenShots/ScreenRecord%2001%20v2.0.0.mp4">Full video with audio (MP4)</a>
 </p>
 
 ## تصاویری از محیط بازی ورژن 1
