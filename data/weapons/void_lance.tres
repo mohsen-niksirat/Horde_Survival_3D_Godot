@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3 uid="uid://wdata_voidlnc1"]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "void_lance"
+display_name = "Void Lance"
+type = "projectile"
+base_damage = 16.0
+base_cooldown = 1.15
+projectile_count = 1
+projectile_speed = 22.0
+area = 1.4
+pierce = 3
+crit_chance = 0.12
+crit_mult = 2.1
+max_range = 28.0
+homing = false
+status_effect = "slow"
+status_duration = 1.2
+status_damage = 0.0
+projectile_scene = "res://scenes/weapons/MagicMissileProjectile.tscn"

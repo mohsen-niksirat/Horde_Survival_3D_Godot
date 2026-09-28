@@ -41,7 +41,7 @@ func _initialize() -> void:
 		_check(tier_opt.description.contains("%"), "description shows stats (%s)" % tier_opt.description)
 
 	# --- All 4 unheld weapons are offered ---
-	_check(new_opts.size() == 4, "all 4 unheld weapons in pool (%d)" % new_opts.size())
+	_check(new_opts.size() == 5, "all 5 unheld weapons in pool (%d)" % new_opts.size())
 
 	# Apply new weapons directly until 5 slots are full
 	for o in new_opts:

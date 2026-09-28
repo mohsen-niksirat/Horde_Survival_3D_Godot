@@ -18,6 +18,11 @@ const WEAPON_FLASH_COLORS := {
 	"divine_spear": Color(1.0, 0.85, 0.4),
 	"lightning": Color(0.65, 0.8, 1.0),
 	"hellfire": Color(1.0, 0.35, 0.1),
+	"void_lance": Color(0.7, 0.35, 1.0),
+	"aurora": Color(0.4, 1.0, 0.85),
+	"judgment": Color(1.0, 0.95, 0.7),
+	"thunderstorm": Color(0.5, 0.7, 1.0),
+	"orbiting_shield": Color(0.85, 0.9, 1.0),
 }
 
 var weapons: Array = []

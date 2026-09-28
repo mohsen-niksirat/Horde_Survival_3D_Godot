@@ -8,7 +8,7 @@ const PASSIVE_IDS := [
 ]
 const MAX_WEAPON_SLOTS := 5
 const CHOICES := 3
-const NEW_WEAPON_POOL := ["fireball", "magic_missile", "orbiting_shield", "divine_spear", "lightning"]
+const NEW_WEAPON_POOL := ["fireball", "magic_missile", "orbiting_shield", "divine_spear", "lightning", "void_lance"]
 
 signal choices_generated(choices: Array)
 
@@ -160,6 +160,7 @@ const SYNERGIES := [
 	{"id": "holy_aegis", "requires": ["holy_bible", "orbiting_shield"], "title": "SYNERGY: Holy Aegis (+12% armor)", "stat": "armor", "percent": 0.12},
 	{"id": "wildfire", "requires": ["hellfire", "thunderstorm"], "title": "SYNERGY: Wildfire (+12% might)", "stat": "might", "percent": 0.12},
 	{"id": "astral_conduit", "requires": ["aurora", "judgment"], "title": "SYNERGY: Astral Conduit (-8% cooldown)", "stat": "cooldown_mult", "percent": -0.08},
+	{"id": "void_storm", "requires": ["void_lance", "lightning"], "title": "SYNERGY: Void Storm (+12% crit)", "stat": "crit_chance", "percent": 0.12},
 ]
 var applied_synergies: Dictionary = {}
 
@@ -240,6 +241,7 @@ func _tier_description(w: WeaponInstance) -> String:
 func _weapon_role(id: String) -> String:
 	match id:
 		"fireball": return "explosive AOE, burn synergy"
+		"void_lance": return "piercing lance, slows on hit"
 		"magic_missile": return "homing bolts, multi-target"
 		"orbiting_shield": return "orbiting guards, melee range"
 		"divine_spear": return "piercing line, high crit"

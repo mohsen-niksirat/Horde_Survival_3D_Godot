@@ -3,7 +3,7 @@ extends Control
 
 const WEAPONS := [
 	"fireball", "magic_missile", "orbiting_shield", "divine_spear", "lightning",
-	"hellfire", "holy_bible", "aurora", "judgment", "thunderstorm",
+	"void_lance", "hellfire", "holy_bible", "aurora", "judgment", "thunderstorm",
 ]
 const EVOLUTIONS := [
 	{"base": "Fireball", "passive": "Spinach (max)", "result": "Hellfire"},
@@ -19,6 +19,7 @@ const SYNERGIES := [
 	"Holy Bible + Orbiting Shield → Holy Aegis (+12% armor)",
 	"Hellfire + Thunderstorm → Wildfire (+12% might)",
 	"Aurora + Judgment → Astral Conduit (−8% cooldown)",
+	"Void Lance + Lightning → Void Storm (+12% crit)",
 ]
 const RELICS := [
 	"Crown of Wisdom — +25% XP gain",
