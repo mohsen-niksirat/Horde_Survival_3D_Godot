@@ -12,8 +12,12 @@ extends Control
 @onready var shake_check: CheckButton = $Center/Panel/Layout/ShakeCheck
 @onready var quality_option: OptionButton = $Center/Panel/Layout/QualityRow/QualityOption
 @onready var close_button: Button = $Center/Panel/Layout/CloseButton
+@onready var layout: Control = $Center/Panel/Layout
 
 const Q_ITEMS := ["Very Low (fastest)", "Low", "Medium", "High", "Ultra", "Auto"]
+
+var ui_scale_slider: HSlider
+var reduced_vfx_check: CheckButton
 
 func _ready() -> void:
 	visible = false
@@ -21,6 +25,7 @@ func _ready() -> void:
 	quality_option.clear()
 	for item in Q_ITEMS:
 		quality_option.add_item(item)
+	_build_v19_rows()
 
 	master_slider.value = SaveManager.get_setting("master_volume", 0.8)
 	music_slider.value = SaveManager.get_setting("music_volume", 0.7)
@@ -30,6 +35,10 @@ func _ready() -> void:
 	haptics_check.button_pressed = SaveManager.get_setting("haptics", false)
 	fullscreen_check.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 	shake_check.button_pressed = SaveManager.get_setting("screen_shake", true)
+	if ui_scale_slider != null:
+		ui_scale_slider.value = SaveManager.get_setting("ui_scale", 1.0)
+	if reduced_vfx_check != null:
+		reduced_vfx_check.button_pressed = SaveManager.get_setting("reduced_vfx", false)
 	var q: int = int(SaveManager.get_setting("quality", 0))
 	if PerformanceManager != null and PerformanceManager.auto_mode:
 		quality_option.selected = 5
@@ -47,8 +56,55 @@ func _ready() -> void:
 	fullscreen_check.toggled.connect(_on_fullscreen)
 	shake_check.toggled.connect(_on_shake)
 	quality_option.item_selected.connect(_on_quality)
+	if ui_scale_slider != null:
+		ui_scale_slider.value_changed.connect(_on_ui_scale)
+	if reduced_vfx_check != null:
+		reduced_vfx_check.toggled.connect(_on_reduced_vfx)
 	close_button.pressed.connect(_on_close)
 	EventBus.game_state_changed.connect(_on_state_changed)
+	_apply_ui_scale(float(SaveManager.get_setting("ui_scale", 1.0)))
+
+## V19: dynamically add UI-scale + reduced-VFX rows (avoids fragile .tscn edits).
+func _build_v19_rows() -> void:
+	if layout == null:
+		return
+	var scale_row := HBoxContainer.new()
+	scale_row.name = "UiScaleRow"
+	var scale_label := Label.new()
+	scale_label.text = "UI Scale"
+	scale_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ui_scale_slider = HSlider.new()
+	ui_scale_slider.name = "UiScaleSlider"
+	ui_scale_slider.min_value = 0.75
+	ui_scale_slider.max_value = 1.5
+	ui_scale_slider.step = 0.05
+	ui_scale_slider.value = 1.0
+	ui_scale_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scale_row.add_child(scale_label)
+	scale_row.add_child(ui_scale_slider)
+	layout.add_child(scale_row)
+	# Insert before close button if possible
+	layout.move_child(scale_row, maxi(0, close_button.get_index() - 1))
+
+	reduced_vfx_check = CheckButton.new()
+	reduced_vfx_check.name = "ReducedVfxCheck"
+	reduced_vfx_check.text = "Reduced VFX"
+	layout.add_child(reduced_vfx_check)
+	layout.move_child(reduced_vfx_check, close_button.get_index())
+
+func _on_ui_scale(value: float) -> void:
+	SaveManager.set_setting("ui_scale", value)
+	_apply_ui_scale(value)
+
+func _apply_ui_scale(value: float) -> void:
+	var win := get_window()
+	if win != null:
+		win.content_scale_factor = clampf(value, 0.75, 1.5)
+
+func _on_reduced_vfx(pressed: bool) -> void:
+	SaveManager.set_setting("reduced_vfx", pressed)
+	if PerformanceManager != null and PerformanceManager.has_method("notify_reduced_vfx"):
+		PerformanceManager.notify_reduced_vfx()
 
 func _on_sensitivity(value: float) -> void:
 	SaveManager.set_setting("look_sensitivity", value)

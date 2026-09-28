@@ -58,6 +58,8 @@ func _default_data() -> Dictionary:
 			"show_damage_numbers": true,
 			"screen_shake": true,
 			"tutorial_done": false,
+			"ui_scale": 1.0,
+			"reduced_vfx": false,
 		},
 		"meta": {
 			"gold": 0,

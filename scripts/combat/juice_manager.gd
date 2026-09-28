@@ -65,6 +65,9 @@ func _on_enemy_damaged(enemy: Node, amount: float, is_crit: bool) -> void:
 		_number_throttle_ms = now + min_gap
 
 func _on_enemy_died(enemy: Node, pos: Vector3) -> void:
+	# V19: reduced-VFX skips kill bursts (damage numbers stay)
+	if SaveManager != null and SaveManager.get_setting("reduced_vfx", false):
+		return
 	var burst: Node3D = _acquire(KILL_BURST_SCENE)
 	if burst != null:
 		var color: Color = Color(1, 1, 1)

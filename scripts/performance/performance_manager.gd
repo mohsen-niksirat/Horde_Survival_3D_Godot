@@ -296,7 +296,14 @@ func particle_cap() -> int:
 		cap = maxi(12, int(cap * WEB_PARTICLE_CAP_SCALE))
 	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
 		cap = maxi(12, int(cap * TOUCH_PARTICLE_CAP_SCALE))
+	# V19: reduced-VFX setting shrinks particle budget
+	if SaveManager != null and SaveManager.get_setting("reduced_vfx", false):
+		cap = maxi(8, int(cap * 0.45))
 	return cap
+
+## V19: call when the reduced-VFX setting changes.
+func notify_reduced_vfx() -> void:
+	quality_changed.emit(quality)
 
 func damage_number_cap() -> int:
 	var cap: int = DAMAGE_NUMBER_CAPS.get(quality, 12)
