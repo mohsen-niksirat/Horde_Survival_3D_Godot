@@ -48,6 +48,12 @@ func _on_damaged(event: DamageEvent) -> void:
 	if event.status_effect != "":
 		status.apply(event.status_effect, event.status_duration)
 	_hit_flash()
+	# R3: micro hit-stop on elite/boss crits only (rate-limited)
+	if event.is_crit and elite != null and Engine.time_scale >= 1.0:
+		if SaveManager == null or not SaveManager.get_setting("reduced_vfx", false):
+			Engine.time_scale = 0.7
+			get_tree().create_timer(0.04, true, false, true).timeout.connect(func():
+				Engine.time_scale = 1.0)
 
 func _hit_flash() -> void:
 	# Flash all archetype part materials white briefly
@@ -291,6 +297,12 @@ func _on_died() -> void:
 	_alive = false
 	if elite != null:
 		elite.on_death()
+		# R3: gold burst so elite deaths read in the horde
+		var burst := PoolManager.acquire("res://scenes/vfx/KillBurst.tscn")
+		if burst != null:
+			PoolManager.tag(burst, "res://scenes/vfx/KillBurst.tscn")
+			get_tree().current_scene.add_child(burst)
+			burst.trigger(global_position, Color(1.0, 0.85, 0.25))
 	# Splitter behavior: leave copies behind (pooled, once per life)
 	if data != null and data.splits_into != "" and not _split_done:
 		_split_done = true

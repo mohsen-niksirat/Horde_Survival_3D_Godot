@@ -166,6 +166,7 @@ func _process(delta: float) -> void:
 	xp_bar.value = lerpf(xp_bar.value, _player.experience.current_xp, minf(10.0 * delta, 1.0))
 	level_label.text = "Lv %d" % _player.experience.level
 	_process_hints(delta)
+	_process_boss_bar()
 
 	# Ability cooldown indicators
 	if _ability_controller != null:
@@ -174,6 +175,30 @@ func _process(delta: float) -> void:
 			var ratio: float = _ability_controller.get_cooldown_ratio(data.id)
 			var btn := ability1_button if data.id == "meteor_strike" else ability2_button
 			btn.modulate = Color(1, 1, 1, 0.4 if ratio > 0.0 else 1.0)
+
+func _process_boss_bar() -> void:
+	if boss_bar == null:
+		return
+	var boss := get_tree().get_first_node_in_group("boss") if get_tree() != null else null
+	if boss == null or not is_instance_valid(boss) or not boss.is_enemy_alive():
+		boss_bar.visible = false
+		return
+	boss_bar.visible = true
+	boss_bar.max_value = boss.health.max_hp
+	boss_bar.value = boss.health.current_hp
+	# R3: bar tint tracks fight phase
+	var ratio: float = boss.health.get_ratio()
+	var fill := boss_bar.get_theme_stylebox("fill") as StyleBoxFlat
+	if fill == null:
+		fill = StyleBoxFlat.new()
+		fill.bg_color = Color(0.85, 0.2, 0.15)
+		boss_bar.add_theme_stylebox_override("fill", fill)
+	if ratio < 0.3:
+		fill.bg_color = Color(1.0, 0.15, 0.08)
+	elif ratio < 0.6:
+		fill.bg_color = Color(1.0, 0.45, 0.12)
+	else:
+		fill.bg_color = Color(0.9, 0.25, 0.2)
 
 func _update_fps_label() -> void:
 	if fps_label == null:
