@@ -25,7 +25,11 @@ static func threat_budget(minutes: float) -> float:
 		return 2.0 + minutes * 2.2 + minutes * minutes * 0.08
 	var at10 := 2.0 + 10.0 * 2.2 + 100.0 * 0.08
 	var extra := minutes - 10.0
-	return at10 + extra * 2.0 + extra * extra * 0.06
+	var budget := at10 + extra * 2.0 + extra * extra * 0.06
+	# R10: standard-run finale — last 2 minutes get denser hordes
+	if not RunManager.endless and minutes >= 13.0:
+		budget *= 1.35
+	return budget
 
 ## Spawn interval shrinks over time (floor keeps late hordes readable).
 static func spawn_interval(minutes: float) -> float:

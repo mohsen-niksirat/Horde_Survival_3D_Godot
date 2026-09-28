@@ -30,3 +30,4 @@ signal combo_changed(count: int, multiplier: float)
 signal settings_changed()
 ## Magnet pickup: XP shards start a soft staggered pull for N seconds.
 signal magnet_pulse(duration: float)
+signal achievement_unlocked(id: String, title: String, gold: int)

@@ -83,4 +83,6 @@ func _unlock(id: String) -> void:
 			var gold: int = def["gold"]
 			SaveManager.set_meta_data("gold", SaveManager.get_meta_data("gold", 0) + gold)
 			achievement_unlocked.emit(id, def["title"], gold)
+			if EventBus != null:
+				EventBus.achievement_unlocked.emit(id, def["title"], gold)
 			return

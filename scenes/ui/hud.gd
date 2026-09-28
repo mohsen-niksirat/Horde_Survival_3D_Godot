@@ -58,6 +58,12 @@ func bind_player(player: Node) -> void:
 	RunManager.kills_changed.connect(_on_kills)
 	EventBus.combo_changed.connect(_on_combo)
 	EventBus.upgrade_applied.connect(_on_upgrade_applied)
+	EventBus.run_ended.connect(_on_run_ended_toast)
+	EventBus.achievement_unlocked.connect(_on_achievement_unlocked)
+
+func _on_achievement_unlocked(_id: String, title: String, gold: int) -> void:
+	_show_toast("ACHIEVEMENT: %s (+%d gold)" % [title, gold])
+	AudioManager.play_game_sfx("level_up")
 	pause_button.pressed.connect(_on_pause_pressed)
 	# Connect once here — not in the visibility handler (that re-ran every state change)
 	if not zoom_in_button.pressed.is_connected(_on_zoom_in):
@@ -89,6 +95,12 @@ func _on_upgrade_applied(title: String) -> void:
 	_refresh_weapon_icons()
 	# Playtest: relic/chest pickups must show what you got
 	_show_toast(title)
+
+func _on_run_ended_toast(victory: bool) -> void:
+	if victory:
+		_show_toast("VICTORY! +250 gold")
+	else:
+		_show_toast("You fell to the horde...")
 
 func _show_toast(text: String) -> void:
 	if hint_label == null:
