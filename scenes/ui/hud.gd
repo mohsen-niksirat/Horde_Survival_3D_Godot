@@ -34,6 +34,7 @@ const HINTS := [
 var _hint_time: float = 0.0
 var _hint_index: int = 0
 var _hints_active: bool = false
+var _toast_left: float = 0.0
 
 var _player: Node
 var _ability_controller: Node
@@ -82,8 +83,19 @@ func _on_fullscreen_pressed() -> void:
 func _on_hud_visibility(new_state: int, _old: int) -> void:
 	visible = not (new_state == GameManager.State.PAUSED or new_state == GameManager.State.LEVEL_UP)
 
-func _on_upgrade_applied(_title: String) -> void:
+func _on_upgrade_applied(title: String) -> void:
 	_refresh_weapon_icons()
+	# Playtest: relic/chest pickups must show what you got
+	_show_toast(title)
+
+func _show_toast(text: String) -> void:
+	if hint_label == null:
+		return
+	hint_label.text = text
+	hint_label.visible = true
+	hint_label.modulate.a = 1.0
+	_toast_left = 3.5
+	_hints_active = false
 
 ## V7: data-driven weapon icons with level pips.
 func _refresh_weapon_icons() -> void:
@@ -187,9 +199,15 @@ func _on_kills(kills: int) -> void:
 	kills_label.text = "Kills: %d  Gold: %d" % [kills, int(RunManager.gold_earned)]
 
 func _process_hints(delta: float) -> void:
+	# Toast (relic pickup, synergy) always wins over onboarding hints
+	if _toast_left > 0.0:
+		_toast_left -= delta
+		hint_label.visible = true
+		hint_label.modulate.a = clampf(_toast_left / 0.6, 0.0, 1.0)
+		return
 	# Contextual onboarding: only during the first 90 seconds of a run
 	if not RunManager.is_running or RunManager.elapsed_time > 90.0:
-		if hint_label.visible:
+		if hint_label.visible and _toast_left <= 0.0:
 			hint_label.visible = false
 			_hints_active = false
 		return

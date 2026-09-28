@@ -76,7 +76,7 @@ func _initialize() -> void:
 
 	# --- Difficulty math sanity ---
 	_check(absf(DifficultyManager.difficulty_multiplier(1, 0.0) - 1.18) < 0.01, "difficulty at start = 1.18")
-	_check(DifficultyManager.hp_scale(20.0) == 10.0, "hp scale capped at 10")
+	_check(DifficultyManager.hp_scale(20.0) == 12.0, "hp scale capped at 12")
 	_check(DifficultyManager.spawn_interval(0.0) == 2.0, "spawn interval starts 2s")
 	_check(DifficultyManager.spawn_interval(100.0) == 0.45, "spawn interval floors at 0.45s (V18)")
 

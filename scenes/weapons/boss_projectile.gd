@@ -1,8 +1,8 @@
 extends Area3D
 ## Boss projectile: straight flight, damages the player on contact. Pooled.
 
-const LIFETIME := 4.0
-const SPEED := 10.0
+const LIFETIME := 4.5
+const SPEED := 6.5
 
 var damage: float = 14.0
 var _velocity: Vector3 = Vector3.ZERO

@@ -33,9 +33,20 @@ func _ready() -> void:
 	# so any parent-node transforms still behave the same).
 	var m := get_node_or_null("Mesh") as MeshInstance3D
 	if m != null and m.get_child_count() == 0:
-		var rig := RigUtil.attach_glb(m, "res://assets/models/xp_shard.glb", 0.45, "ShardRig")
+		# Playtest: smaller pickup so the floor stays readable in hordes
+		var rig := RigUtil.attach_glb(m, "res://assets/models/xp_shard.glb", 0.28, "ShardRig")
 		if rig != null:
 			m.mesh = null
+			# Distinct mint-cyan so XP never blends with white hit FX / red orbs
+			for mi in rig.find_children("*", "MeshInstance3D", true, false):
+				var active = mi.get_active_material(0)
+				if active is StandardMaterial3D:
+					var mat: StandardMaterial3D = (active as StandardMaterial3D).duplicate()
+					mat.albedo_color = Color(0.25, 1.0, 0.75)
+					mat.emission_enabled = true
+					mat.emission = Color(0.15, 0.95, 0.7)
+					mat.emission_energy_multiplier = 1.6
+					mi.set_surface_override_material(0, mat)
 
 func setup(p_value: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	value = p_value
@@ -60,10 +71,10 @@ func _on_magnet_pulse(duration: float) -> void:
 	_magnetized = false
 	if _player != null and is_instance_valid(_player):
 		var d: float = global_position.distance_to(_player.global_position)
-		# 0–2.2s stagger by distance so the field "arrives" as a wave
-		_pulse_stagger = clampf(d / 28.0, 0.0, 1.0) * 2.2
+		# Playtest: magnet must feel instant — only a tiny wave stagger
+		_pulse_stagger = clampf(d / 40.0, 0.0, 1.0) * 0.15
 	else:
-		_pulse_stagger = randf_range(0.0, 1.0)
+		_pulse_stagger = randf_range(0.0, 0.08)
 
 func _process(delta: float) -> void:
 	if _player == null or not is_instance_valid(_player):
@@ -86,21 +97,21 @@ func _process(delta: float) -> void:
 		_pulse_left -= delta
 		if _pulse_stagger > 0.0:
 			_pulse_stagger -= delta
-		else:
-			_magnetized = true
-			var t := 1.0 - clampf(_pulse_left / _pulse_total, 0.0, 1.0)
-			# Ease-in speed + slight swirl for a soft animation
-			var speed := lerpf(PULSE_SPEED_START, PULSE_SPEED_END, t * t)
-			var dir := to_player.normalized() if dist > 0.01 else Vector3.ZERO
-			var swirl := Vector3.UP.cross(dir).normalized() * sin(_wobble + t * 6.0) * (1.0 - t) * 0.45
-			var move := (dir + swirl)
-			if move.length_squared() > 0.0001:
-				move = move.normalized()
-			global_position += move * speed * delta
-			global_position.y = lerpf(global_position.y, 0.7, 4.0 * delta)
-			if dist < 1.2:
-				_collect()
-				return
+		# Playtest: start pulling immediately (tiny stagger only for feel)
+		_magnetized = true
+		var t := 1.0 - clampf(_pulse_left / _pulse_total, 0.0, 1.0)
+		# Ease-in speed + slight swirl for a soft animation
+		var speed := lerpf(PULSE_SPEED_START, PULSE_SPEED_END, t * t)
+		var dir := to_player.normalized() if dist > 0.01 else Vector3.ZERO
+		var swirl := Vector3.UP.cross(dir).normalized() * sin(_wobble + t * 6.0) * (1.0 - t) * 0.45
+		var move := (dir + swirl)
+		if move.length_squared() > 0.0001:
+			move = move.normalized()
+		global_position += move * speed * delta
+		global_position.y = lerpf(global_position.y, 0.7, 4.0 * delta)
+		if dist < 1.2:
+			_collect()
+			return
 		if _pulse_left <= 0.0:
 			_pulse_active = false
 			# Keep normal magnet behavior if still near player

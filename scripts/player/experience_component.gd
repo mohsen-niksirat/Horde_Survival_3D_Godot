@@ -3,8 +3,8 @@ extends Node
 
 signal leveled_up(new_level: int)
 
-const XP_BASE := 12.0
-const XP_GROWTH := 1.18
+const XP_BASE := 18.0
+const XP_GROWTH := 1.22
 
 var level: int = 1
 var current_xp: float = 0.0

@@ -37,8 +37,7 @@ func _on_kill(_enemy: Node, _pos: Vector3) -> void:
 	_emit_combo()
 
 func _emit_combo() -> void:
-	var multiplier: float = 1.0 + float(count / 5) * 0.1
-	EventBus.combo_changed.emit(count, multiplier)
+	EventBus.combo_changed.emit(count, get_multiplier())
 	var tier := get_tier()
 	if tier != _last_tier:
 		_last_tier = tier
@@ -51,8 +50,11 @@ func get_tier() -> String:
 			return t["name"]
 	return "BRONZE"
 
+## Playtest: combo streak can hit thousands — cap XP multiplier so leveling
+## does not explode. Display still shows the raw streak count.
 func get_multiplier() -> float:
-	return 1.0 + float(count / 5) * 0.1
+	var mult := 1.0 + float(count / 5) * 0.1
+	return minf(mult, 3.5)
 
 func reset() -> void:
 	count = 0

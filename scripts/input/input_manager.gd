@@ -8,6 +8,7 @@ var _look_delta: Vector2 = Vector2.ZERO
 var _touch_move_vector: Vector2 = Vector2.ZERO
 var _touch_look_delta: Vector2 = Vector2.ZERO
 var _zoom_delta: float = 0.0
+var _last_touch_move_ms: int = 0
 
 var _using_touch: bool = false
 
@@ -72,6 +73,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func set_touch_move_vector(vec: Vector2) -> void:
 	_touch_move_vector = vec
+	_last_touch_move_ms = Time.get_ticks_msec()
 	_using_touch = true
 
 func set_touch_look_delta(delta: Vector2) -> void:
@@ -85,12 +87,26 @@ func clear_touch() -> void:
 	_using_touch = false
 
 func get_move_vector() -> Vector2:
-	var vec := Vector2.ZERO
-	vec.x = Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
-	vec.y = Input.get_action_strength("move_down") - Input.get_action_strength("move_up")
-	vec += _touch_move_vector
+	# Playtest: never let a stale touch stick keep moving after key release.
+	var key_vec := Vector2.ZERO
+	key_vec.x = Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
+	key_vec.y = Input.get_action_strength("move_down") - Input.get_action_strength("move_up")
+	var vec := key_vec
+	if key_vec.length_squared() < 0.0001:
+		# No keyboard — only trust touch if it was updated very recently
+		if _using_touch and Time.get_ticks_msec() - _last_touch_move_ms < 120:
+			vec = _touch_move_vector
+		else:
+			_touch_move_vector = Vector2.ZERO
+			vec = Vector2.ZERO
+	else:
+		# Keyboard wins; drop leftover stick
+		_touch_move_vector = Vector2.ZERO
 	if vec.length() > 1.0:
 		vec = vec.normalized()
+	# Hard floor so near-zero stick noise doesn't creep the player
+	if vec.length() < 0.08:
+		vec = Vector2.ZERO
 	return vec
 
 func get_look_delta() -> Vector2:

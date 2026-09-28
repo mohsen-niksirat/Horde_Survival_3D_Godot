@@ -19,6 +19,11 @@ func _process(delta: float) -> void:
 	if is_running and not get_tree().paused:
 		elapsed_time += delta
 		time_changed.emit(elapsed_time)
+		# Playtest: standard runs must END with victory (endless is the open mode)
+		if not endless and elapsed_time >= target_duration:
+			is_running = false
+			boss_active = false
+			GameManager.game_over(true)
 
 func start_run() -> void:
 	is_running = true
@@ -26,6 +31,7 @@ func start_run() -> void:
 	kills = 0
 	gold_earned = 0.0
 	boss_active = false
+	endless = false
 	EventBus.run_started.emit()
 
 func start_run_endless() -> void:

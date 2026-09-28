@@ -20,5 +20,5 @@ gold = 3.0
 spawn_weight = 3.0
 threat_cost = 3.0
 ranged_attack = true
-ranged_cooldown = 2.8
-ranged_damage = 10.0
+ranged_cooldown = 3.6
+ranged_damage = 7.0

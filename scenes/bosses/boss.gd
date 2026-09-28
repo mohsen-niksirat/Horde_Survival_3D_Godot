@@ -93,7 +93,7 @@ func setup(p_player: Node3D, p_enemy_manager: Node, p_arena: Node3D, level_scale
 	player = p_player
 	enemy_manager = p_enemy_manager
 	arena = p_arena
-	health.set_scaled(600.0, 4.0, level_scale)
+	health.set_scaled(900.0, 4.0, level_scale)
 	alive = true
 	phase = BossPhase.ONE
 	_slam_timer = 3.0

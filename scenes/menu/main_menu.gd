@@ -31,10 +31,11 @@ func _update_stats() -> void:
 	var best_time: float = SaveManager.get_meta_data("best_time", 0.0)
 	var total_kills: int = SaveManager.get_meta_data("total_kills", 0)
 	var achievements: Dictionary = SaveManager.get_meta_data("achievements", {})
+	var victories: int = SaveManager.get_meta_data("victories", 0)
 	var minutes := int(best_time) / 60
 	var seconds := int(best_time) % 60
-	stats_label.text = "Gold: %d | Best: %02d:%02d | Kills: %d | Achievements: %d" % [
-		gold, minutes, seconds, total_kills, achievements.size()
+	stats_label.text = "Gold: %d | Best: %02d:%02d | Wins: %d | Kills: %d | Achievements: %d" % [
+		gold, minutes, seconds, victories, total_kills, achievements.size()
 	]
 
 func _on_play_pressed() -> void:

@@ -82,7 +82,7 @@ func _spawn_boss(stat_scale: float = 1.0) -> void:
 	pos.x = clampf(pos.x, -55, 55)
 	pos.z = clampf(pos.z, -55, 55)
 	boss.global_position = Vector3(pos.x, 0.5, pos.z)
-	boss.setup(player, enemy_manager, arena, DifficultyManager.hp_scale(DifficultyManager.difficulty_multiplier(player.experience.level, RunManager.elapsed_time / 60.0)) * 0.4 * stat_scale)
+	boss.setup(player, enemy_manager, arena, DifficultyManager.hp_scale(DifficultyManager.difficulty_multiplier(player.experience.level, RunManager.elapsed_time / 60.0)) * 0.55 * stat_scale)
 	# Register the boss in the active list so weapons can target it
 	if not enemy_manager.active_enemies.has(boss):
 		enemy_manager.active_enemies.append(boss)

@@ -7,17 +7,18 @@ static var _mat_cache: Dictionary = {}
 
 ## Strong silhouette-color identity per archetype so the pale arena and
 ## glowing projectiles never blur into one wash.
+## Playtest: darker tints — white arena made pale enemies hard to see.
 const ENEMY_TINTS := {
-	"basic_drone": Color(0.35, 0.55, 0.95),
-	"fast_wisp": Color(0.1, 0.95, 1.0),
-	"tank_golem": Color(0.62, 0.4, 0.2),
-	"shooter_turret": Color(1.0, 0.5, 0.1),
-	"swarm_bat": Color(0.8, 0.3, 0.95),
-	"ghost": Color(0.5, 0.8, 1.0),
-	"splitter": Color(0.3, 0.95, 0.4),
-	"healer": Color(1.0, 0.9, 0.3),
-	"mage": Color(0.65, 0.3, 1.0),
-	"swarm_bat_mini": Color(0.8, 0.3, 0.95),
+	"basic_drone": Color(0.18, 0.32, 0.72),
+	"fast_wisp": Color(0.05, 0.55, 0.7),
+	"tank_golem": Color(0.38, 0.22, 0.1),
+	"shooter_turret": Color(0.75, 0.28, 0.05),
+	"swarm_bat": Color(0.48, 0.12, 0.62),
+	"ghost": Color(0.22, 0.38, 0.62),
+	"splitter": Color(0.12, 0.55, 0.22),
+	"healer": Color(0.72, 0.58, 0.12),
+	"mage": Color(0.42, 0.12, 0.72),
+	"swarm_bat_mini": Color(0.48, 0.12, 0.62),
 }
 
 const ENEMY_SCENES := {
@@ -86,6 +87,8 @@ static func _tint_recursive(node: Node, tint: Color, strength: float) -> void:
 		if mat != null:
 			var c: Color = mat.albedo_color
 			c = c.lerp(tint, strength)
+			# Playtest: darken so silhouettes pop on the light dungeon floor
+			c = c.darkened(0.22)
 			mat.albedo_color = c
 			mat.set_meta("base_color", c)
 	for c in node.get_children():
@@ -173,8 +176,8 @@ static func _mat(color: Color, emission: float = 0.0, transparency: int = BaseMa
 	return m
 
 static func _build_drone(v: Node3D) -> void:
-	var body_mat := _mat(Color(0.62, 0.67, 0.72))
-	var accent_mat := _mat(Color(0.95, 0.45, 0.25), 0.8)
+	var body_mat := _mat(Color(0.38, 0.42, 0.5))
+	var accent_mat := _mat(Color(0.7, 0.28, 0.12), 0.8)
 	_sphere(v, body_mat, 0.5, Vector3(0, 0.55, 0))
 	_mesh(v, SphereMesh.new(), accent_mat, Vector3(0, 0.55, 0)).scale = Vector3(0.28, 0.28, 0.28)
 	var pole := CylinderMesh.new()
@@ -270,8 +273,8 @@ static func animate(visual_root: Node3D, archetype_id: String, time: float, seed
 					child.position.y = child.get_meta("base_y") + sin(time * 5.0 + seed_val) * 0.03
 
 static func _build_ghost(v: Node3D) -> void:
-	var pale := _mat(Color(0.75, 0.85, 0.95, 0.55), 0.0, BaseMaterial3D.TRANSPARENCY_ALPHA)
-	var eye := _mat(Color(0.1, 0.2, 0.4, 1))
+	var pale := _mat(Color(0.35, 0.48, 0.62, 0.7), 0.0, BaseMaterial3D.TRANSPARENCY_ALPHA)
+	var eye := _mat(Color(0.05, 0.1, 0.25, 1))
 	var body := SphereMesh.new()
 	body.radius = 0.42
 	body.height = 0.84
@@ -301,8 +304,8 @@ static func _build_splitter(v: Node3D) -> void:
 	_mesh(v, lobe, inner, Vector3(0.2, 0.55, 0))
 
 static func _build_healer(v: Node3D) -> void:
-	var cloth := _mat(Color(0.92, 0.92, 0.88))
-	var sigil := _mat(Color(0.4, 1.0, 0.5), 1.8)
+	var cloth := _mat(Color(0.55, 0.55, 0.48))
+	var sigil := _mat(Color(0.25, 0.75, 0.35), 1.8)
 	var robe := CylinderMesh.new()
 	robe.top_radius = 0.22
 	robe.bottom_radius = 0.42
