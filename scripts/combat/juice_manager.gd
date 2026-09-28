@@ -49,8 +49,14 @@ func _acquire(scene_path: String) -> Node3D:
 
 func _on_enemy_damaged(enemy: Node, amount: float, is_crit: bool) -> void:
 	var now := Time.get_ticks_msec()
-	var cap: int = PerformanceManager.damage_number_cap() if PerformanceManager != null else 30
-	var min_gap := maxi(16, int(1000.0 / maxf(float(cap), 1.0)))
+	# V15A: skip cheap non-crits entirely when the horde is huge
+	if PerformanceManager != null and PerformanceManager.should_skip_damage_number(is_crit, amount):
+		return
+	var min_gap: int
+	if PerformanceManager != null:
+		min_gap = PerformanceManager.damage_number_min_gap_ms()
+	else:
+		min_gap = 33
 	if not is_crit and now < _number_throttle_ms:
 		return
 	var number: Node3D = _acquire(DAMAGE_NUMBER_SCENE)

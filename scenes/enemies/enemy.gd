@@ -32,6 +32,7 @@ var _phase_timer: float = 0.0
 var _split_done: bool = false
 var _active_tweens: Array = []
 var _last_phasing: bool = false
+var _elite_ring: MeshInstance3D = null
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -136,10 +137,12 @@ func make_elite(p_abilities: Array) -> void:
 	ring_mat.emission = Color(1.0, 0.75, 0.15, 1)
 	ring_mat.emission_energy_multiplier = 1.6
 	ring_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	ring.material_override = ring_mat
 	ring.position = Vector3(0, 0.06, 0)
-	ring.scale = Vector3(1.2, 1.0, 1.2)
+	ring.scale = Vector3(1.25, 1.0, 1.25)
 	add_child(ring)
+	_elite_ring = ring
 	elite = $EliteComponent
 	elite.setup(self, _player, get_parent().get_parent().get_enemy_manager() if get_parent().get_parent().has_method("get_enemy_manager") else get_parent().get_parent(), p_abilities)
 
@@ -233,6 +236,7 @@ func _physics_process(delta: float) -> void:
 		PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
 	if dist < 28.0:
 		EnemyVisuals.animate(_mesh, data.id, Time.get_ticks_msec() / 1000.0, _wobble_seed, Vector2(velocity.x, velocity.z).length())
+	_animate_elite_ring()
 
 ## Ghost phasing: periodically untargetable.
 func _is_phasing() -> bool:
@@ -326,7 +330,19 @@ func _kill_tweens() -> void:
 			t.kill()
 	_active_tweens.clear()
 
+func _animate_elite_ring() -> void:
+	if _elite_ring == null or not is_instance_valid(_elite_ring):
+		return
+	# Slow pulse so the ring stays readable without strobing in dense hordes
+	var t := Time.get_ticks_msec() / 1000.0
+	var pulse := 1.0 + 0.08 * sin(t * 2.4 + _wobble_seed)
+	_elite_ring.scale = Vector3(1.25 * pulse, 1.0, 1.25 * pulse)
+	var mat := _elite_ring.material_override as StandardMaterial3D
+	if mat != null:
+		mat.emission_energy_multiplier = 1.4 + 0.5 * (0.5 + 0.5 * sin(t * 2.4 + _wobble_seed))
+
 func _clear_elite_ring() -> void:
+	_elite_ring = null
 	var ring := get_node_or_null("EliteRing")
 	if ring != null:
 		ring.queue_free()

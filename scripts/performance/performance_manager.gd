@@ -58,6 +58,9 @@ const STRESS_PRESSURE := 0.75
 const STRESS_ENEMY_MIN := 45
 const STRESS_FPS := 32
 const STRESS_CAP_SCALE := 0.65
+## V15A: at 150+ active enemies the screen is already noisy — clamp damage numbers hard.
+const DAMAGE_NUMBER_HEAVY_ENEMIES := 150
+const DAMAGE_NUMBER_HEAVY_SCALE := 0.4
 
 var quality: int = Quality.VERY_LOW
 var auto_mode: bool = false
@@ -303,7 +306,28 @@ func damage_number_cap() -> int:
 		cap = maxi(8, int(cap * TOUCH_DAMAGE_NUMBER_CAP_SCALE))
 	if stress_mode:
 		cap = maxi(6, int(cap * 0.5))
+	# V15A: 150+ enemies — fewer floating numbers so combat stays readable
+	if active_enemies >= DAMAGE_NUMBER_HEAVY_ENEMIES:
+		cap = maxi(4, int(cap * DAMAGE_NUMBER_HEAVY_SCALE))
 	return cap
+
+## V15A: milliseconds between non-crit damage numbers (crits stay unthrottled-ish).
+func damage_number_min_gap_ms() -> int:
+	var cap := damage_number_cap()
+	var gap := maxi(16, int(1000.0 / maxf(float(cap), 1.0)))
+	# Heavy horde: stretch the gap so numbers don't stack into a wall of text
+	if active_enemies >= DAMAGE_NUMBER_HEAVY_ENEMIES:
+		gap = maxi(gap, 90)
+	return gap
+
+## V15A: at extreme load, only crits / big hits get a floating number.
+func should_skip_damage_number(is_crit: bool, amount: float) -> bool:
+	if is_crit:
+		return false
+	if active_enemies >= DAMAGE_NUMBER_HEAVY_ENEMIES:
+		# Keep rare big hits visible; drop constant small-hit spam
+		return amount < 40.0
+	return false
 
 ## True when far enemies should skip full physics this tick (horde LOD).
 func should_throttle_enemy_ai() -> bool:

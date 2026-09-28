@@ -13,6 +13,13 @@ const GRAVITY := 25.0
 const SLAM_TELEGRAPH := 1.1
 const SLAM_RADIUS := 5.0
 
+## V15A telegraph colors: phase-coded so the player reads threat level at a glance.
+const TELEGRAPH_COLORS := {
+	BossPhase.ONE: Color(1.0, 0.55, 0.15, 0.85),
+	BossPhase.TWO: Color(1.0, 0.35, 0.1, 0.9),
+	BossPhase.ENRAGE: Color(1.0, 0.12, 0.08, 0.95),
+}
+
 const BOSS_RIG := "res://assets/models/kaykit/monsters/skeleton_warrior.glb"
 const BOSS_HEIGHT := 5.6
 
@@ -32,6 +39,7 @@ var _summon_timer: float = 8.0
 var _telegraph: MeshInstance3D
 var _telegraph_active: bool = false
 var _telegraph_pos: Vector3
+var _telegraph_mat: StandardMaterial3D = null
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -39,7 +47,16 @@ func _ready() -> void:
 	health.died.connect(_on_died)
 	_telegraph = $Telegraph
 	_telegraph.visible = false
+	_cache_telegraph_mat()
 	_attach_rig()
+
+func _cache_telegraph_mat() -> void:
+	var ring := _telegraph.get_node_or_null("TelegraphRing")
+	if ring == null:
+		return
+	var mat := ring.get_active_material(0) as StandardMaterial3D
+	if mat != null:
+		_telegraph_mat = mat
 
 ## Swap the primitive sphere stack for a giant animated skeleton.
 func _attach_rig() -> void:
@@ -102,7 +119,11 @@ func _physics_process(delta: float) -> void:
 
 	# Telegraphed slam in progress?
 	if _telegraph_active:
-		_telegraph.scale = Vector3.ONE * (1.0 + (1.0 - _slam_timer / SLAM_TELEGRAPH) * 0.5)
+		var charge := 1.0 - (_slam_timer / SLAM_TELEGRAPH)
+		_telegraph.scale = Vector3.ONE * (1.0 + charge * 0.5)
+		if _telegraph_mat != null:
+			# Pulse brighter as impact approaches
+			_telegraph_mat.emission_energy_multiplier = 1.6 + charge * 2.2
 		if _slam_timer <= 0.0:
 			_execute_slam()
 		move_and_slide()
@@ -161,8 +182,17 @@ func _start_slam() -> void:
 	_telegraph_pos = player.global_position
 	_telegraph.global_position = Vector3(_telegraph_pos.x, 0.06, _telegraph_pos.z)
 	_telegraph.visible = true
+	_apply_telegraph_color()
 	# Loud audio cue so the player knows to move even mid-horde
 	AudioManager.play_game_sfx("boss_warn")
+
+func _apply_telegraph_color() -> void:
+	if _telegraph_mat == null:
+		return
+	var base: Color = TELEGRAPH_COLORS.get(phase, TELEGRAPH_COLORS[BossPhase.ONE])
+	_telegraph_mat.albedo_color = base
+	_telegraph_mat.emission = Color(base.r, base.g, base.b, 1.0)
+	_telegraph_mat.emission_energy_multiplier = 1.6
 
 func _execute_slam() -> void:
 	_telegraph_active = false

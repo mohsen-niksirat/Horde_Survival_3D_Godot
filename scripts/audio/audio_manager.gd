@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 ## Audio playback: music + pooled SFX players, volume buses.
 ## Web-safe: playback only starts after user gesture (Click-to-Play) in the web shell.
 
@@ -170,11 +170,11 @@ func play_sfx(stream: AudioStream, volume_db_offset: float = 0.0, pitch: float =
 func play_sfx_tiered(stream: AudioStream, tier: int, volume_db_offset: float = 0.0, pitch: float = 1.0) -> void:
 	# Rate-limit ambient/low-tier sounds under load
 	if _GATE_THRESHOLDS[tier] > 0.0:
-		var key := stream.get_instance_id()
-		var last := _sfx_gate.get(key, -999.0)
+		var key: int = stream.get_instance_id()
+		var last: float = float(_sfx_gate.get(key, -999.0))
 		if Time.get_ticks_msec() - last < _GATE_THRESHOLDS[tier] * 1000.0:
 			return
-		_sfx_gate[key] = Time.get_ticks_msec()
+		_sfx_gate[key] = float(Time.get_ticks_msec())
 	var player := _free_sfx_player()
 	if player == null:
 		if tier < SfxTier.AMBIENT:
@@ -183,7 +183,7 @@ func play_sfx_tiered(stream: AudioStream, tier: int, volume_db_offset: float = 0
 		else:
 			return
 	# Apply tier-based volume scaling (ducking under stress)
-	var vol_scale := TIER_VOLUME_SCALE.get(tier, 1.0)
+	var vol_scale: float = float(TIER_VOLUME_SCALE.get(tier, 1.0))
 	player.stream = stream
 	player.volume_db = linear_to_db(clampf(sfx_volume * master_volume * vol_scale, 0.001, 1.0)) + volume_db_offset
 	player.pitch_scale = pitch
@@ -199,7 +199,7 @@ func _free_sfx_player() -> AudioStreamPlayer:
 
 ## Named SFX presets used across the game.
 func play_game_sfx(id: String) -> void:
-	var tier := SFX_IMPORTANCE.get(id, SfxTier.IMPORTANT)
+	var tier: int = int(SFX_IMPORTANCE.get(id, SfxTier.IMPORTANT))
 	match id:
 		"weapon_fire":
 			play_recipe_tiered("shoot_fb", [
@@ -235,7 +235,7 @@ func play_game_sfx(id: String) -> void:
 				{"freq": 55.0, "glide": 0.7, "dur": 0.5, "kind": "sine", "gain": 0.8, "decay": 1.6},
 			], -2.0)
 		"boss_die":
-			play_recipe("boss_d", [
+			play_recipe_tiered("boss_d", [
 				{"freq": 160.0, "glide": 0.15, "dur": 0.9, "kind": "saw", "gain": 1.0, "decay": 1.8},
 				{"freq": 0.0, "glide": 1.0, "dur": 0.55, "kind": "noise", "gain": 0.7, "decay": 2.0},
 				{"freq": 48.0, "glide": 0.5, "dur": 1.0, "kind": "sine", "gain": 1.0, "decay": 1.2},
@@ -290,7 +290,7 @@ func get_music_db() -> float:
 ## Under stress or low quality, reduce SFX pool size and shorten gate thresholds.
 func _on_performance_tier_changed(tier: int) -> void:
 	var pm: Node = PerformanceManager
-	var reduce := pm.stress_mode or pm.quality <= pm.Quality.LOW
+	var reduce: bool = bool(pm.stress_mode) or int(pm.quality) <= int(pm.Quality.LOW)
 	# Shrink SFX pool under pressure to free audio voices
 	var target_size := SFX_POOL_SIZE if not reduce else 6
 	while _sfx_players.size() > target_size:
