@@ -153,6 +153,18 @@ func bind_abilities(controller: Node) -> void:
 
 func _process(delta: float) -> void:
 	timer_label.text = RunManager.get_time_string()
+	# R9: standard runs show remaining time to victory
+	if not RunManager.endless and RunManager.is_running:
+		var left: float = maxf(RunManager.target_duration - RunManager.elapsed_time, 0.0)
+		var lm := int(left) / 60
+		var ls := int(left) % 60
+		timer_label.text = "%s  (win %d:%02d)" % [RunManager.get_time_string(), lm, ls]
+		if left < 60.0:
+			timer_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+		else:
+			timer_label.add_theme_color_override("font_color", Color.WHITE)
+	else:
+		timer_label.add_theme_color_override("font_color", Color.WHITE)
 	_fps_accum += delta
 	if _fps_accum >= 0.25:
 		_fps_accum = 0.0

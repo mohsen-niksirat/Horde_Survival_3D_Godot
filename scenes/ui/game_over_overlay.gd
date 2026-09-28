@@ -51,6 +51,7 @@ func _commit_run() -> void:
 		RunManager.kills,
 		int(gold_earned),
 	]
+	stats_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35) if _victory else Color(1.0, 0.55, 0.5))
 
 func _on_retry() -> void:
 	GameManager.start_game()
