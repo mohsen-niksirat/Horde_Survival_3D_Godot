@@ -20,6 +20,7 @@ var has_revive: bool = false
 
 var _face_yaw: float = 0.0
 var _base_hp: float = 100.0
+var _identity: Node3D = null
 
 func _ready() -> void:
 	add_to_group("player")
@@ -34,6 +35,14 @@ func _ready() -> void:
 	EventBus.xp_collected.connect(_on_xp_collected)
 
 func bind_combat(enemy_manager: Node, projectile_root: Node3D) -> void:
+	# V16: character identity VFX (aura / trail)
+	if _identity == null:
+		var id_script := load("res://scenes/player/character_identity.gd")
+		if id_script != null:
+			_identity = Node3D.new()
+			_identity.set_script(id_script)
+			add_child(_identity)
+			_identity.setup(self)
 	## Called by Main after both player and systems exist.
 	weapon_controller.setup(self, enemy_manager, projectile_root)
 	# Starting weapon: selected character's weapon (V13), default fireball

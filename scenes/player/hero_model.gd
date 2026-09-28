@@ -87,7 +87,12 @@ func _scale_external_to_capsule(inst: Node3D) -> void:
 	inst.position.y = 0.0
 
 func _apply_tint(character_id: String, inst: Node3D) -> void:
-	var tint := Color(0.35, 0.45, 0.8)
+	# V16: stronger per-character identity colors
+	var tint := Color(0.45, 0.75, 1.0)
+	match character_id:
+		"paladin": tint = Color(1.0, 0.88, 0.35)
+		"rogue": tint = Color(0.35, 0.95, 0.55)
+	_iter_mesh_tint(inst, tint)
 	match character_id:
 		"paladin": tint = Color(0.85, 0.75, 0.35)
 		"rogue": tint = Color(0.35, 0.55, 0.4)
@@ -107,6 +112,7 @@ func _iter_mesh_tint(node: Node, tint: Color) -> void:
 		_iter_mesh_tint(c, tint)
 
 func set_character_tint(character_id: String) -> void:
+	_apply_tint(character_id, _external if _external != null else self)
 	if use_external():
 		_apply_tint(character_id, _external)
 
