@@ -28,6 +28,9 @@ var _zoom: float
 var _current_distance: float
 var _shake_amount: float = 0.0
 var _shake_decay: float = 6.0
+## V15B intro camera: brief yaw ease toward a world point (boss entrance).
+var _look_target_yaw: float = NAN
+var _look_blend: float = 0.0
 var _yaw_sensitivity_base: float = 0.0032
 var _pitch_sensitivity_base: float = 0.0028
 ## True on touch devices: mouse motion is EMULATED by touches there and
@@ -114,6 +117,13 @@ func _process(delta: float) -> void:
 	rotation = Vector3(0, _yaw, 0)
 	_spring_arm.rotation.x = _pitch
 
+	# V15B: soft yaw ease toward a look target (boss intro), then release
+	if not is_nan(_look_target_yaw):
+		_yaw = lerp_angle(_yaw, _look_target_yaw, 1.0 - exp(-4.5 * delta))
+		_look_blend -= delta
+		if _look_blend <= 0.0:
+			_look_target_yaw = NAN
+
 	# Shake
 	if _shake_amount > 0.001:
 		_camera.h_offset = randf_range(-1, 1) * _shake_amount
@@ -127,6 +137,17 @@ func add_shake(amount: float) -> void:
 	if not shake_enabled or not SaveManager.get_setting("screen_shake", true):
 		return
 	_shake_amount = minf(_shake_amount + amount, 0.6)
+
+## V15B: ease the orbit yaw toward a world point for a short intro beat.
+func look_at_world_point(point: Vector3, hold_seconds: float = 1.2) -> void:
+	if _target == null:
+		return
+	var to := point - global_position
+	to.y = 0.0
+	if to.length_squared() < 0.01:
+		return
+	_look_target_yaw = atan2(-to.x, -to.z)
+	_look_blend = maxf(hold_seconds, 0.1)
 
 func get_move_basis() -> Basis:
 	# Camera-relative movement basis (yaw only, flattened)

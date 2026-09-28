@@ -59,7 +59,8 @@ func _initialize() -> void:
 		if tinted.albedo_color.a > 0.5:
 			var tint_target: Color = EnemyVisuals.ENEMY_TINTS.get(e.data.id, Color.TRANSPARENT)
 			if tint_target.a > 0.0:
-				var dist := tinted.albedo_color.distance_to(tint_target)
+				var c: Color = tinted.albedo_color
+				var dist: float = Vector3(c.r - tint_target.r, c.g - tint_target.g, c.b - tint_target.b).length()
 				_check(dist < 0.4, "%s tint is strong enough (Δ=%.2f)" % [e.data.id, dist])
 
 	# --- Contact damage: only on real touch, never from proximity ---

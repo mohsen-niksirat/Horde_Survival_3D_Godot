@@ -94,6 +94,11 @@ func _spawn_boss(stat_scale: float = 1.0) -> void:
 	RunManager.set_boss_active(true)
 	GameManager.change_state(GameManager.State.BOSS)
 	EventBus.boss_spawned.emit(boss)
+	# V15B: intro camera beat — ease toward the boss entrance
+	var cam_rig: Node3D = player.get_node_or_null("CameraRig")
+	if cam_rig != null and cam_rig.has_method("look_at_world_point"):
+		cam_rig.look_at_world_point(boss.global_position, 1.4)
+		cam_rig.add_shake(0.22)
 
 ## Elite every 10 player levels (reference-game cadence).
 func _tick_elites() -> void:

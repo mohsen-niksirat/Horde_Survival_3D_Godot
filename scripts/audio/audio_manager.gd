@@ -233,7 +233,7 @@ func play_game_sfx(id: String) -> void:
 				{"freq": 110.0, "glide": 0.85, "dur": 0.18, "kind": "square", "gain": 1.0},
 				{"freq": 110.0, "glide": 0.85, "dur": 0.18, "delay": 0.24, "kind": "square", "gain": 1.0},
 				{"freq": 55.0, "glide": 0.7, "dur": 0.5, "kind": "sine", "gain": 0.8, "decay": 1.6},
-			], -2.0)
+			], tier, -2.0)
 		"boss_die":
 			play_recipe_tiered("boss_d", [
 				{"freq": 160.0, "glide": 0.15, "dur": 0.9, "kind": "saw", "gain": 1.0, "decay": 1.8},

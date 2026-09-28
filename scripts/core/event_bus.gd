@@ -22,6 +22,8 @@ signal gold_collected(amount: float)
 signal enemy_spawned(enemy: Node)
 signal boss_spawned(boss: Node)
 signal boss_died()
+## V15B: phase transitions flash the screen + punch the camera.
+signal boss_phase_changed(phase_name: String, color: Color)
 
 # --- Misc ---
 signal combo_changed(count: int, multiplier: float)

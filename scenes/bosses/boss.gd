@@ -97,6 +97,11 @@ func setup(p_player: Node3D, p_enemy_manager: Node, p_arena: Node3D, level_scale
 	alive = true
 	phase = BossPhase.ONE
 	_slam_timer = 3.0
+	# V15B: entrance — drop in oversized then settle (imposing first frame)
+	var target := Vector3.ONE
+	scale = target * 1.35
+	var tw := create_tween()
+	tw.tween_property(self, "scale", target, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func get_health_ratio() -> float:
 	return health.get_ratio()
@@ -150,10 +155,21 @@ func _update_phase() -> void:
 	if ratio < 0.3 and phase != BossPhase.ENRAGE:
 		phase = BossPhase.ENRAGE
 		_apply_phase_tint()
+		_announce_phase("ENRAGE")
 		EventBus.boss_spawned.emit(self)  # reuse as intensity signal
 	elif ratio < 0.6 and phase == BossPhase.ONE:
 		phase = BossPhase.TWO
 		_apply_phase_tint()
+		_announce_phase("PHASE 2")
+
+## V15B: phase-transition flash + camera punch so the shift is felt.
+func _announce_phase(phase_name: String) -> void:
+	var color: Color = TELEGRAPH_COLORS.get(phase, TELEGRAPH_COLORS[BossPhase.ONE])
+	EventBus.boss_phase_changed.emit(phase_name, color)
+	var cam := get_viewport().get_camera_3d()
+	var rig := cam.get_parent().get_parent() if cam != null else null
+	if rig != null and rig.has_method("add_shake"):
+		rig.add_shake(0.28)
 
 func _tick_attacks(delta: float, dist: float) -> void:
 	# Ground slam (all phases, faster in enrage)
@@ -240,6 +256,12 @@ func _on_died() -> void:
 	alive = false
 	EventBus.boss_died.emit()
 	boss_died.emit()
+	# V15B victory moment: gold flash + camera punch at the kill
+	EventBus.boss_phase_changed.emit("VICTORY", Color(1.0, 0.9, 0.35, 0.55))
+	var cam := get_viewport().get_camera_3d()
+	var rig := cam.get_parent().get_parent() if cam != null else null
+	if rig != null and rig.has_method("add_shake"):
+		rig.add_shake(0.45)
 	# Rewards: big XP burst
 	for i in range(12):
 		var orb := PoolManager.acquire("res://scenes/pickups/XpOrb.tscn")

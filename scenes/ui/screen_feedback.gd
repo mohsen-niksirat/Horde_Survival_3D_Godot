@@ -12,6 +12,7 @@ func bind_player(player: Node) -> void:
 	_player = player
 	EventBus.player_leveled_up.connect(_on_level_up)
 	EventBus.boss_spawned.connect(_on_boss_spawned)
+	EventBus.boss_phase_changed.connect(_on_boss_phase_changed)
 	vignette.modulate.a = 0.0
 	flash.modulate.a = 0.0
 
@@ -35,3 +36,8 @@ func _on_level_up(_level: int) -> void:
 func _on_boss_spawned(_boss: Node) -> void:
 	flash.color = Color(1, 0.45, 0.2)
 	flash.modulate.a = 0.5
+
+## V15B: phase-transition / victory flash uses the phase color.
+func _on_boss_phase_changed(_phase_name: String, color: Color) -> void:
+	flash.color = color
+	flash.modulate.a = 0.55
