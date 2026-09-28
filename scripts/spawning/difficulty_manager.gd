@@ -4,7 +4,11 @@ class_name DifficultyManager
 ## 3D-retuned constants. Per-stat caps prevent late-game absurdity.
 
 static func difficulty_multiplier(player_level: int, minutes: float) -> float:
-	return 1.0 + 0.18 * sqrt(float(maxi(player_level, 1))) + minutes * 0.06
+	var base := 1.0 + 0.18 * sqrt(float(maxi(player_level, 1))) + minutes * 0.06
+	# V18: endless soft-cap after 10 min so 15–20 min runs stay playable
+	if minutes > 10.0:
+		base = 1.0 + 0.18 * sqrt(float(maxi(player_level, 1))) + 10.0 * 0.06 + (minutes - 10.0) * 0.025
+	return base
 
 static func hp_scale(difficulty: float) -> float:
 	return minf(difficulty, 10.0)
@@ -16,12 +20,17 @@ static func speed_scale(difficulty: float) -> float:
 	return minf(1.0 + (difficulty - 1.0) * 0.25, 1.8)
 
 ## Threat budget grows with time: more points = more/stronger enemies.
+## V18: quadratic term softens after 10 min (endless survivability).
 static func threat_budget(minutes: float) -> float:
-	return 2.0 + minutes * 2.2 + minutes * minutes * 0.08
+	if minutes <= 10.0:
+		return 2.0 + minutes * 2.2 + minutes * minutes * 0.08
+	var at10 := 2.0 + 10.0 * 2.2 + 100.0 * 0.08
+	var extra := minutes - 10.0
+	return at10 + extra * 1.6 + extra * extra * 0.03
 
-## Spawn interval shrinks over time.
+## Spawn interval shrinks over time (floor keeps late hordes readable).
 static func spawn_interval(minutes: float) -> float:
-	return maxf(2.0 / (1.0 + minutes * 0.06), 0.35)
+	return maxf(2.0 / (1.0 + minutes * 0.06), 0.45)
 
 ## Which archetypes are allowed at this time (minutes).
 static func allowed_archetypes(minutes: float) -> Array:

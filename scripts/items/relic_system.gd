@@ -69,4 +69,51 @@ func apply_relic(data: RelicData) -> void:
 	player.on_stats_changed()
 	if data.special == "revive_once":
 		player.grant_revive()
+	applied_relics[data.id] = true
+	_apply_relic_synergy(data)
 	EventBus.upgrade_applied.emit(data.display_name)
+
+## V17: relic × weapon / relic × relic synergy hooks (once per pairing).
+func _apply_relic_synergy(data: RelicData) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	var weapon_ids: Array = []
+	if player.get("weapon_controller") != null:
+		for w in player.weapon_controller.weapons:
+			weapon_ids.append(w.data.id)
+	# Power Ring + fire kit → extra might
+	if data.id == "ring":
+		var fire_count := 0
+		for wid in ["fireball", "hellfire", "thunderstorm", "lightning"]:
+			if weapon_ids.has(wid):
+				fire_count += 1
+		if fire_count >= 2:
+			_grant_once("relic_ring_fire", "RELIC SYNERGY: Inferno Band (+10% might)", "might", 0.10)
+	# Crown + Clover → deeper luck well
+	if data.id == "clover" or data.id == "crown":
+		var other := "crown" if data.id == "clover" else "clover"
+		if _has_relic(other):
+			_grant_once("relic_crown_clover", "RELIC SYNERGY: Favored Fortune (+10% luck, +10% XP)", "luck", 0.10)
+			player.stat_block.add_modifier("xp_gain", 0.0, 0.10)
+			player.on_stats_changed()
+	# Armor + Wings → mobile bulwark
+	if data.id == "armor" or data.id == "wings":
+		var other := "wings" if data.id == "armor" else "armor"
+		if _has_relic(other):
+			_grant_once("relic_bulwark", "RELIC SYNERGY: Mobile Bulwark (+8% move speed, +4 armor)", "move_speed", 0.08)
+			player.stat_block.add_modifier("armor", 4.0, 0.0)
+			player.on_stats_changed()
+
+func _has_relic(id: String) -> bool:
+	return applied_relics.has(id)
+
+var applied_relics: Dictionary = {}
+var applied_relic_synergies: Dictionary = {}
+
+func _grant_once(key: String, title: String, stat: String, percent: float) -> void:
+	if applied_relic_synergies.has(key):
+		return
+	applied_relic_synergies[key] = true
+	player.stat_block.add_modifier(stat, 0.0, percent)
+	player.on_stats_changed()
+	EventBus.upgrade_applied.emit(title)

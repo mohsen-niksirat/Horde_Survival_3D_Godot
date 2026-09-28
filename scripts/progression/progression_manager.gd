@@ -156,6 +156,10 @@ const SYNERGIES := [
 	{"id": "firestorm", "requires": ["fireball", "lightning"], "title": "SYNERGY: Firestorm (+15% might)", "stat": "might", "percent": 0.15},
 	{"id": "storm_caller", "requires": ["magic_missile", "lightning"], "title": "SYNERGY: Storm Caller (-10% cooldown)", "stat": "cooldown_mult", "percent": -0.10},
 	{"id": "iron_tempest", "requires": ["orbiting_shield", "divine_spear"], "title": "SYNERGY: Iron Tempest (+10% area)", "stat": "area_mult", "percent": 0.10},
+	# V17: more build identities
+	{"id": "holy_aegis", "requires": ["holy_bible", "orbiting_shield"], "title": "SYNERGY: Holy Aegis (+12% armor)", "stat": "armor", "percent": 0.12},
+	{"id": "wildfire", "requires": ["hellfire", "thunderstorm"], "title": "SYNERGY: Wildfire (+12% might)", "stat": "might", "percent": 0.12},
+	{"id": "astral_conduit", "requires": ["aurora", "judgment"], "title": "SYNERGY: Astral Conduit (-8% cooldown)", "stat": "cooldown_mult", "percent": -0.08},
 ]
 var applied_synergies: Dictionary = {}
 

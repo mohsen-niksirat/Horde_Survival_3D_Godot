@@ -371,6 +371,14 @@ func get_debug_info() -> String:
 	lines.append("enemies: %d/%d | projectiles: %d | particles: %d" % [
 		active_enemies, effective_enemy_cap(), active_projectiles, active_particles,
 	])
+	# V18: endless balance snapshot (10/15/20-min tuning evidence)
+	if RunManager != null:
+		var mins := RunManager.elapsed_time / 60.0
+		var diff := DifficultyManager.difficulty_multiplier(25, mins)
+		lines.append("endless: t=%.1fm | diff=%.2f | threat=%.1f | spawn=%.2fs | endless=%s" % [
+			mins, diff, DifficultyManager.threat_budget(mins),
+			DifficultyManager.spawn_interval(mins), str(RunManager.endless),
+		])
 	var sys_lines: Array[String] = []
 	for name in _system_times:
 		sys_lines.append("%s: %.2f ms" % [name, get_system_avg_ms(name)])
