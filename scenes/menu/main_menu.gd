@@ -21,7 +21,7 @@ func _ready() -> void:
 	achievements_button.pressed.connect(_on_achievements_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
 	upgrades_button.pressed.connect(_on_upgrades_pressed)
-	how_to_play_button.pressed.connect(_on_placeholder_pressed.bind("WASD to move - survive the horde - weapons fire automatically - Q/E abilities"))
+	how_to_play_button.pressed.connect(_on_placeholder_pressed.bind("WASD move · auto-attack · Q/E abilities · cyan shards = XP · chests = relics · survive 15 min to WIN (or Endless)"))
 	quit_button.pressed.connect(_on_quit_pressed)
 	notice_label.text = ""
 	# P9: full achievements panel (fallback notice if scene missing)

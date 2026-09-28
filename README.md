@@ -36,14 +36,17 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 ## Features
 
 - Third-person 3D arena combat, camera-relative movement, zero aiming
+- **Standard run: survive 15 minutes for VICTORY** — or toggle **Endless** for infinite scaling
 - 5 auto-firing weapons + 5 evolutions (Hellfire, Holy Bible, Aurora, Judgment, Thunderstorm)
+- 6 weapon synergies + relic synergy hooks (Inferno Band, Favored Fortune, Mobile Bulwark)
 - 9 enemy archetypes + 8 modular elite abilities + one complete 3-phase boss
 - XP orbs with magnet pickup, level-ups with 3 rarity-colored choices, 8 passive items
 - Relics (rarity-weighted map pickups incl. Phoenix Feather revive), a pet (Dragon Welp), 2 active abilities (Meteor Strike, Time Freeze)
 - Combo system with XP multiplier and 6 visual tiers, 10 achievements with gold rewards
 - Threat-budget horde spawning, difficulty timeline, quality-tier entity caps
-- Versioned meta save (gold, bests, achievements) that persists in the browser
+- Versioned meta save (gold, bests, wins, achievements) that persists in the browser
 - Responsive HUD; virtual joystick + touch camera on mobile
+- Settings: UI scale, reduced VFX, quality tiers, screen shake
 - Kenney CC0 GLB heroes/enemies/weapons/skybox (see docs/ASSET_CREDITS.md); quality Very Low→Ultra + FPS counter
 
 ## How to Run Locally
