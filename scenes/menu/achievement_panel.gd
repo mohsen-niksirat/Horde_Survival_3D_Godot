@@ -7,6 +7,8 @@ const DEFS := [
 	{"id": "kill_1000", "title": "Exterminator", "desc": "1000 total kills", "gold": 300},
 	{"id": "survive_5min", "title": "Survivor I", "desc": "Survive 5 minutes", "gold": 100},
 	{"id": "survive_10min", "title": "Survivor II", "desc": "Survive 10 minutes", "gold": 200},
+	{"id": "survive_15min", "title": "Hordebreaker", "desc": "Survive 15 minutes", "gold": 500},
+	{"id": "win_run", "title": "Victorious", "desc": "Win a standard 15-minute run", "gold": 400},
 	{"id": "level_10", "title": "Rising Star", "desc": "Reach level 10", "gold": 100},
 	{"id": "level_25", "title": "Veteran", "desc": "Reach level 25", "gold": 200},
 	{"id": "first_boss", "title": "Boss Slayer", "desc": "Defeat a boss", "gold": 300},

@@ -31,12 +31,11 @@ func start_run() -> void:
 	kills = 0
 	gold_earned = 0.0
 	boss_active = false
-	endless = false
 	EventBus.run_started.emit()
 
 func start_run_endless() -> void:
-	start_run()
 	endless = true
+	start_run()
 
 func end_run() -> void:
 	is_running = false

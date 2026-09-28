@@ -27,6 +27,8 @@ func _on_state_changed(new_state: int, _old: int) -> void:
 func _commit_run() -> void:
 	# Meta progression: gold, bests, totals
 	var gold_earned: float = RunManager.gold_earned
+	if _victory:
+		gold_earned += 250.0
 	SaveManager.set_meta_data("gold", SaveManager.get_meta_data("gold", 0) + int(gold_earned))
 	SaveManager.set_meta_data("total_runs", SaveManager.get_meta_data("total_runs", 0) + 1)
 	if _victory:
@@ -36,7 +38,7 @@ func _commit_run() -> void:
 	# Kills are already counted per-kill in achievements; do not re-add
 	RunManager.gold_earned = 0.0
 	var title := "VICTORY" if _victory else "RUN OVER"
-	var subtitle := "You survived the horde." if _victory else "The horde claimed you."
+	var subtitle := "You survived the horde. +250 bonus gold!" if _victory else "The horde claimed you."
 	stats_label.text = "%s\n%s\nSurvived: %s\nKills: %d\nGold earned: %d" % [
 		title,
 		subtitle,
