@@ -70,4 +70,7 @@ func _tier_bonus(arr: Array) -> int:
 	return arr[idx]
 
 func level_up() -> void:
+	var prev := level
 	level = mini(level + 1, 5)
+	if level == 5 and prev < 5 and EventBus != null:
+		EventBus.upgrade_applied.emit("%s MAX TIER" % data.display_name)

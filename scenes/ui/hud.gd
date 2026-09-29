@@ -248,6 +248,7 @@ func _process_boss_bar() -> void:
 	boss_bar.visible = true
 	boss_bar.max_value = boss.health.max_hp
 	boss_bar.value = boss.health.current_hp
+	boss_bar.tooltip_text = "THE WARDEN"
 	# R3: bar tint tracks fight phase
 	var ratio: float = boss.health.get_ratio()
 	var fill := boss_bar.get_theme_stylebox("fill") as StyleBoxFlat
