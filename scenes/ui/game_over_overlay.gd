@@ -28,11 +28,14 @@ func _commit_run() -> void:
 	# Meta progression: gold, bests, totals
 	var gold_earned: float = RunManager.gold_earned
 	var unlock_msg := ""
+	var gold_note := ""
 	if _victory:
+		var base_gold := gold_earned
 		gold_earned += 250.0
 		# S2: gold interest on victory (meta greed feel)
 		var interest: int = int(gold_earned * 0.1)
 		gold_earned += interest
+		gold_note = " (run %d + win 250 + interest %d)" % [int(base_gold), interest]
 		var wins: int = int(SaveManager.get_meta_data("victories", 0)) + 1
 		SaveManager.set_meta_data("victories", wins)
 		if wins == 1:
@@ -47,13 +50,14 @@ func _commit_run() -> void:
 	RunManager.gold_earned = 0.0
 	var title := "VICTORY" if _victory else "RUN OVER"
 	var subtitle := ("You survived the horde. +250 bonus gold!" + unlock_msg) if _victory else "The horde claimed you."
-	stats_label.text = "%s\n%s\nSurvived: %s\nKills: %d\nBest combo: %d\nGold earned: %d" % [
+	stats_label.text = "%s\n%s\nSurvived: %s\nKills: %d\nBest combo: %d\nGold earned: %d%s" % [
 		title,
 		subtitle,
 		RunManager.get_time_string(),
 		RunManager.kills,
 		_max_combo(),
 		int(gold_earned),
+		gold_note,
 	]
 	stats_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35) if _victory else Color(1.0, 0.55, 0.5))
 
