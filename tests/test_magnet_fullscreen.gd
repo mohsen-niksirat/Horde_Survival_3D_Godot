@@ -17,7 +17,11 @@ func _initialize() -> void:
 	for i in range(4):
 		await process_frame
 		await physics_frame
-	var fs_btn: Button = main.get_node_or_null("HUD/Hud/Abilities/ZoomRow/Fullscreen")
+	var fs_btn: Button = main.get_node_or_null("HUD/Hud/Abilities/Fullscreen")
+	if fs_btn == null:
+		fs_btn = main.get_node_or_null("HUD/Hud/Abilities/ZoomRow/Fullscreen")
+	if fs_btn == null:
+		fs_btn = main.get_node_or_null("HUD/Hud/Abilities/ZoomCol/Fullscreen")
 	_check(fs_btn != null, "HUD fullscreen button exists")
 	var player: CharacterBody3D = main.get_node("World/Player")
 	var world = main.get_node("World")

@@ -9,16 +9,16 @@ static var _mat_cache: Dictionary = {}
 ## glowing projectiles never blur into one wash.
 ## Playtest: darker tints — white arena made pale enemies hard to see.
 const ENEMY_TINTS := {
-	"basic_drone": Color(0.18, 0.32, 0.72),
-	"fast_wisp": Color(0.05, 0.55, 0.7),
-	"tank_golem": Color(0.38, 0.22, 0.1),
-	"shooter_turret": Color(0.75, 0.28, 0.05),
-	"swarm_bat": Color(0.48, 0.12, 0.62),
-	"ghost": Color(0.22, 0.38, 0.62),
-	"splitter": Color(0.12, 0.55, 0.22),
-	"healer": Color(0.72, 0.58, 0.12),
-	"mage": Color(0.42, 0.12, 0.72),
-	"swarm_bat_mini": Color(0.48, 0.12, 0.62),
+	"basic_drone": Color(0.12, 0.22, 0.55),
+	"fast_wisp": Color(0.03, 0.35, 0.5),
+	"tank_golem": Color(0.28, 0.15, 0.06),
+	"shooter_turret": Color(0.55, 0.18, 0.03),
+	"swarm_bat": Color(0.35, 0.08, 0.48),
+	"ghost": Color(0.15, 0.25, 0.45),
+	"splitter": Color(0.08, 0.4, 0.15),
+	"healer": Color(0.55, 0.4, 0.08),
+	"mage": Color(0.3, 0.08, 0.55),
+	"swarm_bat_mini": Color(0.35, 0.08, 0.48),
 }
 
 const ENEMY_SCENES := {
@@ -88,7 +88,7 @@ static func _tint_recursive(node: Node, tint: Color, strength: float) -> void:
 			var c: Color = mat.albedo_color
 			c = c.lerp(tint, strength)
 			# Playtest: darken so silhouettes pop on the light dungeon floor
-			c = c.darkened(0.22)
+			c = c.darkened(0.35)
 			mat.albedo_color = c
 			mat.set_meta("base_color", c)
 	for c in node.get_children():

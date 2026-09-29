@@ -87,7 +87,21 @@ func apply_relic(data: RelicData) -> void:
 		"legendary": rarity_tag = "★ "
 		"rare": rarity_tag = "◆ "
 		"uncommon": rarity_tag = "● "
-	EventBus.upgrade_applied.emit("RELIC %s%s (%s)" % [rarity_tag, data.display_name, data.rarity])
+	# T-playtest: say exactly what the chest granted
+	var mods := ""
+	for m in data.modifiers:
+		var st: String = str(m.get("stat", ""))
+		var fl: float = float(m.get("flat", 0.0))
+		var pc: float = float(m.get("percent", 0.0))
+		if absf(pc) > 0.001:
+			mods += " %s %+.0f%%" % [st, pc * 100.0]
+		elif absf(fl) > 0.001:
+			mods += " %s %+.0f" % [st, fl]
+	if data.special == "revive_once":
+		mods = " revive"
+	if mods == "":
+		mods = " " + data.description
+	EventBus.upgrade_applied.emit("RELIC %s%s:%s" % [rarity_tag, data.display_name, mods])
 
 ## V17: relic × weapon / relic × relic synergy hooks (once per pairing).
 func _apply_relic_synergy(data: RelicData) -> void:

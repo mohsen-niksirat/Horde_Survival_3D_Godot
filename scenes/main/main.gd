@@ -236,12 +236,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			debug_label.visible = _debug_enabled
 			get_viewport().set_input_as_handled()
 			return
-	if event is InputEventMouseButton and event.pressed:
-		# Click-to-recapture only during active gameplay (browser Esc unlocks)
-		if not DisplayServer.is_touchscreen_available():
-			if (GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS) \
-					and not InputManager.is_pointer_captured():
-				InputManager.capture_pointer()
+	# V2 playtest: do not steal clicks for pointer lock — UI buttons need the mouse.
 
 func _toggle_pause() -> void:
 	if GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS:

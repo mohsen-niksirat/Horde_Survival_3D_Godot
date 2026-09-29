@@ -91,6 +91,7 @@ func _build_trees() -> void:
 			var rot := randf() * TAU
 			tr.append(_xform(base, rot, 0.0, Vector3.ONE * (tscale * randf_range(0.85, 1.15))))
 		_make_mmi(real["mesh"], null, tr, parent, "TreeRigs")
+		_add_cyl_colliders(parent, tr, 0.45, 3.5)
 		return
 	var trunk := CylinderMesh.new()
 	trunk.top_radius = 0.18
@@ -114,6 +115,32 @@ func _build_trees() -> void:
 	_make_mmi(trunk, _baked_mat(TRUNK_COLOR), trunks, parent, "Trunks")
 	_make_mmi(crown, _baked_mat(LEAF_COLOR), crowns_a, parent, "CrownsA")
 	_make_mmi(crown, _baked_mat(LEAF_COLOR.lightened(0.08)), crowns_b, parent, "CrownsB")
+	_add_cyl_colliders(parent, trunks, 0.35, 2.4)
+
+## T-playtest: every solid-looking prop needs a collider (no walk-through).
+func _add_cyl_colliders(parent: Node3D, transforms: Array, radius: float, height: float) -> void:
+	for t in transforms:
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var cyl := CylinderShape3D.new()
+		cyl.radius = radius * maxf(t.basis.get_scale().x, 0.5)
+		cyl.height = height
+		shape.shape = cyl
+		shape.position = Vector3(0, height * 0.5, 0)
+		body.add_child(shape)
+		body.position = t.origin
+		parent.add_child(body)
+
+func _add_box_collider(parent: Node3D, pos: Vector3, size: Vector3) -> void:
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	shape.position = Vector3(0, size.y * 0.5, 0)
+	body.add_child(shape)
+	body.position = pos
+	parent.add_child(body)
 
 func _build_rocks() -> void:
 	var parent := Node3D.new()

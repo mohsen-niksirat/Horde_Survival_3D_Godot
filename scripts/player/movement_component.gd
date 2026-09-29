@@ -37,18 +37,6 @@ func tick(delta: float, move_dir: Vector2) -> bool:
 	var flat := Vector2(_body.velocity.x, _body.velocity.z)
 	var target_flat := Vector2(target.x, target.z)
 
-	# Playtest: release must stop quickly — hard damp when no input
-	if move_dir.length_squared() < 0.0004:
-		var stop_rate := deceleration * 2.2
-		var new_flat0 := flat.move_toward(Vector2.ZERO, stop_rate * base_speed * delta)
-		if new_flat0.length() < 0.15:
-			new_flat0 = Vector2.ZERO
-		_move_speed = new_flat0.length()
-		_body.velocity.x = new_flat0.x
-		_body.velocity.z = new_flat0.y
-		_body.move_and_slide()
-		return false
-
 	var rate := acceleration if target_flat.length_squared() > flat.length_squared() else deceleration
 	var new_flat := flat.move_toward(target_flat, rate * base_speed * delta)
 	_move_speed = new_flat.length()

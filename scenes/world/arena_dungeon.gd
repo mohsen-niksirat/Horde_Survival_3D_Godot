@@ -113,3 +113,21 @@ func _instance_prop(path: String, pos: Vector3) -> void:
 	node.position = pos
 	node.rotate_y(randf() * TAU)
 	add_child(node)
+	# T-playtest: solid props block the player
+	var name_l := path.get_file().to_lower()
+	if name_l.contains("column") or name_l.contains("table") or name_l.contains("chest"):
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		if name_l.contains("column"):
+			box.size = Vector3(1.1, 3.2, 1.1)
+			shape.position = Vector3(0, 1.6, 0)
+		elif name_l.contains("table"):
+			box.size = Vector3(1.8, 1.0, 1.0)
+			shape.position = Vector3(0, 0.5, 0)
+		else:
+			box.size = Vector3(1.0, 0.9, 0.8)
+			shape.position = Vector3(0, 0.45, 0)
+		shape.shape = box
+		body.add_child(shape)
+		node.add_child(body)
