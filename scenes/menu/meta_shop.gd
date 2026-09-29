@@ -11,6 +11,7 @@ const STATS := [
 	{"id": "meta_gold", "name": "Greed", "stat": "gold_gain", "pct": 0.05, "effect": "Earn more gold from every kill."},
 	{"id": "meta_armor", "name": "Bulwark", "stat": "armor", "pct": 0.06, "effect": "Take less damage from contact hits."},
 	{"id": "meta_crit", "name": "Precision", "stat": "crit_chance", "pct": 0.02, "effect": "Higher critical hit chance."},
+	{"id": "meta_slots", "name": "Arsenal", "stat": "weapon_slots", "pct": 1.0, "effect": "+1 weapon slot per level (start 3, max 5)."},
 ]
 const MAX_LEVEL := 20
 
@@ -41,6 +42,8 @@ func _current_bonus(s: Dictionary) -> String:
 	if lvl <= 0:
 		return "no bonus yet"
 	var pct: float = s["pct"] * lvl
+	if s["stat"] == "weapon_slots":
+		return "current: %d slots (base 3 + %d)" % [mini(3 + lvl, 5), lvl]
 	if s["stat"] == "max_hp":
 		return "current: +%.0f max HP" % (100.0 * pct)
 	if s["stat"] == "cooldown_mult":
@@ -112,6 +115,8 @@ func _on_buy(s: Dictionary) -> void:
 ## Apply all purchased levels as modifiers (called at run start).
 func apply_to(stats: StatBlock) -> void:
 	for s in STATS:
+		if s["stat"] == "weapon_slots":
+			continue
 		var lvl := _level(s["id"])
 		if lvl > 0:
 			stats.add_modifier(s["stat"], 0.0, s["pct"] * lvl, "meta_" + s["id"])
@@ -119,6 +124,8 @@ func apply_to(stats: StatBlock) -> void:
 ## Static helper usable without instantiating the UI.
 static func apply_meta_upgrades(stats: StatBlock) -> void:
 	for s in STATS:
+		if s["stat"] == "weapon_slots":
+			continue
 		var lvl := int(SaveManager.get_meta_data("meta_upgrades", {}).get(s["id"], 0))
 		if lvl > 0:
 			stats.add_modifier(s["stat"], 0.0, s["pct"] * lvl, "meta_" + s["id"])

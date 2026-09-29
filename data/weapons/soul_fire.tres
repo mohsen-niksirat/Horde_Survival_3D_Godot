@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3 uid="uid://wdata_soulfx1"]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "soul_fire"
+display_name = "Soul Fire"
+type = "projectile"
+base_damage = 18.0
+base_cooldown = 1.9
+projectile_count = 2
+projectile_speed = 14.0
+area = 2.0
+pierce = 0
+crit_chance = 0.06
+crit_mult = 2.0
+max_range = 24.0
+homing = false
+status_effect = "burn"
+status_duration = 2.5
+status_damage = 6.0
+projectile_scene = "res://scenes/weapons/FireballProjectile.tscn"

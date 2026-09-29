@@ -7,9 +7,17 @@ const PASSIVE_IDS := [
 	"magnet", "heart", "growth", "vampire",
 	"hunters_mark",
 ]
-const MAX_WEAPON_SLOTS := 5
+const MAX_WEAPON_SLOTS_CAP := 5
+const BASE_WEAPON_SLOTS := 3
+
+## T-playtest: start with 3 slots; meta_slots expands toward 5.
+func max_weapon_slots() -> int:
+	var bonus: int = 0
+	if SaveManager != null:
+		bonus = int(SaveManager.get_meta_data("meta_upgrades", {}).get("meta_slots", 0))
+	return mini(BASE_WEAPON_SLOTS + bonus, MAX_WEAPON_SLOTS_CAP)
 const CHOICES := 3
-const NEW_WEAPON_POOL := ["fireball", "magic_missile", "orbiting_shield", "divine_spear", "lightning", "void_lance"]
+const NEW_WEAPON_POOL := ["fireball", "magic_missile", "orbiting_shield", "divine_spear", "lightning", "void_lance", "frost_bolt", "soul_fire"]
 
 signal choices_generated(choices: Array)
 
@@ -103,7 +111,7 @@ func _fill_pool(pool: Array) -> void:
 			pool.append(opt)
 
 	# New weapons: offer any not-yet-held weapon (player may hold max 5)
-	if weapons.size() < MAX_WEAPON_SLOTS:
+	if weapons.size() < max_weapon_slots():
 		var held: Array = []
 		for w in weapons:
 			held.append(w.data.id)
@@ -198,7 +206,7 @@ func apply_choice(option: UpgradeOption) -> void:
 					w.level_up()
 					break
 		UpgradeOption.Kind.NEW_WEAPON:
-			if player.weapon_controller.weapons.size() < MAX_WEAPON_SLOTS:
+			if player.weapon_controller.weapons.size() < max_weapon_slots():
 				player.weapon_controller.add_weapon(option.target)
 				_check_synergies()
 		UpgradeOption.Kind.PASSIVE:
@@ -243,6 +251,8 @@ func _weapon_role(id: String) -> String:
 	match id:
 		"fireball": return "explosive AOE, burn synergy"
 		"void_lance": return "piercing lance, slows on hit"
+		"frost_bolt": return "homing chill bolt"
+		"soul_fire": return "twin burning souls"
 		"magic_missile": return "homing bolts, multi-target"
 		"orbiting_shield": return "orbiting guards, melee range"
 		"divine_spear": return "piercing line, high crit"

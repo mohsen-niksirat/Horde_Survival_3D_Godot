@@ -3,7 +3,7 @@ extends Control
 
 const WEAPONS := [
 	"fireball", "magic_missile", "orbiting_shield", "divine_spear", "lightning",
-	"void_lance", "hellfire", "holy_bible", "aurora", "judgment", "thunderstorm",
+	"void_lance", "frost_bolt", "soul_fire", "hellfire", "holy_bible", "aurora", "judgment", "thunderstorm", "void_reaver",
 ]
 const EVOLUTIONS := [
 	{"base": "Fireball", "passive": "Spinach (max)", "result": "Hellfire"},

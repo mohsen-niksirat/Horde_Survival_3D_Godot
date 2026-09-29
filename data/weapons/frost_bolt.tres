@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3 uid="uid://wdata_frostb1"]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "frost_bolt"
+display_name = "Frost Bolt"
+type = "projectile"
+base_damage = 14.0
+base_cooldown = 1.4
+projectile_count = 1
+projectile_speed = 16.0
+area = 1.8
+pierce = 1
+crit_chance = 0.08
+crit_mult = 2.0
+max_range = 26.0
+homing = true
+status_effect = "slow"
+status_duration = 2.0
+status_damage = 0.0
+projectile_scene = "res://scenes/weapons/MagicMissileProjectile.tscn"

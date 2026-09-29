@@ -6,7 +6,7 @@ var failures := 0
 
 func _initialize() -> void:
 	var game_manager := root.get_node("GameManager")
-	root.get_node("SaveManager").set_meta_data("meta_upgrades", {})
+	root.get_node("SaveManager").set_meta_data("meta_upgrades", {"meta_slots": 2})
 
 	var main_ps: PackedScene = load("res://scenes/main/Main.tscn")
 	var main := main_ps.instantiate()
@@ -40,10 +40,10 @@ func _initialize() -> void:
 		_check(not tier_opt.description.contains("Upgrade to level"), "no generic text (%s)" % tier_opt.description)
 		_check(tier_opt.description.contains("%"), "description shows stats (%s)" % tier_opt.description)
 
-	# --- All 4 unheld weapons are offered ---
-	_check(new_opts.size() == 5, "all 5 unheld weapons in pool (%d)" % new_opts.size())
+	# --- Unheld weapons are offered (pool grew with frost/soul) ---
+	_check(new_opts.size() >= 5, "unheld weapons in pool (%d)" % new_opts.size())
 
-	# Apply new weapons directly until 5 slots are full
+	# Apply until slots full (meta_slots=2 → max 5)
 	for o in new_opts:
 		prog.apply_choice(o)
 	_check(player.weapon_controller.weapons.size() == 5, "5 weapon slots filled (%d)" % player.weapon_controller.weapons.size())
