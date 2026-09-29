@@ -82,7 +82,12 @@ func apply_relic(data: RelicData) -> void:
 		player.grant_revive()
 	applied_relics[data.id] = true
 	_apply_relic_synergy(data)
-	EventBus.upgrade_applied.emit("RELIC: " + data.display_name)
+	var rarity_tag := ""
+	match data.rarity:
+		"legendary": rarity_tag = "★ "
+		"rare": rarity_tag = "◆ "
+		"uncommon": rarity_tag = "● "
+	EventBus.upgrade_applied.emit("RELIC %s%s (%s)" % [rarity_tag, data.display_name, data.rarity])
 
 ## V17: relic × weapon / relic × relic synergy hooks (once per pairing).
 func _apply_relic_synergy(data: RelicData) -> void:

@@ -46,6 +46,28 @@ func setup(p_data: RelicData, p_player: Node3D, pos: Vector3, lifetime: float) -
 				mi.set_surface_override_material(0, tinted)
 	visible = true
 	monitoring = true
+	# T2: taller beacon pillar so chests are findable mid-horde
+	if get_node_or_null("Beacon") == null:
+		_spawn_beacon(_rarity_color(data.rarity))
+
+func _spawn_beacon(color: Color) -> void:
+	var beacon := MeshInstance3D.new()
+	beacon.name = "Beacon"
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.12
+	cyl.bottom_radius = 0.35
+	cyl.height = 2.8
+	beacon.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(color.r, color.g, color.b, 0.18)
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = 0.7
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	beacon.material_override = mat
+	beacon.position = Vector3(0, 1.6, 0)
+	add_child(beacon)
 
 func _rarity_color(rarity: String) -> Color:
 	match rarity:
