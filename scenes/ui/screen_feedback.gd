@@ -14,8 +14,13 @@ func bind_player(player: Node) -> void:
 	EventBus.boss_spawned.connect(_on_boss_spawned)
 	EventBus.boss_phase_changed.connect(_on_boss_phase_changed)
 	EventBus.player_died.connect(_on_player_died)
+	EventBus.enemy_spawned.connect(_on_enemy_maybe_elite)
 	vignette.modulate.a = 0.0
 	flash.modulate.a = 0.0
+
+func _on_enemy_maybe_elite(enemy: Node) -> void:
+	if enemy != null and enemy.get("elite") != null and enemy.elite != null:
+		_on_elite_spawned()
 
 func _on_player_died() -> void:
 	# R7: hard red flash on death
@@ -42,6 +47,11 @@ func _on_level_up(_level: int) -> void:
 func _on_boss_spawned(_boss: Node) -> void:
 	flash.color = Color(1, 0.45, 0.2)
 	flash.modulate.a = 0.5
+
+func _on_elite_spawned() -> void:
+	# R13: subtle gold flash when an elite enters the arena
+	flash.color = Color(1.0, 0.85, 0.3)
+	flash.modulate.a = 0.28
 
 ## V15B: phase-transition / victory flash uses the phase color.
 func _on_boss_phase_changed(_phase_name: String, color: Color) -> void:

@@ -60,6 +60,17 @@ func bind_player(player: Node) -> void:
 	EventBus.upgrade_applied.connect(_on_upgrade_applied)
 	EventBus.run_ended.connect(_on_run_ended_toast)
 	EventBus.achievement_unlocked.connect(_on_achievement_unlocked)
+	EventBus.boss_spawned.connect(_on_boss_banner)
+	EventBus.boss_phase_changed.connect(_on_boss_phase_banner)
+
+func _on_boss_banner(_boss: Node) -> void:
+	_show_toast("THE WARDEN AWAKENS")
+	AudioManager.play_game_sfx("boss_warn")
+
+func _on_boss_phase_banner(phase_name: String, _color: Color) -> void:
+	if phase_name == "VICTORY":
+		return
+	_show_toast("BOSS %s" % phase_name)
 
 func _on_achievement_unlocked(_id: String, title: String, gold: int) -> void:
 	_show_toast("ACHIEVEMENT: %s (+%d gold)" % [title, gold])
