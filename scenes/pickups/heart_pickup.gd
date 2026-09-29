@@ -43,7 +43,11 @@ func _process(delta: float) -> void:
 		var to_p: Vector3 = _player.global_position - global_position
 		to_p.y = 0.0
 		var d := to_p.length()
-		if d < 6.0 and d > 0.2:
+		# S7: low-HP players pull hearts from farther away
+		var magnet_range := 6.0
+		if _player.health != null and _player.health.get_ratio() < 0.4:
+			magnet_range = 14.0
+		if d < magnet_range and d > 0.2:
 			global_position += to_p.normalized() * 11.0 * delta
 		if d < 1.4 and _player.health.is_alive():
 			_player.health.heal(heal_amount)

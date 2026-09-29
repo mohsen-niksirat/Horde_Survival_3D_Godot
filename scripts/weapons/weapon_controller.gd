@@ -67,6 +67,9 @@ func add_weapon(weapon_data: WeaponData) -> void:
 	var inst := WeaponInstance.new()
 	inst.setup(weapon_data, self)
 	weapons.append(inst)
+	# S7: celebrate full arsenal once
+	if weapons.size() == 5:
+		EventBus.upgrade_applied.emit("FULL ARSENAL — 5/5 weapons")
 	if weapon_data.type == "orbit":
 		# Recreate the orbit container if it was freed (restart/cleanup)
 		if _orbit_root == null or not is_instance_valid(_orbit_root) or not _orbit_root.is_inside_tree():
