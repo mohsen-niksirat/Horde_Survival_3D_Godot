@@ -43,6 +43,8 @@ func _emit_combo() -> void:
 		_last_tier = tier
 		if tier != "BRONZE":
 			combo_tier_reached.emit(tier)
+			if EventBus != null:
+				EventBus.upgrade_applied.emit("COMBO %s" % tier)
 
 func get_tier() -> String:
 	for t in TIERS:
