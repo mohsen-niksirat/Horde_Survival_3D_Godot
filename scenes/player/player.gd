@@ -155,6 +155,7 @@ func _on_died() -> void:
 		health.reset()
 		health.set_invincible(2.0)
 		camera_rig.add_shake(0.3)
+		EventBus.upgrade_applied.emit("Phoenix Feather — revived!")
 		return
 	EventBus.player_died.emit()
 	if camera_rig != null and camera_rig.has_method("add_shake"):

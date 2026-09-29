@@ -382,9 +382,10 @@ func get_debug_info() -> String:
 	if RunManager != null:
 		var mins := RunManager.elapsed_time / 60.0
 		var diff := DifficultyManager.difficulty_multiplier(25, mins)
-		lines.append("endless: t=%.1fm | diff=%.2f | threat=%.1f | spawn=%.2fs | endless=%s" % [
+		var win_left := maxf(RunManager.target_duration - RunManager.elapsed_time, 0.0) if not RunManager.endless else -1.0
+		lines.append("endless: t=%.1fm | diff=%.2f | threat=%.1f | spawn=%.2fs | win_in=%.0fs | endless=%s" % [
 			mins, diff, DifficultyManager.threat_budget(mins),
-			DifficultyManager.spawn_interval(mins), str(RunManager.endless),
+			DifficultyManager.spawn_interval(mins), win_left, str(RunManager.endless),
 		])
 	var sys_lines: Array[String] = []
 	for name in _system_times:
