@@ -12,6 +12,7 @@ func _ready() -> void:
 	EventBus.boss_spawned.connect(_on_boss_spawned)
 	EventBus.boss_died.connect(_on_boss_died)
 	EventBus.player_died.connect(_on_player_died)
+	EventBus.run_ended.connect(_on_run_ended)
 
 ## V11B haptics: short vibration on key gameplay moments (mobile only,
 ## user-toggleable via Settings).
@@ -59,3 +60,11 @@ func _on_boss_died() -> void:
 
 func _on_player_died() -> void:
 	_haptic(250)
+
+func _on_run_ended(victory: bool) -> void:
+	if victory:
+		AudioManager.play_game_sfx("victory")
+		_haptic(180)
+	else:
+		AudioManager.play_game_sfx("player_hurt")
+		_haptic(220)

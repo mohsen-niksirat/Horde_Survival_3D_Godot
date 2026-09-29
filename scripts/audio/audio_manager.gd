@@ -260,6 +260,13 @@ func play_game_sfx(id: String) -> void:
 				{"freq": 1980.0, "dur": 0.38, "delay": 0.05, "kind": "sine", "gain": 0.4, "decay": 2.0},
 				{"freq": 2640.0, "dur": 0.3, "delay": 0.11, "kind": "sine", "gain": 0.22, "decay": 2.0},
 			], tier, -8.0)
+		"victory":
+			play_recipe_tiered("victory", [
+				{"freq": 523.0, "dur": 0.18, "kind": "sine", "gain": 0.9},
+				{"freq": 659.0, "dur": 0.18, "delay": 0.16, "kind": "sine", "gain": 0.9},
+				{"freq": 784.0, "dur": 0.18, "delay": 0.32, "kind": "sine", "gain": 0.95},
+				{"freq": 1046.0, "dur": 0.55, "delay": 0.48, "kind": "sine", "gain": 1.0, "decay": 1.8},
+			], SfxTier.CRITICAL, -2.0)
 
 ## Volume loading from save on demand.
 func apply_saved_volumes() -> void:
