@@ -98,6 +98,16 @@ Manual URL after setup: `https://mohsen-niksirat.github.io/Horde_Survival_3D_God
 
 Architecture is Android-compatible (Compatibility renderer, touch-first input abstraction). Android export steps will be added post-MVP: install Android build template (`Project → Install Android Build Template`), add the Android preset, export APK/AAB.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports, balance notes, and PRs welcome.
+
+## License
+
+Code and project scripts: **MIT** (see [LICENSE](LICENSE)).
+
+Third-party art/audio (Kenney, KayKit): **CC0** — see [docs/ASSET_CREDITS.md](docs/ASSET_CREDITS.md).
+
 ## Controls
 
 | Action | Desktop | Mobile | Gamepad |
