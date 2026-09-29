@@ -30,6 +30,9 @@ func _commit_run() -> void:
 	var unlock_msg := ""
 	if _victory:
 		gold_earned += 250.0
+		# S2: gold interest on victory (meta greed feel)
+		var interest: int = int(gold_earned * 0.1)
+		gold_earned += interest
 		var wins: int = int(SaveManager.get_meta_data("victories", 0)) + 1
 		SaveManager.set_meta_data("victories", wins)
 		if wins == 1:

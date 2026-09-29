@@ -9,6 +9,8 @@ const STATS := [
 	{"id": "meta_speed", "name": "Swiftness", "stat": "move_speed", "pct": 0.03, "effect": "Run faster; nothing can catch you."},
 	{"id": "meta_luck", "name": "Luck", "stat": "luck", "pct": 0.04, "effect": "Better random drops (future-proof stat)."},
 	{"id": "meta_gold", "name": "Greed", "stat": "gold_gain", "pct": 0.05, "effect": "Earn more gold from every kill."},
+	{"id": "meta_armor", "name": "Bulwark", "stat": "armor", "pct": 0.06, "effect": "Take less damage from contact hits."},
+	{"id": "meta_crit", "name": "Precision", "stat": "crit_chance", "pct": 0.02, "effect": "Higher critical hit chance."},
 ]
 const MAX_LEVEL := 20
 
