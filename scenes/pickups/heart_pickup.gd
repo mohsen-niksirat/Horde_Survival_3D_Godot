@@ -48,6 +48,7 @@ func _process(delta: float) -> void:
 		if d < 1.4 and _player.health.is_alive():
 			_player.health.heal(heal_amount)
 			AudioManager.play_game_sfx("relic_pickup")
+			EventBus.upgrade_applied.emit("Heart — HP restored")
 			set_deferred("monitoring", false)
 			PoolManager.release(self)
 			return
