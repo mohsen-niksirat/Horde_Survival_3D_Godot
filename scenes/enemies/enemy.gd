@@ -151,6 +151,8 @@ func make_elite(p_abilities: Array) -> void:
 	_elite_ring = ring
 	elite = $EliteComponent
 	elite.setup(self, _player, get_parent().get_parent().get_enemy_manager() if get_parent().get_parent().has_method("get_enemy_manager") else get_parent().get_parent(), p_abilities)
+	if EventBus != null:
+		EventBus.upgrade_applied.emit("ELITE approaches!")
 
 func _physics_process(delta: float) -> void:
 	if not _alive or _player == null or not is_instance_valid(_player):
