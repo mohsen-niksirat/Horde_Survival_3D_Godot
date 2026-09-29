@@ -14,6 +14,8 @@ const DEFS := [
 	{"id": "first_boss", "title": "Boss Slayer", "desc": "Defeat a boss", "gold": 300},
 	{"id": "combo_25", "title": "Chain Master", "desc": "Hit a 25 kill combo", "gold": 150},
 	{"id": "weapon_evolved", "title": "Weapon Evolver", "desc": "Evolve a weapon", "gold": 250},
+	{"id": "elite_slayer", "title": "Elite Slayer", "desc": "Defeat an elite enemy", "gold": 200},
+	{"id": "combo_100", "title": "Unstoppable", "desc": "Hit a 100 kill combo", "gold": 350},
 ]
 
 @onready var rows: VBoxContainer = $Center/Panel/Layout/Scroll/Rows

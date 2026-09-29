@@ -27,7 +27,7 @@ func setup(p_player: CharacterBody3D) -> void:
 		if ResourceLoader.exists(path):
 			passive_data[id] = load(path)
 	# Load evolution recipes
-	for evo_path in ["res://data/weapons/evo_hellfire.tres", "res://data/weapons/evo_holy_bible.tres", "res://data/weapons/evo_aurora.tres", "res://data/weapons/evo_judgment.tres", "res://data/weapons/evo_thunderstorm.tres"]:
+	for evo_path in ["res://data/weapons/evo_hellfire.tres", "res://data/weapons/evo_holy_bible.tres", "res://data/weapons/evo_aurora.tres", "res://data/weapons/evo_judgment.tres", "res://data/weapons/evo_thunderstorm.tres", "res://data/weapons/evo_void_reaver.tres"]:
 		if ResourceLoader.exists(evo_path):
 			evolutions.append(load(evo_path))
 

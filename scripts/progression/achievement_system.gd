@@ -17,6 +17,8 @@ const DEFS := [
 	{"id": "first_boss", "title": "Boss Slayer", "gold": 300},
 	{"id": "combo_25", "title": "Chain Master", "gold": 150},
 	{"id": "weapon_evolved", "title": "Weapon Evolver", "gold": 250},
+	{"id": "elite_slayer", "title": "Elite Slayer", "gold": 200},
+	{"id": "combo_100", "title": "Unstoppable", "gold": 350},
 ]
 
 var unlocked: Dictionary = {}
@@ -55,6 +57,8 @@ func _on_kill(_enemy: Node, _pos: Vector3) -> void:
 	elif kills >= 100:
 		_unlock("kill_100")
 	_unlock("kill_1")
+	if _enemy != null and _enemy.get("elite") != null and _enemy.elite != null:
+		_unlock("elite_slayer")
 
 func _on_level(level: int) -> void:
 	if level >= 25:
@@ -66,7 +70,9 @@ func _on_boss() -> void:
 	_unlock("first_boss")
 
 func _on_combo(count: int, _mult: float) -> void:
-	if count >= 25:
+	if count >= 100:
+		_unlock("combo_100")
+	elif count >= 25:
 		_unlock("combo_25")
 
 func _on_upgrade(title: String) -> void:

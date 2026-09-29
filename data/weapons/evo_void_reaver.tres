@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EvolutionData" load_steps=3 format=3 uid="uid://evo_voidrev01"]
+
+[ext_resource type="Script" path="res://scripts/progression/evolution_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/weapons/void_reaver.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "void_reaver"
+display_name = "Void Reaver"
+base_weapon_id = "void_lance"
+required_passive_id = "hunters_mark"
+evolved_weapon = ExtResource("2")

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3 uid="uid://wdata_voidrev1"]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "void_reaver"
+display_name = "Void Reaver"
+type = "projectile"
+base_damage = 42.0
+base_cooldown = 0.85
+projectile_count = 2
+projectile_speed = 26.0
+area = 2.0
+pierce = 5
+crit_chance = 0.22
+crit_mult = 2.4
+max_range = 32.0
+homing = false
+status_effect = "slow"
+status_duration = 1.8
+status_damage = 0.0
+projectile_scene = "res://scenes/weapons/MagicMissileProjectile.tscn"

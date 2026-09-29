@@ -87,15 +87,15 @@ func _initialize() -> void:
 	_check(_boss_projectile_count(main) > volleys_before, "mage fired a volley")
 	em.clear_all()
 
-	# --- All 5 evolutions exist and resolve ---
+	# --- All evolutions exist and resolve ---
 	var prog: Node = main.progression
-	_check(prog.evolutions.size() == 5, "5 evolution recipes loaded (%d)" % prog.evolutions.size())
+	_check(prog.evolutions.size() >= 5, "evolution recipes loaded (%d)" % prog.evolutions.size())
 	player.weapon_controller.weapons.clear()
-	for w_id in ["fireball", "magic_missile", "orbiting_shield", "divine_spear", "lightning"]:
+	for w_id in ["fireball", "magic_missile", "orbiting_shield", "divine_spear", "lightning", "void_lance"]:
 		player.weapon_controller.add_weapon(load("res://data/weapons/%s.tres" % w_id))
 	for w in player.weapon_controller.weapons:
 		w.level = 5
-	for p_id in ["spinach", "empty_tome", "heart", "crown", "wings"]:
+	for p_id in ["spinach", "empty_tome", "heart", "crown", "wings", "hunters_mark"]:
 		prog.passive_levels[p_id] = 5
 	var resolved := {}
 	for trial in range(30):
@@ -105,10 +105,10 @@ func _initialize() -> void:
 			# remove the base weapon so other evolutions can surface
 			player.weapon_controller.weapons = player.weapon_controller.weapons.filter(func(w): return w.data.id != evo.base_weapon_id)
 	var missing := []
-	for id in ["hellfire", "holy_bible", "aurora", "judgment", "thunderstorm"]:
+	for id in ["hellfire", "holy_bible", "aurora", "judgment", "thunderstorm", "void_reaver"]:
 		if not resolved.has(id):
 			missing.append(id)
-	_check(missing.is_empty(), "all 5 evolutions resolve (missing: %s)" % str(missing))
+	_check(missing.is_empty(), "all evolutions resolve (missing: %s)" % str(missing))
 
 	if failures == 0:
 		print("V6_CONTENT_PASS")

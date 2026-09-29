@@ -11,6 +11,7 @@ const EVOLUTIONS := [
 	{"base": "Orbiting Shield", "passive": "Heart (max)", "result": "Aurora"},
 	{"base": "Divine Spear", "passive": "Crown (max)", "result": "Judgment"},
 	{"base": "Lightning", "passive": "Wings (max)", "result": "Thunderstorm"},
+	{"base": "Void Lance", "passive": "Hunter's Mark (max)", "result": "Void Reaver"},
 ]
 const SYNERGIES := [
 	"Fireball + Lightning → Firestorm (+15% might)",
