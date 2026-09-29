@@ -188,6 +188,18 @@ func _process(delta: float) -> void:
 			timer_label.add_theme_color_override("font_color", Color.WHITE)
 	else:
 		timer_label.add_theme_color_override("font_color", Color.WHITE)
+	# R18: run phase label under timer pressure
+	if RunManager.is_running:
+		var m := RunManager.elapsed_time / 60.0
+		var phase := "EARLY"
+		if m >= 13.0:
+			phase = "FINALE"
+		elif m >= 10.0:
+			phase = "LATE"
+		elif m >= 5.0:
+			phase = "MID"
+		if kills_label != null:
+			kills_label.text = "%d kills  ·  %s" % [RunManager.kills, phase]
 	_fps_accum += delta
 	if _fps_accum >= 0.25:
 		_fps_accum = 0.0
