@@ -59,14 +59,16 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 | 3 wins | Unlock **Rogue** |
 | Achievements | Bonus gold (see in-game list) |
 
-## Recent polish (R-series)
+## Recent polish (R/S series)
 
 - 15-minute victory ending + endless mode
-- Void Lance weapon, Hunter's Mark passive, extra synergies
-- Character unlocks by wins, achievements panel, victory gold
-- Live boss HP bar, elite death bursts, ability cooldown readouts
+- Void Lance → **Void Reaver** evolution, Hunter's Mark passive, extra synergies
+- Character unlocks by wins, achievements panel (12+), victory gold + interest
+- Live boss HP bar, elite death bursts, ability cooldown readouts + ready glow
+- Victory fanfare, combo tier toasts, phoenix revive toast
+- Meta shop: Bulwark + Precision; crit haptics on mobile
 - XP shard look/magnet, combo XP cap, darker enemies, stuck-move fix
-- HUD win countdown, pause run stats, achievement toasts
+- HUD win countdown, run phase label, pause run stats
 
 ## How to Run Locally
 
