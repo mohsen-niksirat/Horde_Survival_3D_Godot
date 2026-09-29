@@ -26,6 +26,43 @@ func setup(p_player: Node3D, p_arena: Node3D, p_pickup_root: Node3D) -> void:
 		var path := "res://data/relics/%s.tres" % id
 		if ResourceLoader.exists(path):
 			_pool.append(load(path))
+	# R14: guaranteed reward chest when a boss falls
+	if EventBus != null and not EventBus.boss_died.is_connected(_on_boss_died):
+		EventBus.boss_died.connect(_on_boss_died)
+
+func _on_boss_died() -> void:
+	_spawn_one(true)
+
+func _spawn_one(ignore_cap: bool = false) -> void:
+	if _pool.is_empty() or player == null or arena == null:
+		return
+	if not ignore_cap:
+		var live := 0
+		if get_tree() != null:
+			for child in get_tree().get_nodes_in_group("relics"):
+				if is_instance_valid(child):
+					live += 1
+		if live >= MAX_ON_MAP:
+			return
+	var total := 0
+	for r in _pool:
+		total += r.rarity_weight()
+	if total <= 0:
+		return
+	var roll := randi() % total
+	var chosen = _pool[0]
+	for r in _pool:
+		roll -= r.rarity_weight()
+		if roll < 0:
+			chosen = r
+			break
+	if _relic_scene == null:
+		return
+	var relic := _relic_scene.instantiate()
+	pickup_root.add_child(relic)
+	relic.add_to_group("relics")
+	var pos: Vector3 = arena.get_spawn_position(player.global_position)
+	relic.setup(chosen, player, pos, LIFETIME)
 
 func _process(delta: float) -> void:
 	_timer -= delta
@@ -34,33 +71,7 @@ func _process(delta: float) -> void:
 		_try_spawn()
 
 func _try_spawn() -> void:
-	if _pool.is_empty():
-		return
-	# Count only live relic pickups — pickup_root may also hold projectiles/VFX
-	var live := 0
-	if get_tree() != null:
-		for child in get_tree().get_nodes_in_group("relics"):
-			if is_instance_valid(child) and child.is_inside_tree():
-				live += 1
-	if live >= MAX_ON_MAP:
-		return
-	# Rarity-weighted pick
-	var total := 0
-	for r in _pool:
-		total += r.rarity_weight()
-	var roll := randi() % total
-	var chosen = _pool[0]
-	for r in _pool:
-		roll -= r.rarity_weight()
-		if roll <= 0:
-			chosen = r
-			break
-	# Spawn on ring
-	var relic := _relic_scene.instantiate()
-	pickup_root.add_child(relic)
-	relic.add_to_group("relics")
-	var pos: Vector3 = arena.get_spawn_position(player.global_position)
-	relic.setup(chosen, player, pos, LIFETIME)
+	_spawn_one(false)
 
 func apply_relic(data: RelicData) -> void:
 	player.stat_block.base["max_hp"] += 0  # no-op touch to ensure statblock exists
