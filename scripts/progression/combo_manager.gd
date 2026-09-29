@@ -4,7 +4,7 @@ extends Node
 
 signal combo_tier_reached(tier_name: String)
 
-const TIMEOUT := 2.0
+const TIMEOUT := 2.8
 const TIERS := [
 	{"name": "GODLIKE", "count": 200},
 	{"name": "DIAMOND", "count": 100},
