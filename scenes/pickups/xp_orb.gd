@@ -34,17 +34,28 @@ func _ready() -> void:
 	var m := get_node_or_null("Mesh") as MeshInstance3D
 	if m != null and m.get_child_count() == 0:
 		# Playtest: smaller pickup so the floor stays readable in hordes
-		var rig := RigUtil.attach_glb(m, "res://assets/models/xp_shard.glb", 0.28, "ShardRig")
+		var size_scale := 0.28
+		if value >= 8.0:
+			size_scale = 0.42
+		elif value >= 4.0:
+			size_scale = 0.34
+		var rig := RigUtil.attach_glb(m, "res://assets/models/xp_shard.glb", size_scale, "ShardRig")
 		if rig != null:
 			m.mesh = null
 			# Distinct mint-cyan so XP never blends with white hit FX / red orbs
+			# High-value shards go gold for instant read
+			var col := Color(0.25, 1.0, 0.75)
+			var emit := Color(0.15, 0.95, 0.7)
+			if value >= 8.0:
+				col = Color(1.0, 0.85, 0.25)
+				emit = Color(1.0, 0.75, 0.15)
 			for mi in rig.find_children("*", "MeshInstance3D", true, false):
 				var active = mi.get_active_material(0)
 				if active is StandardMaterial3D:
 					var mat: StandardMaterial3D = (active as StandardMaterial3D).duplicate()
-					mat.albedo_color = Color(0.25, 1.0, 0.75)
+					mat.albedo_color = col
 					mat.emission_enabled = true
-					mat.emission = Color(0.15, 0.95, 0.7)
+					mat.emission = emit
 					mat.emission_energy_multiplier = 1.6
 					mi.set_surface_override_material(0, mat)
 
