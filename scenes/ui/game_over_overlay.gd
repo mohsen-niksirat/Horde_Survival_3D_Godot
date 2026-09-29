@@ -44,14 +44,26 @@ func _commit_run() -> void:
 	RunManager.gold_earned = 0.0
 	var title := "VICTORY" if _victory else "RUN OVER"
 	var subtitle := ("You survived the horde. +250 bonus gold!" + unlock_msg) if _victory else "The horde claimed you."
-	stats_label.text = "%s\n%s\nSurvived: %s\nKills: %d\nGold earned: %d" % [
+	stats_label.text = "%s\n%s\nSurvived: %s\nKills: %d\nBest combo: %d\nGold earned: %d" % [
 		title,
 		subtitle,
 		RunManager.get_time_string(),
 		RunManager.kills,
+		_max_combo(),
 		int(gold_earned),
 	]
 	stats_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35) if _victory else Color(1.0, 0.55, 0.5))
+
+func _max_combo() -> int:
+	var combos := get_tree().get_nodes_in_group("combo_manager") if get_tree() != null else []
+	# ComboManager is a plain Node under Main — search by script
+	var main := get_tree().current_scene if get_tree() != null else null
+	if main != null:
+		var found: Array = main.find_children("*", "Node", true, false)
+		for n in found:
+			if n.get("max_combo") != null:
+				return int(n.max_combo)
+	return 0
 
 func _on_retry() -> void:
 	GameManager.start_game()
