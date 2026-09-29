@@ -30,11 +30,16 @@ func _ready() -> void:
 func _refresh_stats() -> void:
 	if _stats_label == null:
 		return
-	_stats_label.text = "Time %s  ·  Kills %d  ·  Level %d  ·  Gold %d" % [
+	var win_txt := ""
+	if not RunManager.endless:
+		var left: float = maxf(RunManager.target_duration - RunManager.elapsed_time, 0.0)
+		win_txt = "  ·  Win in %d:%02d" % [int(left) / 60, int(left) % 60]
+	_stats_label.text = "Time %s  ·  Kills %d  ·  Level %d  ·  Gold %d%s" % [
 		RunManager.get_time_string(),
 		RunManager.kills,
 		_player_level(),
 		int(RunManager.gold_earned),
+		win_txt,
 	]
 
 func _player_level() -> int:
