@@ -59,6 +59,15 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 | 3 wins | Unlock **Rogue** |
 | Achievements | Bonus gold (see in-game list) |
 
+## Recent polish (R-series)
+
+- 15-minute victory ending + endless mode
+- Void Lance weapon, Hunter's Mark passive, extra synergies
+- Character unlocks by wins, achievements panel, victory gold
+- Live boss HP bar, elite death bursts, ability cooldown readouts
+- XP shard look/magnet, combo XP cap, darker enemies, stuck-move fix
+- HUD win countdown, pause run stats, achievement toasts
+
 ## How to Run Locally
 
 1. Install [Godot 4.7+](https://godotengine.org/download) (project features pin `4.7`)
