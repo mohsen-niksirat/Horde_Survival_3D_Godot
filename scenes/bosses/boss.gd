@@ -40,6 +40,7 @@ var _telegraph: MeshInstance3D
 var _telegraph_active: bool = false
 var _telegraph_pos: Vector3
 var _telegraph_mat: StandardMaterial3D = null
+var _enrage_ring: MeshInstance3D = null
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -88,6 +89,29 @@ func _apply_phase_tint() -> void:
 				m.emission = Color(1.0, 0.25, 0.1)
 				m.emission_energy_multiplier = 0.6
 			mi.set_surface_override_material(0, m)
+	# T1: enrage ground aura so the danger zone reads from afar
+	if phase == BossPhase.ENRAGE:
+		_spawn_enrage_ring()
+
+func _spawn_enrage_ring() -> void:
+	if _enrage_ring != null and is_instance_valid(_enrage_ring):
+		return
+	_enrage_ring = MeshInstance3D.new()
+	_enrage_ring.name = "EnrageRing"
+	var torus := TorusMesh.new()
+	torus.inner_radius = 2.8
+	torus.outer_radius = 3.4
+	_enrage_ring.mesh = torus
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.2, 0.1, 0.55)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.15, 0.05)
+	mat.emission_energy_multiplier = 1.8
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_enrage_ring.material_override = mat
+	_enrage_ring.position = Vector3(0, 0.08, 0)
+	add_child(_enrage_ring)
 
 func setup(p_player: Node3D, p_enemy_manager: Node, p_arena: Node3D, level_scale: float) -> void:
 	player = p_player
@@ -224,6 +248,8 @@ func _execute_slam() -> void:
 		rig.add_shake(0.35)
 
 func _fire_fan() -> void:
+	# T1: brief orange flash so radial volleys are telegraphed
+	EventBus.boss_phase_changed.emit("FAN", Color(1.0, 0.55, 0.15, 0.4))
 	# Radial projectiles (simple pooled spheres via EnemyManager projectiles)
 	var count := 10 if phase == BossPhase.ENRAGE else 8
 	for i in range(count):
