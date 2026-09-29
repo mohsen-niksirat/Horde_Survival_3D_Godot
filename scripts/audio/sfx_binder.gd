@@ -22,13 +22,16 @@ func _haptic(ms: int) -> void:
 
 var _last_hit_ms: int = 0
 
-func _on_enemy_damaged(_enemy: Node, _amount: float, _crit: bool) -> void:
+func _on_enemy_damaged(_enemy: Node, _amount: float, crit: bool) -> void:
 	# Throttle identical hit sounds (reference-game lesson: 15 sounds/sec max)
 	var now := Time.get_ticks_msec()
 	if now - _last_hit_ms < 50:
 		return
 	_last_hit_ms = now
 	AudioManager.play_game_sfx("enemy_hit")
+	# S4: tiny haptic punch on crits (mobile)
+	if crit:
+		_haptic(12)
 
 func _on_enemy_died(_enemy: Node, _pos: Vector3) -> void:
 	var now := Time.get_ticks_msec()
