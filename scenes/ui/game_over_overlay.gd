@@ -50,10 +50,15 @@ func _commit_run() -> void:
 	RunManager.gold_earned = 0.0
 	var title := "VICTORY" if _victory else "RUN OVER"
 	var subtitle := ("You survived the horde. +250 bonus gold!" + unlock_msg) if _victory else "The horde claimed you."
-	stats_label.text = "%s\n%s\nSurvived: %s\nKills: %d\nBest combo: %d\nGold earned: %d%s" % [
+	var best: float = float(SaveManager.get_meta_data("best_time", 0.0))
+	var best_note := ""
+	if RunManager.elapsed_time >= best - 0.05 and RunManager.elapsed_time > 5.0:
+		best_note = "  ·  NEW BEST TIME"
+	stats_label.text = "%s\n%s\nSurvived: %s%s\nKills: %d\nBest combo: %d\nGold earned: %d%s" % [
 		title,
 		subtitle,
 		RunManager.get_time_string(),
+		best_note,
 		RunManager.kills,
 		_max_combo(),
 		int(gold_earned),

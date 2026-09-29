@@ -40,7 +40,8 @@ func _build() -> void:
 		var card := Button.new()
 		card.custom_minimum_size = Vector2(220, 220)
 		if unlocked:
-			card.text = "%s\n\n%s" % [data.display_name, data.description]
+			var weapon_name: String = data.starting_weapon_id.replace("_", " ").capitalize()
+			card.text = "%s\n\n%s\nStarts with: %s" % [data.display_name, data.description, weapon_name]
 			card.add_theme_color_override("font_color", data.color)
 			card.pressed.connect(_on_pick.bind(data))
 		else:
