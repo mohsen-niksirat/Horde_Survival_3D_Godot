@@ -18,6 +18,7 @@ extends Control
 @onready var weapon_icons: HBoxContainer = $TopLeft/WeaponIcons
 @onready var boss_bar: ProgressBar = $BossBar
 @onready var hint_label: Label = $HintLabel
+var _objective_label: Label
 
 ## V14 onboarding: rotating contextual hints during the first 90 seconds.
 const HINTS := [
@@ -86,6 +87,13 @@ func _on_achievement_unlocked(_id: String, title: String, gold: int) -> void:
 	_refresh_weapon_icons()
 	# V-fix: hide gameplay HUD while paused/level-up so overlays read clean
 	EventBus.game_state_changed.connect(_on_hud_visibility)
+	EventBus.run_started.connect(_on_run_started_briefing)
+	_build_objective_label()
+
+func _on_run_started_briefing() -> void:
+	var m = RunManager.mission
+	if m != null:
+		_show_toast("%s — %s" % [m.display_name, m.briefing])
 
 func _on_zoom_in() -> void:
 	InputManager.add_zoom_delta(-0.18)
@@ -174,8 +182,37 @@ func bind_abilities(controller: Node) -> void:
 			ac._execute(ac.abilities[1]["data"])
 			ac.abilities[1]["cooldown_left"] = ac.abilities[1]["data"].cooldown)
 
+func _build_objective_label() -> void:
+	_objective_label = Label.new()
+	_objective_label.name = "ObjectiveLabel"
+	_objective_label.add_theme_font_size_override("font_size", 16)
+	_objective_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.55))
+	_objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_objective_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_objective_label.offset_top = 96.0
+	_objective_label.visible = false
+	add_child(_objective_label)
+
+func _process_objective() -> void:
+	if _objective_label == null:
+		return
+	var m = RunManager.mission
+	if m == null or not RunManager.is_running:
+		_objective_label.visible = false
+		return
+	_objective_label.visible = true
+	match m.win_rule:
+		"survive_time":
+			var left: float = maxf(float(m.win_target) - RunManager.elapsed_time, 0.0)
+			_objective_label.text = "%s — survive %d:%02d" % [m.display_name, int(left) / 60, int(left) % 60]
+		"kill_count":
+			_objective_label.text = "%s — %d / %d kills" % [m.display_name, RunManager.kills, int(m.win_target)]
+		"kill_boss":
+			_objective_label.text = "%s — defeat the Warden" % m.display_name
+
 func _process(delta: float) -> void:
 	timer_label.text = RunManager.get_time_string()
+	_process_objective()
 	# R9: standard runs show remaining time to victory
 	if not RunManager.endless and RunManager.is_running:
 		var left: float = maxf(RunManager.target_duration - RunManager.elapsed_time, 0.0)

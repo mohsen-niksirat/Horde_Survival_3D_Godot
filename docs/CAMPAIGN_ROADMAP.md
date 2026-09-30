@@ -109,9 +109,9 @@ Level-up UI:
 
 ## Current status
 - [x] Character lore on select (tap to read)
-- [ ] MissionData + Campaign menu
-- [ ] Story cut-cards
+- [x] MissionData + Campaign menu
+- [x] Story briefings on run start + objective HUD
 - [ ] Arena variant B
 - [ ] Extra weapons + slot meta
-- [ ] Objectives HUD
+- [x] Objectives HUD
 - [ ] Ending
