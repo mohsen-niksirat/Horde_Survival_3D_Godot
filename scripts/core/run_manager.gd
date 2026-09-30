@@ -11,6 +11,9 @@ var kills: int = 0
 var gold_earned: float = 0.0
 var boss_active: bool = false
 var target_duration: float = 900.0
+## Campaign (S1): active mission win rule
+var mission: Resource = null
+var mission_boss_killed: bool = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -24,6 +27,30 @@ func _process(delta: float) -> void:
 			is_running = false
 			boss_active = false
 			GameManager.game_over(true)
+		elif mission != null:
+			_check_mission_win()
+
+## S1 campaign: win when mission rule is met.
+func _check_mission_win() -> void:
+	var won := false
+	match mission.win_rule:
+		"survive_time":
+			won = elapsed_time >= float(mission.win_target)
+		"kill_count":
+			won = kills >= int(mission.win_target)
+		"kill_boss":
+			won = mission_boss_killed
+	if won:
+		is_running = false
+		boss_active = false
+		gold_earned += float(mission.gold_reward)
+		GameManager.game_over(true)
+
+func set_mission(m: Resource) -> void:
+	mission = m
+	mission_boss_killed = false
+	if m != null and m.win_rule == "survive_time":
+		target_duration = float(m.win_target)
 
 func start_run() -> void:
 	is_running = true
@@ -31,6 +58,7 @@ func start_run() -> void:
 	kills = 0
 	gold_earned = 0.0
 	boss_active = false
+	mission_boss_killed = false
 	EventBus.run_started.emit()
 
 func start_run_endless() -> void:
@@ -44,6 +72,9 @@ func end_run() -> void:
 func register_kill() -> void:
 	kills += 1
 	kills_changed.emit(kills)
+
+func on_boss_killed() -> void:
+	mission_boss_killed = true
 
 func add_gold(amount: float) -> void:
 	gold_earned += amount

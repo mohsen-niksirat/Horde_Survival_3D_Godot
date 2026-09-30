@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="MissionData" load_steps=2 format=3 uid="uid://miss_gate001"]
+
+[ext_resource type="Script" path="res://scripts/core/mission_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "m1_gate"
+display_name = "Ash at the Gate"
+briefing = "The outer ward is cracking. Hold the gate until the torches die."
+map_id = "arena"
+win_rule = "survive_time"
+win_target = 300.0
+gold_reward = 150
+unlock_wins = 0

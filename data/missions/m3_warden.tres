@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="MissionData" load_steps=2 format=3 uid="uid://miss_ward001"]
+
+[ext_resource type="Script" path="res://scripts/core/mission_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "m3_warden"
+display_name = "The Warden"
+briefing = "The Warden holds the lower gate. Break him and the Heartforge is open."
+map_id = "arena"
+win_rule = "kill_boss"
+win_target = 1.0
+gold_reward = 350
+unlock_wins = 2

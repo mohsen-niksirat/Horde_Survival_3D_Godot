@@ -282,6 +282,8 @@ func _on_died() -> void:
 	alive = false
 	EventBus.boss_died.emit()
 	boss_died.emit()
+	if RunManager != null:
+		RunManager.on_boss_killed()
 	# V15B victory moment: gold flash + camera punch at the kill
 	EventBus.boss_phase_changed.emit("VICTORY", Color(1.0, 0.9, 0.35, 0.55))
 	var cam := get_viewport().get_camera_3d()
