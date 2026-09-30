@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3 uid="uid://char_cleric01"]
+
+[ext_resource type="Script" path="res://scripts/progression/character_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cleric"
+display_name = "Cleric"
+description = "+15% HP, +10% XP. Starts with Magic Missile."
+color = Color(1, 0.95, 0.75, 1)
+starting_weapon_id = "magic_missile"
+max_hp_pct = 0.15
+move_speed_pct = 0.0
+might_pct = 0.1

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3 uid="uid://char_ranger001"]
+
+[ext_resource type="Script" path="res://scripts/progression/character_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ranger"
+display_name = "Ranger"
+description = "+12% speed, +8% might. Starts with Frost Bolt."
+color = Color(0.55, 0.9, 0.55, 1)
+starting_weapon_id = "frost_bolt"
+max_hp_pct = 0.0
+move_speed_pct = 0.12
+might_pct = 0.08

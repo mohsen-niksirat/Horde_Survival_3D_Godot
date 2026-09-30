@@ -7,11 +7,15 @@ const HERO_RIGS := {
 	"mage": "res://assets/models/kaykit/heroes/adventurer_mage.glb",
 	"paladin": "res://assets/models/kaykit/heroes/adventurer_knight.glb",
 	"rogue": "res://assets/models/kaykit/heroes/adventurer_rogue.glb",
+	"cleric": "res://assets/models/kaykit/heroes/adventurer_knight.glb",
+	"ranger": "res://assets/models/kaykit/heroes/adventurer_rogue.glb",
 }
 const HERO_SCENES := {
 	"mage": "res://assets/models/heroes/hero_mage.glb",
 	"paladin": "res://assets/models/heroes/hero_paladin.glb",
 	"rogue": "res://assets/models/heroes/hero_rogue.glb",
+	"cleric": "res://assets/models/heroes/hero_paladin.glb",
+	"ranger": "res://assets/models/heroes/hero_rogue.glb",
 }
 const RIG_HEIGHT := 1.75
 
@@ -92,6 +96,8 @@ func _apply_tint(character_id: String, inst: Node3D) -> void:
 	match character_id:
 		"paladin": tint = Color(1.0, 0.88, 0.35)
 		"rogue": tint = Color(0.35, 0.95, 0.55)
+		"cleric": tint = Color(1.0, 0.98, 0.82)
+		"ranger": tint = Color(0.45, 0.85, 0.5)
 	_iter_mesh_tint(inst, tint)
 	match character_id:
 		"paladin": tint = Color(0.85, 0.75, 0.35)

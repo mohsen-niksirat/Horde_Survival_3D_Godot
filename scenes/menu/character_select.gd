@@ -2,16 +2,20 @@ extends Control
 ## Character select: pick applies id + starts the run.
 ## R4: unlock gates — mage free, paladin after 1 win, rogue after 3 wins.
 
-const CHARS := ["mage", "paladin", "rogue"]
+const CHARS := ["mage", "paladin", "rogue", "cleric", "ranger"]
 const UNLOCK_WINS := {
 	"mage": 0,
 	"paladin": 1,
 	"rogue": 3,
+	"cleric": 2,
+	"ranger": 4,
 }
 const LORE := {
 	"mage": "Once a court scholar who read the stars a little too closely. When the horde rose from the deep dungeon, she traded dusty tomes for living fire — and never looked back.",
 	"paladin": "A shield-bearer of the old order. Sworn to hold the line until the last torch dies. Slow to move, harder to kill, gold as the dawn.",
 	"rogue": "Grew up in the market under the dungeon walls. Steals relics from the horde the way she once stole bread — fast, quiet, and always one step ahead.",
+	"cleric": "Kept the Heartforge lit for thirty years. When the wards cracked, prayer turned to light — and light turned into a weapon.",
+	"ranger": "Scouted the frostroad until the ice swallowed the signal fires. Now the cold itself answers when she calls.",
 }
 
 @onready var cards: HBoxContainer = $Center/Layout/Cards

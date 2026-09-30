@@ -50,6 +50,14 @@ func _commit_run() -> void:
 	RunManager.gold_earned = 0.0
 	var title := "VICTORY" if _victory else "RUN OVER"
 	var subtitle := ("You survived the horde. +250 bonus gold!" + unlock_msg) if _victory else "The horde claimed you."
+	# S4: campaign mission result card
+	var m = RunManager.mission
+	if _victory and m != null:
+		title = "MISSION COMPLETE"
+		subtitle = "%s\n%s" % [m.display_name, str(m.briefing)]
+	elif not _victory and m != null:
+		title = "MISSION FAILED"
+		subtitle = "%s — the horde held the line." % m.display_name
 	var best: float = float(SaveManager.get_meta_data("best_time", 0.0))
 	var best_note := ""
 	if RunManager.elapsed_time >= best - 0.05 and RunManager.elapsed_time > 5.0:
