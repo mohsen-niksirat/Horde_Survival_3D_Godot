@@ -137,7 +137,12 @@ func _request_rig_preload() -> void:
 	ability_controller.setup(player, enemy_manager, projectile_root)
 	player.ability_controller = ability_controller
 
-	# Pet (Dragon Welp)
+	# Pet (Dragon Welp) — defer so first frame is faster on weak browsers
+	call_deferred("_spawn_pet")
+
+func _spawn_pet() -> void:
+	if not is_inside_tree():
+		return
 	var pet_scene: PackedScene = load("res://scenes/player/Pet.tscn")
 	var pet := pet_scene.instantiate()
 	pet.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -166,7 +171,12 @@ func _request_rig_preload() -> void:
 	# Juice/pet/projectile VFX belong to the pausable world too
 	juice.process_mode = Node.PROCESS_MODE_PAUSABLE
 
-	# V8 procedural music with state-driven intensity
+	# V8 procedural music — build WAVs after first frame (heavy PCM gen)
+	call_deferred("_build_music")
+
+func _build_music() -> void:
+	if not is_inside_tree():
+		return
 	var music := Node.new()
 	music.set_script(preload("res://scripts/audio/music_director.gd"))
 	music.name = "MusicDirector"

@@ -19,6 +19,10 @@ func _ready() -> void:
 		_build_floor()
 		_build_walls()
 		_build_torches()
+	# Perf: defer decorative props one frame so first playable frame is faster
+	if PerformanceManager != null and PerformanceManager.quality <= PerformanceManager.Quality.LOW:
+		call_deferred("_build_dressing")
+	else:
 		_build_dressing()
 	_apply_map_palette()
 
