@@ -17,6 +17,21 @@ var _owner_weapon: WeaponInstance
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	# Weapon visuals pass: flask-like fireball instead of bare sphere
+	var mesh := get_node_or_null("Mesh") as MeshInstance3D
+	if mesh != null and mesh.get_child_count() == 0 and ResourceLoader.exists("res://assets/models/weapons/potion.glb"):
+		var rig := RigUtil.attach_glb(mesh, "res://assets/models/weapons/potion.glb", 0.5, "PropRig")
+		if rig != null:
+			mesh.mesh = null
+			for mi in rig.find_children("*", "MeshInstance3D", true, false):
+				var active = mi.get_active_material(0)
+				if active is StandardMaterial3D:
+					var m: StandardMaterial3D = (active as StandardMaterial3D).duplicate()
+					m.albedo_color = Color(1.0, 0.45, 0.12)
+					m.emission_enabled = true
+					m.emission = Color(1.0, 0.35, 0.05)
+					m.emission_energy_multiplier = 1.2
+					mi.set_surface_override_material(0, m)
 
 func setup_fireball(weapon: WeaponInstance, p_damage: float, p_area: float, p_crit: float, p_data: WeaponData, from_pos: Vector3, dir: Vector3) -> void:
 	_owner_weapon = weapon

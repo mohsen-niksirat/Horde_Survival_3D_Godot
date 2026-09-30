@@ -23,6 +23,30 @@ var _cached_target: Node3D = null
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	_attach_model()
+
+## Weapon visuals pass: real props instead of bare capsules when assets exist.
+func _attach_model() -> void:
+	var mesh := get_node_or_null("Mesh") as MeshInstance3D
+	if mesh == null or mesh.get_child_count() > 0:
+		return
+	var path := ""
+	match _weapon_id:
+		"divine_spear", "judgment":
+			path = "res://assets/models/weapons/weapon-spear.glb"
+		"magic_missile", "holy_bible", "frost_bolt":
+			path = "res://assets/models/weapons/weapon-sword.glb"
+		"void_lance", "void_reaver", "soul_fire":
+			path = "res://assets/models/weapons/weapon-sword.glb"
+		_:
+			return
+	if not ResourceLoader.exists(path):
+		return
+	var height := 0.7 if path.ends_with("weapon-spear.glb") else 0.45
+	var rig := RigUtil.attach_glb(mesh, path, height, "PropRig")
+	if rig != null:
+		mesh.mesh = null
+		rig.rotation.y = RigUtil.RIG_YAW
 
 func setup_generic(p_damage: float, p_speed: float, p_pierce: int, p_crit: float,
 		p_homing: bool, p_status: String, p_status_dur: float,
