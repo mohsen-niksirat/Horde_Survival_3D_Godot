@@ -111,7 +111,9 @@ Level-up UI:
 - [x] Character lore on select (tap to read)
 - [x] MissionData + Campaign menu
 - [x] Story briefings on run start + objective HUD
-- [ ] Arena variant B
-- [ ] Extra weapons + slot meta
+- [x] Arena variant B (ice palette on Frostroad)
+- [x] Extra weapons + Arsenal slot meta (3 base → 5)
 - [x] Objectives HUD
-- [ ] Ending
+- [x] Weapon/projectile real props (swords, spears, flask, shields)
+- [x] Cleric & Ranger heroes
+- [ ] Ending / Heartforge finale
