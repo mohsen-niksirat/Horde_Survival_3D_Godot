@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://menu0000000001"]
+[gd_scene load_steps=9 format=3 uid="uid://menu0000000001"]
 
 [ext_resource type="Script" path="res://scenes/menu/main_menu.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/menu/SettingsMenu.tscn" id="2"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://scenes/menu/MetaShop.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/menu/CharacterSelect.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/menu/WeaponCodex.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/menu/AchievementPanel.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/menu/CampaignMenu.tscn" id="8"]
 
 [node name="MainMenu" type="Control"]
 layout_mode=3
@@ -146,3 +148,7 @@ vertical_alignment=1
 [node name="WeaponCodex" parent="." instance=ExtResource("6")]
 
 [node name="MetaShop" parent="." instance=ExtResource("4")]
+ 
+[node name="AchievementPanel" parent="." instance=ExtResource("7")]
+
+[node name="CampaignMenu" parent="." instance=ExtResource("8")]

@@ -16,6 +16,7 @@ const DEFS := [
 	{"id": "weapon_evolved", "title": "Weapon Evolver", "desc": "Evolve a weapon", "gold": 250},
 	{"id": "elite_slayer", "title": "Elite Slayer", "desc": "Defeat an elite enemy", "gold": 200},
 	{"id": "combo_100", "title": "Unstoppable", "desc": "Hit a 100 kill combo", "gold": 350},
+	{"id": "torchbearer", "title": "Torchbearer of Heartforge", "desc": "Complete the Heartforge finale and save the city", "gold": 500},
 ]
 
 @onready var rows: VBoxContainer = $Center/Panel/Layout/Scroll/Rows

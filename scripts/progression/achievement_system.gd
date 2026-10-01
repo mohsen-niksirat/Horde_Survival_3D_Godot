@@ -8,7 +8,7 @@ const DEFS := [
 	{"id": "kill_1", "title": "First Blood", "gold": 50},
 	{"id": "kill_100", "title": "Centurion", "gold": 100},
 	{"id": "kill_1000", "title": "Exterminator", "gold": 300},
-	{"id": "survive_5min", "title": " Survivor I", "gold": 100},
+	{"id": "survive_5min", "title": "Survivor I", "gold": 100},
 	{"id": "survive_10min", "title": "Survivor II", "gold": 200},
 	{"id": "survive_15min", "title": "Hordebreaker", "gold": 500},
 	{"id": "win_run", "title": "Victorious", "gold": 400},
