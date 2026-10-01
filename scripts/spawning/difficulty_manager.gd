@@ -49,8 +49,12 @@ static func allowed_archetypes(minutes: float) -> Array:
 		out.append("shooter_turret")
 	if minutes >= 5.0:
 		out.append("tank_golem")
+	if minutes >= 5.5:
+		out.append("specter")
 	if minutes >= 6.0:
 		out.append("splitter")
+	if minutes >= 6.5:
+		out.append("brute")
 	if minutes >= 7.0:
 		out.append("mage")
 	if minutes >= 8.0:

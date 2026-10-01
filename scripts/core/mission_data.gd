@@ -10,6 +10,11 @@ extends Resource
 @export var win_target: float = 300.0
 @export var gold_reward: int = 150
 @export var unlock_wins: int = 0
+@export var act: int = 1
+@export var act_name: String = "Act I — The Gate"
+@export var side_objective_type: String = ""   # "kill_elites" | "combo_streak"
+@export var side_objective_target: int = 0
+@export var side_gold_reward: int = 50
 
 func describe_win() -> String:
 	match win_rule:
@@ -18,8 +23,18 @@ func describe_win() -> String:
 		"kill_count":
 			return "Defeat %d enemies" % int(win_target)
 		"kill_boss":
-			return "Defeat the Warden"
+			if id == "m5_heartforge":
+				return "Defeat Heartforge Core"
+			return "Defeat the Boss"
 	return "Complete the objective"
+
+func describe_side() -> String:
+	match side_objective_type:
+		"kill_elites":
+			return "Bonus: Slay %d Elites (+%d gold)" % [side_objective_target, side_gold_reward]
+		"combo_streak":
+			return "Bonus: Reach %d Combo (+%d gold)" % [side_objective_target, side_gold_reward]
+	return ""
 
 func is_unlocked(victories: int) -> bool:
 	return victories >= unlock_wins

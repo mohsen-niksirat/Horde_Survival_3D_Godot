@@ -33,7 +33,7 @@ func setup(p_arena: Node3D, p_player: Node3D, p_enemy_manager: Node) -> void:
 	_active = true
 
 func _load_archetypes() -> void:
-	for id in ["basic_drone", "fast_wisp", "tank_golem", "swarm_bat", "shooter_turret", "ghost", "splitter", "healer", "mage"]:
+	for id in ["basic_drone", "fast_wisp", "tank_golem", "swarm_bat", "shooter_turret", "ghost", "splitter", "healer", "mage", "brute", "specter"]:
 		var path := "res://data/enemies/%s.tres" % id
 		if ResourceLoader.exists(path):
 			archetype_data[id] = load(path)
@@ -59,7 +59,7 @@ func _process(delta: float) -> void:
 	PerformanceManager.report_system_time("waves", Time.get_ticks_usec() - start)
 
 ## Milestone boss at BOSS_TIME seconds; in Endless, respawns every 5 min
-## at +30% stats.
+## at +30% stats. S4: boss missions spawn early (120s) for focused boss encounters.
 func _tick_boss() -> void:
 	if RunManager.endless:
 		if RunManager.elapsed_time >= _next_endless_boss_time:
@@ -67,9 +67,14 @@ func _tick_boss() -> void:
 			_endless_boss_count += 1
 			_spawn_boss(1.0 + 0.3 * _endless_boss_count)
 		return
-	if not _boss_spawned and RunManager.elapsed_time >= BOSS_TIME:
+	var m = RunManager.mission
+	var boss_time := BOSS_TIME
+	if m != null and m.win_rule == "kill_boss":
+		boss_time = 120.0
+	if not _boss_spawned and RunManager.elapsed_time >= boss_time:
 		_boss_spawned = true
-		_spawn_boss(1.0)
+		var stat_mult: float = 1.25 if (m != null and m.id == "m5_heartforge") else 1.0
+		_spawn_boss(stat_mult)
 
 func _spawn_boss(stat_scale: float = 1.0) -> void:
 	var boss_scene: PackedScene = load(BOSS_SCENE)

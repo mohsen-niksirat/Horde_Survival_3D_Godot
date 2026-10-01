@@ -66,6 +66,7 @@ func _on_campaign_pressed() -> void:
 func _on_play_pressed() -> void:
 	AudioManager.play_game_sfx("ui_click")
 	play_button.disabled = true
+	RunManager.mission = null
 	RunManager.endless = endless_check.button_pressed
 	GameManager.start_game()
 

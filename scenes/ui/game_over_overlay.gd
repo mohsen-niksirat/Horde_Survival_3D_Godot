@@ -50,11 +50,17 @@ func _commit_run() -> void:
 	RunManager.gold_earned = 0.0
 	var title := "VICTORY" if _victory else "RUN OVER"
 	var subtitle := ("You survived the horde. +250 bonus gold!" + unlock_msg) if _victory else "The horde claimed you."
-	# S4: campaign mission result card
+	# S4+S9: campaign mission result card & Heartforge finale ending card
 	var m = RunManager.mission
 	if _victory and m != null:
-		title = "MISSION COMPLETE"
-		subtitle = "%s\n%s" % [m.display_name, str(m.briefing)]
+		if m.id == "m5_heartforge":
+			title = "★ THE HEARTFORGE RESTORED ★"
+			subtitle = "The ancient Heartforge rekindles with primordial flame!\nThe horde retreats into the dark abyss, and the light of the city is saved.\nTorchbearer, your vigil has held."
+		else:
+			title = "MISSION COMPLETE"
+			subtitle = "%s\n%s" % [m.display_name, str(m.briefing)]
+		if RunManager.side_objective_completed and m.get("side_gold_reward") != null:
+			subtitle += "\n★ Bonus Objective Completed (+%d gold)!" % int(m.side_gold_reward)
 	elif not _victory and m != null:
 		title = "MISSION FAILED"
 		subtitle = "%s — the horde held the line." % m.display_name

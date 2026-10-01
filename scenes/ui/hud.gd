@@ -204,14 +204,28 @@ func _process_objective() -> void:
 		_objective_label.visible = false
 		return
 	_objective_label.visible = true
+	var obj_text := ""
 	match m.win_rule:
 		"survive_time":
 			var left: float = maxf(float(m.win_target) - RunManager.elapsed_time, 0.0)
-			_objective_label.text = "%s — survive %d:%02d" % [m.display_name, int(left) / 60, int(left) % 60]
+			obj_text = "%s — survive %d:%02d" % [m.display_name, int(left) / 60, int(left) % 60]
 		"kill_count":
-			_objective_label.text = "%s — %d / %d kills" % [m.display_name, RunManager.kills, int(m.win_target)]
+			obj_text = "%s — %d / %d kills" % [m.display_name, RunManager.kills, int(m.win_target)]
 		"kill_boss":
-			_objective_label.text = "%s — defeat the Warden" % m.display_name
+			var target_name: String = "the Heartforge Core" if m.id == "m5_heartforge" else "the Warden"
+			obj_text = "%s — defeat %s" % [m.display_name, target_name]
+
+	var side_type: String = str(m.get("side_objective_type"))
+	var side_target: int = int(m.get("side_objective_target"))
+	if side_type != "" and side_target > 0:
+		var side_done: bool = bool(RunManager.side_objective_completed)
+		var tag := " [DONE]" if side_done else ""
+		match side_type:
+			"kill_elites":
+				obj_text += "  ·  Bonus: %d/%d Elites%s" % [mini(RunManager.elites_killed, side_target), side_target, tag]
+			"combo_streak":
+				obj_text += "  ·  Bonus: %d/%d Combo%s" % [mini(RunManager.max_combo_reached, side_target), side_target, tag]
+	_objective_label.text = obj_text
 
 func _process(delta: float) -> void:
 	timer_label.text = RunManager.get_time_string()

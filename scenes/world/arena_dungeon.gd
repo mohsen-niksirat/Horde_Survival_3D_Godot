@@ -26,14 +26,15 @@ func _ready() -> void:
 		_build_dressing()
 	_apply_map_palette()
 
-## S3: cheap palette swap for mission maps (ice cavern vs stone gate).
-func _is_ice_map() -> bool:
+## S3+S9: cheap palette swap for mission maps (stone gate vs ice cavern vs heartforge magma).
+func _get_map_id() -> String:
 	if RunManager == null or RunManager.mission == null:
-		return false
-	return str(RunManager.mission.map_id) == "ice"
+		return "arena"
+	return str(RunManager.mission.map_id)
 
 func _apply_map_palette() -> void:
-	if not _is_ice_map():
+	var map := _get_map_id()
+	if map == "arena":
 		return
 	var we := get_node_or_null("../WorldEnvironment") as WorldEnvironment
 	if we == null or we.environment == null:
@@ -42,19 +43,35 @@ func _apply_map_palette() -> void:
 		while p != null and we == null:
 			we = p.get_node_or_null("WorldEnvironment") as WorldEnvironment
 			p = p.get_parent()
-	if we != null and we.environment != null:
-		we.environment.ambient_light_color = Color(0.55, 0.75, 1.0)
-		we.environment.fog_enabled = true
-		we.environment.fog_light_color = Color(0.45, 0.65, 0.9)
-		we.environment.fog_density = 0.012
-	for n in ["FloorTiles", "DungeonWalls", "CornerPillars"]:
-		var mmi := get_node_or_null(n) as MultiMeshInstance3D
-		if mmi != null:
-			var mat := mmi.material_override as StandardMaterial3D
-			if mat == null:
-				mat = StandardMaterial3D.new()
-				mmi.material_override = mat
-			mat.albedo_color = Color(0.55, 0.78, 1.0)
+
+	if map == "ice":
+		if we != null and we.environment != null:
+			we.environment.ambient_light_color = Color(0.55, 0.75, 1.0)
+			we.environment.fog_enabled = true
+			we.environment.fog_light_color = Color(0.45, 0.65, 0.9)
+			we.environment.fog_density = 0.012
+		for n in ["FloorTiles", "DungeonWalls", "CornerPillars"]:
+			var mmi := get_node_or_null(n) as MultiMeshInstance3D
+			if mmi != null:
+				var mat := mmi.material_override as StandardMaterial3D
+				if mat == null:
+					mat = StandardMaterial3D.new()
+					mmi.material_override = mat
+				mat.albedo_color = Color(0.55, 0.78, 1.0)
+	elif map == "heartforge":
+		if we != null and we.environment != null:
+			we.environment.ambient_light_color = Color(1.0, 0.42, 0.22)
+			we.environment.fog_enabled = true
+			we.environment.fog_light_color = Color(0.85, 0.32, 0.12)
+			we.environment.fog_density = 0.014
+		for n in ["FloorTiles", "DungeonWalls", "CornerPillars"]:
+			var mmi := get_node_or_null(n) as MultiMeshInstance3D
+			if mmi != null:
+				var mat := mmi.material_override as StandardMaterial3D
+				if mat == null:
+					mat = StandardMaterial3D.new()
+					mmi.material_override = mat
+				mat.albedo_color = Color(0.82, 0.35, 0.22)
 
 func _extract_meshes() -> bool:
 	_tile_mesh = RigUtil.extract_mesh(ENV + "floor_tile_large.glb")["mesh"]

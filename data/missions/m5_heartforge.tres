@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MissionData" load_steps=2 format=3 uid="uid://miss_forge001"]
+
+[ext_resource type="Script" path="res://scripts/core/mission_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "m5_heartforge"
+display_name = "The Heartforge"
+briefing = "The primordial Heartforge is cracking with corrupt magma. Defeat the Core Warden and rekindle the light of the city!"
+map_id = "heartforge"
+win_rule = "kill_boss"
+win_target = 1.0
+gold_reward = 600
+unlock_wins = 4
+act = 3
+act_name = "Act III — The Heart"
+side_objective_type = "combo_streak"
+side_objective_target = 50
+side_gold_reward = 250

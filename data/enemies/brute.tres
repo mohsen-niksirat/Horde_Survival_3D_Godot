@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3 uid="uid://endata_brute001"]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "brute"
+display_name = "Brute"
+color = Color(0.65, 0.28, 0.18, 1)
+scale = 1.4
+max_hp = 50.0
+damage = 16.0
+move_speed = 2.4
+armor = 2.0
+movement_type = "chase"
+attack_range = 1.8
+attack_cooldown = 1.2
+xp = 8.0
+gold = 3.0
+spawn_weight = 4.0
+threat_cost = 4.0

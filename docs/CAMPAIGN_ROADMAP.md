@@ -109,11 +109,13 @@ Level-up UI:
 
 ## Current status
 - [x] Character lore on select (tap to read)
-- [x] MissionData + Campaign menu
+- [x] MissionData + Campaign menu (all 5 story missions across Acts I, II, III)
 - [x] Story briefings on run start + objective HUD
-- [x] Arena variant B (ice palette on Frostroad)
+- [x] Arena variant B (ice palette on Frostroad & Nest Hunt)
+- [x] Arena variant C (Heartforge magma & ember palette on finale)
 - [x] Extra weapons + Arsenal slot meta (3 base → 5)
-- [x] Objectives HUD
+- [x] Objectives HUD + in-run side objectives (Elites, Combo streaks)
 - [x] Weapon/projectile real props (swords, spears, flask, shields)
 - [x] Cleric & Ranger heroes
-- [ ] Ending / Heartforge finale
+- [x] Enemy story pack (Brute & Specter archetypes with model rigs)
+- [x] Ending / Heartforge finale card + Torchbearer achievement & 100% progress tracking

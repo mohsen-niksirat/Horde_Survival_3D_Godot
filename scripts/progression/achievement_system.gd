@@ -19,6 +19,7 @@ const DEFS := [
 	{"id": "weapon_evolved", "title": "Weapon Evolver", "gold": 250},
 	{"id": "elite_slayer", "title": "Elite Slayer", "gold": 200},
 	{"id": "combo_100", "title": "Unstoppable", "gold": 350},
+	{"id": "torchbearer", "title": "Torchbearer of Heartforge", "gold": 500},
 ]
 
 var unlocked: Dictionary = {}
@@ -48,6 +49,8 @@ func _on_run_ended(victory: bool) -> void:
 	if victory:
 		_unlock("win_run")
 		_unlock("survive_15min")
+		if RunManager.mission != null and str(RunManager.mission.id) == "m5_heartforge":
+			_unlock("torchbearer")
 
 func _on_kill(_enemy: Node, _pos: Vector3) -> void:
 	var kills: int = SaveManager.get_meta_data("total_kills", 0) + 1

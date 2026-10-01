@@ -18,6 +18,8 @@ const ENEMY_TINTS := {
 	"splitter": Color(0.08, 0.4, 0.15),
 	"healer": Color(0.55, 0.4, 0.08),
 	"mage": Color(0.3, 0.08, 0.55),
+	"brute": Color(0.55, 0.22, 0.12),
+	"specter": Color(0.48, 0.16, 0.68),
 	"swarm_bat_mini": Color(0.35, 0.08, 0.48),
 }
 
@@ -31,6 +33,8 @@ const ENEMY_SCENES := {
 	"splitter": "res://assets/models/enemies/enemy_orc.glb",
 	"healer": "res://assets/models/enemies/enemy_healer.glb",
 	"mage": "res://assets/models/enemies/enemy_mage.glb",
+	"brute": "res://assets/models/enemies/enemy_orc.glb",
+	"specter": "res://assets/models/enemies/enemy_ghost.glb",
 	"swarm_bat_mini": "res://assets/models/enemies/enemy_bat.glb",
 }
 
@@ -44,6 +48,8 @@ const GLB_SCALES := {
 	"splitter": 1.25,
 	"healer": 1.15,
 	"mage": 1.15,
+	"brute": 1.4,
+	"specter": 1.1,
 	"swarm_bat_mini": 0.65,
 }
 

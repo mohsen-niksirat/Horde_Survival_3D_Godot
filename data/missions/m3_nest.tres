@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MissionData" load_steps=2 format=3 uid="uid://miss_nest001"]
+
+[ext_resource type="Script" path="res://scripts/core/mission_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "m3_nest"
+display_name = "Nest Hunt"
+briefing = "Descend into the deep caverns. Slay the subterranean horde before they overrun the lower wards."
+map_id = "ice"
+win_rule = "kill_count"
+win_target = 130.0
+gold_reward = 300
+unlock_wins = 2
+act = 2
+act_name = "Act II — The Deep"
+side_objective_type = "combo_streak"
+side_objective_target = 40
+side_gold_reward = 120

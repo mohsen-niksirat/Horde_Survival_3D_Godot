@@ -90,16 +90,20 @@ func _initialize() -> void:
 	_check(absf(player.get_stat("might") - (might_before + 0.1)) < 0.001, "spinach adds +0.1 might (%.2f -> %.2f)" % [might_before, player.get_stat("might")])
 
 	# --- Weapon tier via choice ---
-	var weapon = player.weapon_controller.weapons[0]
-	var lvl0: int = weapon.level
 	var tier_opt = null
 	for opt in choices_received:
 		if opt.kind == UpgradeOption.Kind.WEAPON_TIER:
 			tier_opt = opt
 			break
 	if tier_opt != null:
+		var target_w = null
+		for w in player.weapon_controller.weapons:
+			if w.data.id == tier_opt.target_id:
+				target_w = w
+				break
+		var lvl0: int = target_w.level if target_w != null else 0
 		progression.apply_choice(tier_opt)
-		_check(weapon.level == lvl0 + 1, "weapon tier applied (%d -> %d)" % [lvl0, weapon.level])
+		_check(target_w != null and target_w.level == lvl0 + 1, "weapon tier applied (%d -> %d)" % [lvl0, target_w.level if target_w != null else 0])
 	else:
 		print("SKIP: no weapon-tier option offered this run")
 

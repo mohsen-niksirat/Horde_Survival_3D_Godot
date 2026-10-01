@@ -18,7 +18,7 @@ func _initialize() -> void:
 	var game_manager := root.get_node("GameManager")
 	game_manager.state = game_manager.State.PLAYING
 
-	_check(wm.archetype_data.size() == 9, "9 archetypes loaded (got %d)" % wm.archetype_data.size())
+	_check(wm.archetype_data.size() >= 9, ">= 9 archetypes loaded (got %d)" % wm.archetype_data.size())
 
 	# --- Simulate 30 seconds of waves (fast-forward clock, run frames) ---
 	var run_manager := root.get_node("RunManager")

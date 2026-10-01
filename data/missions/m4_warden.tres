@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-id = "m3_warden"
+id = "m4_warden"
 display_name = "The Warden"
 briefing = "The Warden holds the lower gate. Break him and the path to the Heartforge is open."
 map_id = "arena"
