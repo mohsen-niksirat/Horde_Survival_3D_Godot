@@ -66,7 +66,7 @@ func _physics_process(delta: float) -> void:
 	# Flicker the glow while flying
 	var mat: StandardMaterial3D = ($Mesh as MeshInstance3D).get_surface_override_material(0)
 	if mat != null:
-		mat.emission_energy_multiplier = 2.0 + sin(_life * 30.0) * 0.5
+		mat.emission_energy_multiplier = 0.75 + sin(_life * 30.0) * 0.15
 	# Despawn outside arena
 	if absf(global_position.x) > 62.0 or absf(global_position.z) > 62.0:
 		_deactivate()

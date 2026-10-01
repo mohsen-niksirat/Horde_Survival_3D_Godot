@@ -75,6 +75,8 @@ func setup(p_value: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	set_deferred("monitoring", true)
 
 func _on_magnet_pulse(duration: float) -> void:
+	if not is_inside_tree() or not visible:
+		return
 	# Soft wave: farther shards wait a bit longer, then ease toward player
 	_pulse_total = maxf(duration, 0.5)
 	_pulse_left = _pulse_total

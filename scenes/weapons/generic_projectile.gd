@@ -125,7 +125,15 @@ func _get_enemy_manager() -> Node:
 	while parent != null:
 		if parent.has_method("get_enemy_manager"):
 			return parent.get_enemy_manager()
+		if parent.get_node_or_null("EnemyManager") != null:
+			return parent.get_node("EnemyManager")
 		parent = parent.get_parent()
+	var tree := get_tree()
+	if tree != null and tree.current_scene != null:
+		if tree.current_scene.has_method("get_enemy_manager"):
+			return tree.current_scene.get_enemy_manager()
+		if tree.current_scene.get_node_or_null("EnemyManager") != null:
+			return tree.current_scene.get_node("EnemyManager")
 	return null
 
 func _deactivate() -> void:

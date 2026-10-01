@@ -16,6 +16,12 @@ func _initialize() -> void:
 	var game_manager := root.get_node("GameManager")
 	game_manager.state = game_manager.State.PLAYING
 
+	var mb := InputEventMouseButton.new()
+	mb.button_index = MOUSE_BUTTON_RIGHT
+	mb.pressed = true
+	Input.parse_input_event(mb)
+	await process_frame
+
 	var yaw0: float = rig._yaw
 	# Simulate large mouse motion: 20 events x 500px = far beyond one screen
 	for i in range(20):

@@ -31,7 +31,7 @@ func _initialize() -> void:
 
 	# Stress mode reduces pool size
 	var perf: Node = root.get_node("PerformanceManager")
-	var original_size := audio._sfx_players.size()
+	var original_size: int = audio._sfx_players.size()
 	perf.stress_mode = true
 	perf.quality_changed.emit(perf.quality)
 	await process_frame

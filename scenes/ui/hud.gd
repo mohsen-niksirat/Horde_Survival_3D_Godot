@@ -55,6 +55,7 @@ const TIER_COLORS := {
 
 func bind_player(player: Node) -> void:
 	_player = player
+	_refresh_weapon_icons()
 	EventBus.player_leveled_up.connect(_on_level_up)
 	RunManager.kills_changed.connect(_on_kills)
 	EventBus.combo_changed.connect(_on_combo)
@@ -76,6 +77,8 @@ func _on_boss_phase_banner(phase_name: String, _color: Color) -> void:
 func _on_achievement_unlocked(_id: String, title: String, gold: int) -> void:
 	_show_toast("ACHIEVEMENT: %s (+%d gold)" % [title, gold])
 	AudioManager.play_game_sfx("level_up")
+
+func _ready() -> void:
 	pause_button.pressed.connect(_on_pause_pressed)
 	# Connect once here — not in the visibility handler (that re-ran every state change)
 	if not zoom_in_button.pressed.is_connected(_on_zoom_in):

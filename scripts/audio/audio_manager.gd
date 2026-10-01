@@ -49,16 +49,21 @@ var _tone_cache: Dictionary = {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_music_player = AudioStreamPlayer.new()
-	_music_player.bus = "Master"
-	add_child(_music_player)
-	for i in range(SFX_POOL_SIZE):
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_sfx_players.append(p)
-	_apply_volumes()
+	_ensure_players()
 	PerformanceManager.quality_changed.connect(_on_performance_tier_changed)
 	PerformanceManager.quality_changed.connect(_on_stress_changed)
+
+func _ensure_players() -> void:
+	if _music_player == null:
+		_music_player = AudioStreamPlayer.new()
+		_music_player.bus = "Master"
+		add_child(_music_player)
+	if _sfx_players.is_empty():
+		for i in range(SFX_POOL_SIZE):
+			var p := AudioStreamPlayer.new()
+			add_child(p)
+			_sfx_players.append(p)
+		_apply_volumes()
 
 ## Simple procedural SFX: short synthesized tone, cached per sound id.
 ## No external audio assets needed â€” layered, swept, soft-clipped synthesis.
@@ -153,21 +158,29 @@ func _build_wav(layers: Array) -> AudioStreamWAV:
 	return stream
 
 func play_music(stream: AudioStream, loop: bool = true) -> void:
+	_ensure_players()
+	if _music_player == null:
+		return
 	if _music_player.stream == stream and _music_player.playing:
 		return
 	_music_player.stream = stream
 	if stream is AudioStreamOggVorbis or stream is AudioStreamMP3:
 		stream.loop = loop
-	_music_player.play()
+	if _music_player.is_inside_tree():
+		_music_player.play()
 
 func stop_music() -> void:
-	_music_player.stop()
+	if _music_player != null:
+		_music_player.stop()
 
 func play_sfx(stream: AudioStream, volume_db_offset: float = 0.0, pitch: float = 1.0) -> void:
 	play_sfx_tiered(stream, SfxTier.IMPORTANT, volume_db_offset, pitch)
 
 ## Play an SFX with importance-tier-based gating and volume ducking.
 func play_sfx_tiered(stream: AudioStream, tier: int, volume_db_offset: float = 0.0, pitch: float = 1.0) -> void:
+	_ensure_players()
+	if _sfx_players.is_empty():
+		return
 	# Rate-limit ambient/low-tier sounds under load
 	if _GATE_THRESHOLDS[tier] > 0.0:
 		var key: int = stream.get_instance_id()
@@ -177,17 +190,20 @@ func play_sfx_tiered(stream: AudioStream, tier: int, volume_db_offset: float = 0
 		_sfx_gate[key] = float(Time.get_ticks_msec())
 	var player := _free_sfx_player()
 	if player == null:
-		if tier < SfxTier.AMBIENT:
+		if tier < SfxTier.AMBIENT and not _sfx_players.is_empty():
 			# Critical/important: steal the loudest non-critical player
 			player = _sfx_players[0]
 		else:
 			return
+	if player == null:
+		return
 	# Apply tier-based volume scaling (ducking under stress)
 	var vol_scale: float = float(TIER_VOLUME_SCALE.get(tier, 1.0))
 	player.stream = stream
 	player.volume_db = linear_to_db(clampf(sfx_volume * master_volume * vol_scale, 0.001, 1.0)) + volume_db_offset
 	player.pitch_scale = pitch
-	player.play()
+	if player.is_inside_tree():
+		player.play()
 
 func _free_sfx_player() -> AudioStreamPlayer:
 	if _sfx_players.is_empty():
@@ -281,17 +297,27 @@ func set_volumes(master: float, music: float, sfx: float) -> void:
 	music_volume = music
 	sfx_volume = sfx
 	_apply_volumes()
+	var eb: Node = Engine.get_main_loop().root.get_node_or_null("EventBus") if Engine.get_main_loop() != null else null
+	if eb != null and eb.has_signal("settings_changed"):
+		eb.settings_changed.emit()
 
 func _apply_volumes() -> void:
-	var music_db := linear_to_db(clampf(music_volume * master_volume, 0.001, 1.0))
-	var sfx_db := linear_to_db(clampf(sfx_volume * master_volume, 0.001, 1.0))
+	var music_db := get_music_db()
+	var sfx_db := -80.0 if (master_volume <= 0.001 or sfx_volume <= 0.001) else linear_to_db(clampf(sfx_volume * master_volume, 0.001, 1.0))
 	if _music_player:
 		_music_player.volume_db = music_db
 	for p in _sfx_players:
 		p.volume_db = sfx_db
+	var tree := get_tree()
+	if tree != null and tree.root != null:
+		var md: Node = tree.root.find_child("MusicDirector", true, false)
+		if md != null and md.has_method("update_volumes"):
+			md.update_volumes()
 
 ## Query function: MusicDirector uses this to cross-fade to the right ceiling.
 func get_music_db() -> float:
+	if master_volume <= 0.001 or music_volume <= 0.001:
+		return -80.0
 	return linear_to_db(clampf(music_volume * master_volume, 0.001, 1.0))
 
 ## Under stress or low quality, reduce SFX pool size and shorten gate thresholds.

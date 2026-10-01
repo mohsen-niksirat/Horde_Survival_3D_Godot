@@ -98,7 +98,7 @@ func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: 
 	tween.tween_property(_mesh, "scale", target_scale, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 	_attack_timer = randf_range(0.0, data.attack_cooldown)
-	_ranged_timer = randf_range(0.5, data.ranged_cooldown if data.ranged_attack else 2.5)
+	_ranged_timer = randf_range(0.5, minf(2.0, data.ranged_cooldown) if data.ranged_attack else 2.5)
 	_heal_timer = data.heal_cooldown
 	_phase_timer = data.phase_interval
 	_split_done = false
@@ -209,10 +209,9 @@ func _physics_process(delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, atan2(dir.x, dir.z), 8.0 * delta)
 
 	_attack_timer -= delta
-	# Contact damage ONLY on real touch: player capsule 0.45 m + enemy body
-	# radius (scales with archetype size, elites are bulkier). Mere proximity
-	# no longer drains HP — hordes must physically reach the hero.
-	var contact_r := 0.92 + 0.45 * maxf(data.scale - 1.0, 0.0) + (0.5 if elite != null else 0.0)
+	# Contact damage ONLY on real touch: player capsule 0.45 m + enemy body 0.55 m = 1.0 m touch distance
+	# plus margin (scales with archetype size, elites are bulkier).
+	var contact_r := 1.15 + 0.45 * maxf(data.scale - 1.0, 0.0) + (0.5 if elite != null else 0.0)
 	if _attack_timer <= 0.0 and dist <= contact_r:
 		_attack_timer = data.attack_cooldown
 		if _player.has_method("take_contact_damage"):

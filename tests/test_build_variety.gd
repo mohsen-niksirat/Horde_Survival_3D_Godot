@@ -6,7 +6,6 @@ var failures := 0
 
 func _initialize() -> void:
 	var game_manager := root.get_node("GameManager")
-	root.get_node("SaveManager").set_meta_data("meta_upgrades", {"meta_slots": 2})
 
 	var main_ps: PackedScene = load("res://scenes/main/Main.tscn")
 	var main := main_ps.instantiate()
@@ -14,6 +13,8 @@ func _initialize() -> void:
 	for i in range(4):
 		await process_frame
 		await physics_frame
+
+	root.get_node("SaveManager").set_meta_data("meta_upgrades", {"meta_slots": 2})
 
 	var player: CharacterBody3D = main.get_node("World/Player")
 	var prog: Node = main.progression

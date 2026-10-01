@@ -11,6 +11,11 @@ var _zoom_delta: float = 0.0
 var _last_touch_move_ms: int = 0
 
 var _using_touch: bool = false
+var _rmb_held: bool = false
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		_rmb_held = event.pressed
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -35,7 +40,7 @@ func capture_pointer() -> void:
 func is_look_active() -> bool:
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		return true
-	return Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	return _rmb_held or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 
 func is_pointer_captured() -> bool:
 	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED

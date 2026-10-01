@@ -72,5 +72,8 @@ func _tier_bonus(arr: Array) -> int:
 func level_up() -> void:
 	var prev := level
 	level = mini(level + 1, 5)
-	if level == 5 and prev < 5 and EventBus != null:
-		EventBus.upgrade_applied.emit("%s MAX TIER" % data.display_name)
+	if level == 5 and prev < 5:
+		var main_loop := Engine.get_main_loop()
+		if main_loop is SceneTree and main_loop.root != null and main_loop.root.has_node("EventBus"):
+			var event_bus: Node = main_loop.root.get_node("EventBus")
+			event_bus.upgrade_applied.emit("%s MAX TIER" % data.display_name)
