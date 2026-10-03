@@ -36,5 +36,16 @@ func describe_side() -> String:
 			return "Bonus: Reach %d Combo (+%d gold)" % [side_objective_target, side_gold_reward]
 	return ""
 
-func is_unlocked(victories: int) -> bool:
+func is_unlocked(victories: int, completed_missions: Array = []) -> bool:
+	# Campaign progression: unlocked by finishing the previous mission,
+	# falling back to victory count so existing saves keep working.
+	var prev_map := {
+		"m2_frost": "m1_gate",
+		"m3_nest": "m2_frost",
+		"m4_warden": "m3_nest",
+		"m5_heartforge": "m4_warden",
+	}
+	var prev: String = str(prev_map.get(id, ""))
+	if prev != "" and completed_missions.has(prev):
+		return true
 	return victories >= unlock_wins

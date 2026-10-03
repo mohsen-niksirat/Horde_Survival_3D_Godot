@@ -18,10 +18,29 @@ const Q_ITEMS := ["Very Low (fastest)", "Low", "Medium", "High", "Ultra", "Auto"
 
 var ui_scale_slider: HSlider
 var reduced_vfx_check: CheckButton
+var _save_timer: Timer
+
+## Live-update a setting in memory and schedule a single debounced disk write.
+func _set_setting_debounced(key: String, value) -> void:
+	if not SaveManager.data.has("settings"):
+		SaveManager.data["settings"] = {}
+	SaveManager.data["settings"][key] = value
+	_save_timer.start()
+
+func _on_save_debounce() -> void:
+	SaveManager.save_game()
+	EventBus.settings_changed.emit()
 
 func _ready() -> void:
 	visible = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Debounced persistence: sliders update live but SaveManager.set_setting
+	# writes to disk, so per-tick writes are replaced by one save after the drag.
+	_save_timer = Timer.new()
+	_save_timer.one_shot = true
+	_save_timer.wait_time = 0.5
+	_save_timer.timeout.connect(_on_save_debounce)
+	add_child(_save_timer)
 	quality_option.clear()
 	for item in Q_ITEMS:
 		quality_option.add_item(item)
@@ -101,7 +120,7 @@ func _build_v19_rows() -> void:
 	layout.move_child(dmg_check, close_button.get_index())
 
 func _on_ui_scale(value: float) -> void:
-	SaveManager.set_setting("ui_scale", value)
+	_set_setting_debounced("ui_scale", value)
 	_apply_ui_scale(value)
 
 func _apply_ui_scale(value: float) -> void:
@@ -115,10 +134,10 @@ func _on_reduced_vfx(pressed: bool) -> void:
 		PerformanceManager.notify_reduced_vfx()
 
 func _on_sensitivity(value: float) -> void:
-	SaveManager.set_setting("look_sensitivity", value)
+	_set_setting_debounced("look_sensitivity", value)
 
 func _on_touch_sensitivity(value: float) -> void:
-	SaveManager.set_setting("touch_sensitivity", value)
+	_set_setting_debounced("touch_sensitivity", value)
 
 func _on_haptics(pressed: bool) -> void:
 	SaveManager.set_setting("haptics", pressed)
@@ -135,7 +154,7 @@ func open() -> void:
 	visible = true
 
 func _on_volume(value: float, key: String) -> void:
-	SaveManager.set_setting(key, value)
+	_set_setting_debounced(key, value)
 	AudioManager.apply_saved_volumes()
 
 func _on_shake(pressed: bool) -> void:

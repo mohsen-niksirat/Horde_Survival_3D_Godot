@@ -9,6 +9,7 @@ var _player: Node3D
 var _life: float = 0.0
 var _vertical_velocity: float = 3.0
 var _settled: bool = false
+var _collected: bool = false
 
 @onready var _mesh: MeshInstance3D = $Mesh
 
@@ -29,6 +30,7 @@ func setup(heal: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	_player = p_player
 	_life = 0.0
 	_settled = false
+	_collected = false
 	_vertical_velocity = 3.0
 	global_position = spawn_pos + Vector3(randf_range(-0.5, 0.5), 0.8, randf_range(-0.5, 0.5))
 	set_deferred("monitoring", true)
@@ -50,12 +52,7 @@ func _process(delta: float) -> void:
 		if d < magnet_range and d > 0.2:
 			global_position += to_p.normalized() * 11.0 * delta
 		if d < 1.4 and _player.health.is_alive():
-			_player.health.heal(heal_amount)
-			AudioManager.play_game_sfx("relic_pickup")
-			EventBus.upgrade_applied.emit("Heart — HP restored")
-			set_deferred("monitoring", false)
-			PoolManager.release(self)
-			return
+			_collect(_player)
 	if not _settled:
 		_vertical_velocity -= GRAVITY * delta
 		global_position.y += _vertical_velocity * delta
@@ -63,9 +60,17 @@ func _process(delta: float) -> void:
 			global_position.y = 0.5
 			_settled = true
 
+func _collect(body: Node3D) -> void:
+	if _collected:
+		return
+	_collected = true
+	body.health.heal(heal_amount)
+	AudioManager.play_game_sfx("relic_pickup")
+	EventBus.upgrade_applied.emit("Heart — HP restored")
+	set_deferred("monitoring", false)
+	PoolManager.release(self)
+
 func _on_body_entered(body: Node3D) -> void:
 	if not body.is_in_group("player"):
 		return
-	body.health.heal(heal_amount)
-	set_deferred("monitoring", false)
-	PoolManager.release(self)
+	_collect(body)

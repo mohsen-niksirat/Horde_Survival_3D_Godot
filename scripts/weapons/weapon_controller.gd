@@ -201,6 +201,8 @@ func _play_fire_sfx(weapon_id: String) -> void:
 
 func _fire_aoe_strike(weapon: WeaponInstance, player: Node3D, target: Node3D) -> void:
 	# Round-robin pooled lightning VFX
+	if _lightning_pool.is_empty():
+		return
 	var vfx: Node3D = _lightning_pool[_lightning_idx]
 	_lightning_idx = (_lightning_idx + 1) % _lightning_pool.size()
 	vfx.trigger(weapon, target.global_position, _enemy_manager, player)

@@ -117,3 +117,7 @@ func clear_all() -> void:
 			if is_instance_valid(node):
 				node.queue_free()
 	_pools.clear()
+	# Released-but-not-yet-processed nodes would hit the double-release guard
+	# after this and leak visible forever — drop the deferred queue too.
+	_pending_release.clear()
+	_release_queue.clear()

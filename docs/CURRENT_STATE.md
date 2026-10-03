@@ -23,7 +23,7 @@
 5. [RESOLVED at dcf183e] boss model upgraded (horns, glowing eyes, plates)
 6. Menu weapon collection screen is a placeholder
 ### Gameplay
-7. Endless mode balance (post-15min scaling) untested beyond 10 min
+7. Endless: 5-minute milestone tracking added (RunManager.endless_milestone signal + endless_best_minutes meta via SaveManager at commit_partial_rewards); balance (post-15min scaling) still untested beyond 10 min
 8. Mage volleys can overwhelm in packs — tune if reported
 9. Relic spawn presentation is subtle — may need beacon effect
 

@@ -18,12 +18,18 @@ func has_save() -> bool:
 
 func save_game() -> void:
 	data["save_version"] = SAVE_VERSION
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	# Write to a temp file first, then swap — an interrupted write must not
+	# truncate/corrupt the existing save.
+	var tmp_path := SAVE_PATH + ".tmp"
+	var file := FileAccess.open(tmp_path, FileAccess.WRITE)
 	if file == null:
 		push_error("SaveManager: cannot open save file for writing")
 		return
-	file.store_string(JSON.stringify(data, "\t"))
+	file.store_string(JSON.stringify(data, "  "))
 	file.close()
+	var err := DirAccess.rename_absolute(ProjectSettings.globalize_path(tmp_path), ProjectSettings.globalize_path(SAVE_PATH))
+	if err != OK:
+		push_error("SaveManager: failed to swap save file into place (%d)" % err)
 
 func load_game() -> void:
 	if not has_save():
@@ -84,7 +90,13 @@ func _migrate(parsed: Dictionary) -> Dictionary:
 		else:
 			for key in defaults[section]:
 				if not parsed[section].has(key):
-					parsed[section][key] = defaults[section][key]
+					# quality_schema must come from the parsed save, not the
+					# current default — otherwise legacy 0..3 quality values
+					# get stamped as schema 2 and misread.
+					if section == "settings" and key == "quality_schema" and parsed["settings"].has("quality"):
+						parsed["settings"]["quality_schema"] = int(parsed["settings"].get("quality_schema", 0))
+					else:
+						parsed[section][key] = defaults[section][key]
 	parsed["save_version"] = max(version, SAVE_VERSION)
 	return parsed
 

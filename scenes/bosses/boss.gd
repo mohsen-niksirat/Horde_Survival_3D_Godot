@@ -153,6 +153,9 @@ func _physics_process(delta: float) -> void:
 		if _telegraph_mat != null:
 			# Pulse brighter as impact approaches
 			_telegraph_mat.emission_energy_multiplier = 1.6 + charge * 2.2
+		# Tick the fuse here too — the early return skips _tick_attacks, so
+		# without this the boss telegraphs forever and never slams.
+		_slam_timer -= delta
 		if _slam_timer <= 0.0:
 			_execute_slam()
 		move_and_slide()
@@ -180,7 +183,6 @@ func _update_phase() -> void:
 		phase = BossPhase.ENRAGE
 		_apply_phase_tint()
 		_announce_phase("ENRAGE")
-		EventBus.boss_spawned.emit(self)  # reuse as intensity signal
 	elif ratio < 0.6 and phase == BossPhase.ONE:
 		phase = BossPhase.TWO
 		_apply_phase_tint()

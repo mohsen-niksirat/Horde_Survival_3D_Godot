@@ -43,17 +43,29 @@ func _build() -> void:
 	rows.add_child(header)
 	for def in DEFS:
 		var got: bool = unlocked.has(def["id"])
-		var row := VBoxContainer.new()
-		row.add_theme_constant_override("separation", 2)
+		# Row layout: status badge on the left, title/description stack on the right.
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		var badge := Label.new()
+		badge.text = "★" if got else "○"
+		badge.add_theme_font_size_override("font_size", 22)
+		# Gold for unlocked, gray for locked.
+		badge.add_theme_color_override("font_color", Color(1.0, 0.84, 0.0) if got else Color(0.5, 0.52, 0.58))
+		badge.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		badge.custom_minimum_size = Vector2(30, 0)
+		row.add_child(badge)
+		var text_col := VBoxContainer.new()
+		text_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		text_col.add_theme_constant_override("separation", 2)
 		var title := Label.new()
-		var mark := "✓" if got else "…"
-		title.text = "%s  %s  (+%d gold)" % [mark, def["title"], def["gold"]]
+		title.text = "%s  (+%d gold)" % [def["title"], def["gold"]]
 		title.add_theme_font_size_override("font_size", 16)
 		title.add_theme_color_override("font_color", Color(0.55, 0.95, 0.55) if got else Color(0.55, 0.58, 0.65))
-		row.add_child(title)
+		text_col.add_child(title)
 		var desc := Label.new()
 		desc.text = def["desc"]
 		desc.add_theme_font_size_override("font_size", 13)
 		desc.add_theme_color_override("font_color", Color(0.7, 0.72, 0.8))
-		row.add_child(desc)
+		text_col.add_child(desc)
+		row.add_child(text_col)
 		rows.add_child(row)

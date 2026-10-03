@@ -24,6 +24,8 @@ func trigger(weapon_like, target_pos: Vector3, enemy_manager: Node, player: Node
 	if player.has_method("get_stat"):
 		might = player.get_stat("might")
 	for enemy in hits:
+		if not is_instance_valid(enemy) or enemy.get("health") == null:
+			continue
 		var is_crit: bool = randf() < weapon_like.get_crit_chance()
 		var amount: float = weapon_like.get_damage() * might * (2.0 if is_crit else 1.0)
 		# V12 status interaction: lightning DETONATES burning enemies (+50%)
@@ -43,3 +45,7 @@ func _process(delta: float) -> void:
 		_active = false
 		visible = false
 		scale = Vector3.ONE
+		# Meteor-strike VFX is instantiated per cast (not pooled) — free it
+		# so it doesn't leak. Pooled nodes (pool_scene meta) just hide.
+		if get_meta("pool_scene", "") == "":
+			queue_free()

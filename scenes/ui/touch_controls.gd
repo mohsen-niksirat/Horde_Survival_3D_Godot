@@ -23,11 +23,26 @@ func _ready() -> void:
 	visible = false
 	if DisplayServer.is_touchscreen_available():
 		visible = true
+	# While paused we ignore gameplay input via _input (only buttons keep working
+	# through their own GUI event handling, which does not depend on _input).
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	EventBus.game_state_changed.connect(_on_game_state_changed)
 	zoom_in.pressed.connect(func(): InputManager.add_zoom_delta(-BUTTON_ZOOM_STEP))
 	zoom_out.pressed.connect(func(): InputManager.add_zoom_delta(BUTTON_ZOOM_STEP))
 
+func _on_game_state_changed(new_state: int, _old: int) -> void:
+	if new_state != GameManager.State.PLAYING and new_state != GameManager.State.BOSS:
+		_joy_index = -1
+		_look_index = -1
+		InputManager.set_touch_move_vector(Vector2.ZERO)
+		InputManager.set_touch_look_delta(Vector2.ZERO)
+		_push_indicator()
+
 func _input(event: InputEvent) -> void:
 	if not visible:
+		return
+	# While paused / in menus, swallow gameplay touch so deltas don't accumulate.
+	if GameManager.state != GameManager.State.PLAYING and GameManager.state != GameManager.State.BOSS:
 		return
 	if event is InputEventScreenTouch:
 		_handle_touch(event)

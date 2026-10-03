@@ -108,6 +108,8 @@ func _on_body_entered(body: Node3D) -> void:
 		return
 	_hit_enemies.append(body)
 
+	if body.get("health") == null:
+		return
 	var is_crit := randf() < crit_chance
 	var event := DamageEvent.new(damage * (2.0 if is_crit else 1.0), _weapon_id, is_crit)
 	event.status_effect = status_effect

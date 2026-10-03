@@ -64,7 +64,7 @@ func _build() -> void:
 			act_header.add_theme_font_size_override("font_size", 15)
 			rows.add_child(act_header)
 
-		var unlocked: bool = m.is_unlocked(wins)
+		var unlocked: bool = m.is_unlocked(wins, completed)
 		var is_done: bool = completed.has(m.id)
 		var card := Button.new()
 		card.custom_minimum_size = Vector2(520, 100)

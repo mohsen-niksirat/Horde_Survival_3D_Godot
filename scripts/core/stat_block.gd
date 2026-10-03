@@ -54,15 +54,13 @@ func add_timed_modifier(stat: String, duration: float, flat: float = 0.0, percen
 	})
 
 func tick(delta: float) -> void:
-	if _timed.is_empty():
-		return
-	var still_valid := false
-	for m in _timed:
+	# Remove expired entries as they run out — otherwise their flat/percent
+	# bonuses keep applying in get_stat() forever.
+	for i in range(_timed.size() - 1, -1, -1):
+		var m: Dictionary = _timed[i]
 		m["remaining"] -= delta
-		if m["remaining"] > 0.0:
-			still_valid = true
-	if not still_valid:
-		_timed.clear()
+		if m["remaining"] <= 0.0:
+			_timed.remove_at(i)
 
 func get_stat(stat: String) -> float:
 	var value: float = base.get(stat, 0.0)

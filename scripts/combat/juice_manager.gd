@@ -44,6 +44,11 @@ func _acquire(scene_path: String) -> Node3D:
 	var pool: Array = _pools.get(scene_path, [])
 	if pool.is_empty():
 		return null
+	# Prefer an idle (hidden) node so a still-animating one isn't stolen.
+	for node in pool:
+		if is_instance_valid(node) and not node.visible:
+			return node
+	# All busy — fall back to round-robin.
 	var idx: int = _indices.get(scene_path, 0)
 	_indices[scene_path] = (idx + 1) % pool.size()
 	return pool[idx]
@@ -80,8 +85,10 @@ func _on_enemy_died(enemy: Node, pos: Vector3) -> void:
 	var burst: Node3D = _acquire(KILL_BURST_SCENE)
 	if burst != null:
 		var color: Color = Color(1, 1, 1)
-		if enemy.get("data") != null:
-			color = enemy.data.color
+		if enemy != null and is_instance_valid(enemy) and enemy.get("data") != null:
+			var ed: Resource = enemy.get("data")
+			if ed != null and "color" in ed:
+				color = ed.color
 		burst.trigger(pos, color)
 
 func _on_level_up(_level: int) -> void:

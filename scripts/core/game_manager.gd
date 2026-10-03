@@ -24,6 +24,21 @@ var selected_character_id: String = "mage"
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	EventBus.game_state_changed.connect(_on_game_state_changed)
+	# Restore the persisted character choice (SaveManager loads in its own
+	# _ready; autoload order guarantees it is ready first).
+	# Unlock state is victories-driven (character_select.UNLOCK_WINS), not
+	# the legacy unlocked_characters array (which is never updated).
+	if SaveManager.get_meta_data("selected_character", null) != null and state == State.BOOT:
+		var saved: String = str(SaveManager.get_meta_data("selected_character"))
+		var wins: int = int(SaveManager.get_meta_data("victories", 0))
+		var need: int = 0
+		match saved:
+			"paladin": need = 1
+			"rogue": need = 3
+			"cleric": need = 2
+			"ranger": need = 4
+		if wins >= need:
+			selected_character_id = saved
 
 func change_state(new_state: int) -> void:
 	if new_state == state:

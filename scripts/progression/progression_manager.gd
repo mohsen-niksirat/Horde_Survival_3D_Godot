@@ -27,9 +27,13 @@ var passive_data: Dictionary = {}     # passive_id -> PassiveData
 var pending_levels: int = 0
 var evolutions: Array = []
 var evolved_ids: Array = []
+var held_base_ids: Array = []   # original base weapon ids ever held (evolutions keep the base counted)
 
 func setup(p_player: CharacterBody3D) -> void:
 	player = p_player
+	held_base_ids.clear()
+	for w in player.weapon_controller.weapons:
+		held_base_ids.append(w.data.id)
 	for id in PASSIVE_IDS:
 		var path := "res://data/passives/%s.tres" % id
 		if ResourceLoader.exists(path):
@@ -116,7 +120,7 @@ func _fill_pool(pool: Array) -> void:
 		for w in weapons:
 			held.append(w.data.id)
 		for wid in NEW_WEAPON_POOL:
-			if held.has(wid):
+			if held.has(wid) or held_base_ids.has(wid):
 				continue
 			var wdata: WeaponData = load("res://data/weapons/%s.tres" % wid)
 			if wdata == null:
@@ -185,7 +189,11 @@ func _check_synergies() -> void:
 				ok = false
 		if ok and not applied_synergies.has(syn["id"]):
 			applied_synergies[syn["id"]] = true
-			player.stat_block.add_modifier(syn["stat"], 0.0, syn["percent"])
+			# Zero-base stats (armor, luck) get nothing from percent mods — grant flat instead
+			if syn["stat"] == "armor" or syn["stat"] == "luck":
+				player.stat_block.add_modifier(syn["stat"], absf(syn["percent"]) * 100.0, 0.0)
+			else:
+				player.stat_block.add_modifier(syn["stat"], 0.0, syn["percent"])
 			player.on_stats_changed()
 			EventBus.upgrade_applied.emit(syn["title"])
 
@@ -208,6 +216,7 @@ func apply_choice(option: UpgradeOption) -> void:
 		UpgradeOption.Kind.NEW_WEAPON:
 			if player.weapon_controller.weapons.size() < max_weapon_slots():
 				player.weapon_controller.add_weapon(option.target)
+				held_base_ids.append(option.target.id)
 				_check_synergies()
 		UpgradeOption.Kind.PASSIVE:
 			var id: String = option.target.id

@@ -21,6 +21,7 @@ var relic_system: Node
 var combo_manager: Node
 var ability_controller: Node
 var projectile_root: Node3D
+var music_director: Node = null
 var _debug_enabled: bool = false
 
 func _ready() -> void:
@@ -33,6 +34,8 @@ func _ready() -> void:
 	$HUD/LevelUpOverlay.process_mode = Node.PROCESS_MODE_ALWAYS
 
 	RunManager.start_run()
+	# Drop stale touch input carried over from a previous run/scene.
+	InputManager.clear_touch()
 	GameManager.change_state(GameManager.State.PLAYING)
 
 	enemy_manager = Node.new()
@@ -183,12 +186,10 @@ func _build_music() -> void:
 	add_child(music)
 	music.build_music()
 	music.set_intensity(0)  # calm
-	EventBus.game_state_changed.connect(func(new_state, _old):
-		if new_state == GameManager.State.BOSS:
-			music.set_intensity(2)
-		elif new_state == GameManager.State.PLAYING:
-			music.set_intensity(0 if RunManager.elapsed_time < 300.0 else 1)
-	)
+	# Bound method connection: a lambda here would capture the MusicDirector
+	# node and keep it (and its connection) alive across scene changes.
+	EventBus.game_state_changed.connect(_on_game_state_changed_for_music)
+	music_director = music
 
 	# Boss death → back to PLAYING state
 	EventBus.boss_died.connect(_on_boss_died)
@@ -214,6 +215,14 @@ func _build_music() -> void:
 	# Headless tests: never leave the tree paused by tutorial/UI
 	if DisplayServer.get_name() == "headless" or OS.has_feature("headless"):
 		get_tree().paused = false
+
+func _on_game_state_changed_for_music(new_state: int, _old: int) -> void:
+	if music_director == null or not is_instance_valid(music_director):
+		return
+	if new_state == GameManager.State.BOSS:
+		music_director.set_intensity(2)
+	elif new_state == GameManager.State.PLAYING:
+		music_director.set_intensity(0 if RunManager.elapsed_time < 300.0 else 1)
 
 func _on_game_state_changed_for_mouse(new_state: int, _old: int) -> void:
 	_apply_mouse_mode(new_state)

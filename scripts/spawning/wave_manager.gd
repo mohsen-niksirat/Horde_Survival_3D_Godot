@@ -109,8 +109,14 @@ func _spawn_boss(stat_scale: float = 1.0) -> void:
 func _tick_elites() -> void:
 	var level: int = player.experience.level
 	if DifficultyManager.should_spawn_elite(level, _last_elite_level):
-		_last_elite_level = int(level / 10) * 10
-		_spawn_elite()
+		var current_tier := int(_last_elite_level / 10)
+		var target_tier := int(level / 10)
+		# Spawn one elite per crossed 10-level threshold so a big level
+		# jump doesn't skip elite tiers.
+		var count := target_tier - current_tier
+		_last_elite_level = target_tier * 10
+		for i in range(count):
+			_spawn_elite()
 
 func _spawn_elite() -> void:
 	var cap: int = PerformanceManager.effective_enemy_cap()

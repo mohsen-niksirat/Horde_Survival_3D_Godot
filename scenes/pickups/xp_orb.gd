@@ -24,15 +24,20 @@ var _pulse_total: float = 1.0
 var _pulse_stagger: float = 0.0
 var _pulse_active: bool = false
 var _wobble: float = 0.0
+var _visualized: bool = false
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	if EventBus != null and not EventBus.magnet_pulse.is_connected(_on_magnet_pulse):
 		EventBus.magnet_pulse.connect(_on_magnet_pulse)
-	# Real crystal shard instead of a green prism (mesh cleared, node kept
-	# so any parent-node transforms still behave the same).
+	# Rig attachment happens once; size/color are (re)applied per-life in
+	# _apply_value_visuals() so pooled orbs update on recycle.
+
+func _apply_value_visuals() -> void:
 	var m := get_node_or_null("Mesh") as MeshInstance3D
-	if m != null and m.get_child_count() == 0:
+	if m == null:
+		return
+	if m.get_child_count() == 0 or not _visualized:
 		# Playtest: smaller pickup so the floor stays readable in hordes
 		var size_scale := 0.28
 		if value >= 8.0:
@@ -40,24 +45,26 @@ func _ready() -> void:
 		elif value >= 4.0:
 			size_scale = 0.34
 		var rig := RigUtil.attach_glb(m, "res://assets/models/xp_shard.glb", size_scale, "ShardRig")
-		if rig != null:
-			m.mesh = null
-			# Distinct mint-cyan so XP never blends with white hit FX / red orbs
-			# High-value shards go gold for instant read
-			var col := Color(0.25, 1.0, 0.75)
-			var emit := Color(0.15, 0.95, 0.7)
-			if value >= 8.0:
-				col = Color(1.0, 0.85, 0.25)
-				emit = Color(1.0, 0.75, 0.15)
-			for mi in rig.find_children("*", "MeshInstance3D", true, false):
-				var active = mi.get_active_material(0)
-				if active is StandardMaterial3D:
-					var mat: StandardMaterial3D = (active as StandardMaterial3D).duplicate()
-					mat.albedo_color = col
-					mat.emission_enabled = true
-					mat.emission = emit
-					mat.emission_energy_multiplier = 1.6
-					mi.set_surface_override_material(0, mat)
+		if rig == null:
+			return
+		m.mesh = null
+		_visualized = true
+	# Distinct mint-cyan so XP never blends with white hit FX / red orbs
+	# High-value shards go gold for instant read
+	var col := Color(0.25, 1.0, 0.75)
+	var emit := Color(0.15, 0.95, 0.7)
+	if value >= 8.0:
+		col = Color(1.0, 0.85, 0.25)
+		emit = Color(1.0, 0.75, 0.15)
+	for mi in m.find_children("*", "MeshInstance3D", true, false):
+		var active = mi.get_active_material(0)
+		if active is StandardMaterial3D:
+			var mat: StandardMaterial3D = (active as StandardMaterial3D).duplicate()
+			mat.albedo_color = col
+			mat.emission_enabled = true
+			mat.emission = emit
+			mat.emission_energy_multiplier = 1.6
+			mi.set_surface_override_material(0, mat)
 
 func setup(p_value: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	value = p_value
@@ -73,6 +80,8 @@ func setup(p_value: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	_vertical_velocity = randf_range(2.5, 5.0)
 	global_position = spawn_pos + Vector3(randf_range(-0.6, 0.6), 0.6, randf_range(-0.6, 0.6))
 	set_deferred("monitoring", true)
+	# Pooled recycle: re-apply value-driven size/color for this life
+	_apply_value_visuals()
 
 func _on_magnet_pulse(duration: float) -> void:
 	if not is_inside_tree() or not visible:

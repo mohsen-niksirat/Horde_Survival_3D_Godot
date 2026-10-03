@@ -33,6 +33,7 @@ var _split_done: bool = false
 var _active_tweens: Array = []
 var _last_phasing: bool = false
 var _elite_ring: MeshInstance3D = null
+var _spawn_target_scale: Vector3 = Vector3.ONE
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -93,6 +94,7 @@ func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: 
 	var s: float = (1.15 if hp_scale >= 3.0 else 1.0)
 	# V11A: fade/scale in — softens spawn pop-in
 	var target_scale := Vector3(s, s, s)
+	_spawn_target_scale = target_scale
 	_mesh.scale = target_scale * 0.25
 	var tween := _track_tween(create_tween())
 	tween.tween_property(_mesh, "scale", target_scale, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -124,7 +126,13 @@ func make_elite(p_abilities: Array) -> void:
 	dmg_mult = 2.0
 	xp_mult = 10.0
 	gold_mult = 5.0
-	_mesh.scale *= 1.3
+	# Elites end 1.3x larger. The spawn-in tween from setup() would otherwise
+	# overwrite any scale we set here, so retarget a fresh tween to the
+	# elite-scaled final size.
+	_kill_tweens()
+	_mesh.scale = _spawn_target_scale * 0.25
+	var elite_tween := _track_tween(create_tween())
+	elite_tween.tween_property(_mesh, "scale", _spawn_target_scale * 1.3, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	# Golden tint for elite identity
 	for mi in _flash_materials:
 		if is_instance_valid(mi):
@@ -302,8 +310,14 @@ func _on_died() -> void:
 		var burst := PoolManager.acquire("res://scenes/vfx/KillBurst.tscn")
 		if burst != null:
 			PoolManager.tag(burst, "res://scenes/vfx/KillBurst.tscn")
-			get_tree().current_scene.add_child(burst)
-			burst.trigger(global_position, Color(1.0, 0.85, 0.25))
+			var burst_host: Node = get_tree().current_scene
+			if burst_host == null:
+				burst_host = get_parent()
+			if burst_host != null:
+				burst_host.add_child(burst)
+				burst.trigger(global_position, Color(1.0, 0.85, 0.25))
+			else:
+				PoolManager.release(burst)
 	# Splitter behavior: leave copies behind (pooled, once per life)
 	if data != null and data.splits_into != "" and not _split_done:
 		_split_done = true

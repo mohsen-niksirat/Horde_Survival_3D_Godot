@@ -40,11 +40,16 @@ func _commit_run() -> void:
 		SaveManager.set_meta_data("victories", wins)
 		if wins == 1:
 			unlock_msg = "\nPaladin unlocked!"
+		elif wins == 2:
+			unlock_msg = "\nCleric unlocked!"
 		elif wins == 3:
 			unlock_msg = "\nRogue unlocked!"
+		elif wins == 4:
+			unlock_msg = "\nRanger unlocked!"
 	SaveManager.set_meta_data("gold", SaveManager.get_meta_data("gold", 0) + int(gold_earned))
 	SaveManager.set_meta_data("total_runs", SaveManager.get_meta_data("total_runs", 0) + 1)
-	if RunManager.elapsed_time > SaveManager.get_meta_data("best_time", 0.0):
+	var prev_best: float = float(SaveManager.get_meta_data("best_time", 0.0))
+	if RunManager.elapsed_time > prev_best:
 		SaveManager.set_meta_data("best_time", RunManager.elapsed_time)
 	# Kills are already counted per-kill in achievements; do not re-add
 	RunManager.gold_earned = 0.0
@@ -64,9 +69,9 @@ func _commit_run() -> void:
 	elif not _victory and m != null:
 		title = "MISSION FAILED"
 		subtitle = "%s — the horde held the line." % m.display_name
-	var best: float = float(SaveManager.get_meta_data("best_time", 0.0))
+	var best: float = prev_best
 	var best_note := ""
-	if RunManager.elapsed_time >= best - 0.05 and RunManager.elapsed_time > 5.0:
+	if RunManager.elapsed_time > best and RunManager.elapsed_time > 5.0:
 		best_note = "  ·  NEW BEST TIME"
 	stats_label.text = "%s\n%s\nSurvived: %s%s\nKills: %d\nBest combo: %d\nGold earned: %d%s" % [
 		title,

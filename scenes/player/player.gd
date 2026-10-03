@@ -64,6 +64,7 @@ func on_stats_changed() -> void:
 	if max_hp > health.max_hp:
 		health.heal(max_hp - health.max_hp)
 	health.max_hp = max_hp
+	health.armor = stat_block.get_stat("armor")
 	movement.base_speed = stat_block.get_stat("move_speed")
 
 func _on_xp_collected(amount: float) -> void:

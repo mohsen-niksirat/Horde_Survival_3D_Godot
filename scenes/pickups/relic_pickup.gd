@@ -11,6 +11,7 @@ var _vertical_velocity: float = 3.0
 var _settled: bool = false
 var _mesh: MeshInstance3D
 var _mat: StandardMaterial3D
+var _beacon_pulse: Tween
 
 func _ready() -> void:
 	add_to_group("relics")
@@ -68,6 +69,17 @@ func _spawn_beacon(color: Color) -> void:
 	beacon.material_override = mat
 	beacon.position = Vector3(0, 1.6, 0)
 	add_child(beacon)
+	# Relic beacon pulse: looping emission pulse on the shared beacon material.
+	_beacon_pulse = create_tween()
+	_beacon_pulse.set_loops()
+	_beacon_pulse.tween_property(mat, "emission_energy_multiplier", 1.4, 0.6) \
+		.from(0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_beacon_pulse.tween_property(mat, "emission_energy_multiplier", 0.5, 0.6) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _exit_tree() -> void:
+	if _beacon_pulse != null and _beacon_pulse.is_valid():
+		_beacon_pulse.kill()
 
 func _rarity_color(rarity: String) -> Color:
 	match rarity:

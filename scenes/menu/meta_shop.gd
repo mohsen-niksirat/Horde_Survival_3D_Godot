@@ -9,7 +9,7 @@ const STATS := [
 	{"id": "meta_speed", "name": "Swiftness", "stat": "move_speed", "pct": 0.03, "effect": "Run faster; nothing can catch you."},
 	{"id": "meta_luck", "name": "Luck", "stat": "luck", "pct": 0.04, "effect": "Better random drops (future-proof stat)."},
 	{"id": "meta_gold", "name": "Greed", "stat": "gold_gain", "pct": 0.05, "effect": "Earn more gold from every kill."},
-	{"id": "meta_armor", "name": "Bulwark", "stat": "armor", "pct": 0.06, "effect": "Take less damage from contact hits."},
+	{"id": "meta_armor", "name": "Bulwark", "stat": "armor", "flat": 1.0, "effect": "Take less damage from contact hits (+1 armor per level)."},
 	{"id": "meta_crit", "name": "Precision", "stat": "crit_chance", "pct": 0.02, "effect": "Higher critical hit chance."},
 	{"id": "meta_slots", "name": "Arsenal", "stat": "weapon_slots", "pct": 1.0, "effect": "+1 weapon slot per level (start 3, max 5)."},
 ]
@@ -41,13 +41,15 @@ func _current_bonus(s: Dictionary) -> String:
 	var lvl := _level(s["id"])
 	if lvl <= 0:
 		return "no bonus yet"
-	var pct: float = s["pct"] * lvl
+	var pct: float = s.get("pct", 0.0) * lvl
 	if s["stat"] == "weapon_slots":
 		return "current: %d slots (base 3 + %d)" % [mini(3 + lvl, 5), lvl]
 	if s["stat"] == "max_hp":
 		return "current: +%.0f max HP" % (100.0 * pct)
 	if s["stat"] == "cooldown_mult":
 		return "current: -%.0f%% cooldown" % absf(pct * 100.0)
+	if s.has("flat"):
+		return "current: +%.0f armor" % (s["flat"] * lvl)
 	return "current: %+.0f%%" % (pct * 100.0)
 
 func _build_rows() -> void:
@@ -119,7 +121,7 @@ func apply_to(stats: StatBlock) -> void:
 			continue
 		var lvl := _level(s["id"])
 		if lvl > 0:
-			stats.add_modifier(s["stat"], 0.0, s["pct"] * lvl, "meta_" + s["id"])
+			stats.add_modifier(s["stat"], s.get("flat", 0.0) * lvl, s.get("pct", 0.0) * lvl, "meta_" + s["id"])
 
 ## Static helper usable without instantiating the UI.
 static func apply_meta_upgrades(stats: StatBlock) -> void:
@@ -128,4 +130,4 @@ static func apply_meta_upgrades(stats: StatBlock) -> void:
 			continue
 		var lvl := int(SaveManager.get_meta_data("meta_upgrades", {}).get(s["id"], 0))
 		if lvl > 0:
-			stats.add_modifier(s["stat"], 0.0, s["pct"] * lvl, "meta_" + s["id"])
+			stats.add_modifier(s["stat"], s.get("flat", 0.0) * lvl, s.get("pct", 0.0) * lvl, "meta_" + s["id"])

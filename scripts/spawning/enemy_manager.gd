@@ -148,7 +148,9 @@ func release_enemy(enemy: Node) -> void:
 	if PerformanceManager != null:
 		PerformanceManager.update_horde_pressure(active_enemies.size())
 	enemy_released.emit(enemy)
-	enemy.despawn()
+	# Bosses are also tracked in active_enemies but have no despawn().
+	if enemy.has_method("despawn"):
+		enemy.despawn()
 	PoolManager.release(enemy)
 
 ## Spatial-hash radius query. Falls back to linear scan for small hordes.

@@ -230,8 +230,11 @@ func _process_objective() -> void:
 func _process(delta: float) -> void:
 	timer_label.text = RunManager.get_time_string()
 	_process_objective()
-	# R9: standard runs show remaining time to victory
-	if not RunManager.endless and RunManager.is_running:
+	# R9: standard runs show remaining time to victory — but only for
+	# survive_time win rules (kill_boss/kill_count missions have no time target).
+	var mission = RunManager.mission
+	var timed_win: bool = mission == null or mission.win_rule == "survive_time"
+	if not RunManager.endless and RunManager.is_running and timed_win:
 		var left: float = maxf(RunManager.target_duration - RunManager.elapsed_time, 0.0)
 		var lm := int(left) / 60
 		var ls := int(left) % 60

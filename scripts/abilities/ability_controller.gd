@@ -77,4 +77,4 @@ func _time_freeze(data: AbilityData) -> bool:
 		if status_node.has_method("apply"):
 			status_node.apply("freeze", data.duration)
 			applied = true
-	return applied or true
+	return applied

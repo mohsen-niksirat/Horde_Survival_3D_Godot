@@ -3,6 +3,8 @@ extends Node
 
 signal time_changed(elapsed: float)
 signal kills_changed(kills: int)
+## Endless milestone: emitted once per 5-minute interval crossed.
+signal endless_milestone(minutes: int)
 
 var is_running: bool = false
 var endless: bool = false
@@ -17,6 +19,8 @@ var mission_boss_killed: bool = false
 var elites_killed: int = 0
 var max_combo_reached: int = 0
 var side_objective_completed: bool = false
+## Endless: highest 5-minute milestone crossed this run (0 = none yet).
+var endless_milestone_reached: int = 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -47,13 +51,24 @@ func _process(delta: float) -> void:
 	if is_running and not get_tree().paused:
 		elapsed_time += delta
 		time_changed.emit(elapsed_time)
+		if endless:
+			_check_endless_milestone()
 		# Playtest: standard runs must END with victory (endless is the open mode)
-		if not endless and elapsed_time >= target_duration:
+		# Missions own their own win rules — don't end a kill_boss/kill_count
+		# mission on the default 15-minute timer.
+		if not endless and mission == null and elapsed_time >= target_duration:
 			is_running = false
 			boss_active = false
 			GameManager.game_over(true)
 		elif mission != null:
 			_check_mission_win()
+
+## Endless: emit endless_milestone once per 5-minute interval crossed.
+func _check_endless_milestone() -> void:
+	var milestone := int(elapsed_time / 300.0)
+	if milestone > endless_milestone_reached:
+		endless_milestone_reached = milestone
+		endless_milestone.emit(milestone * 5)
 
 ## S1+S7 campaign: win when mission rule is met, award bonus for side objectives.
 func _check_mission_win() -> void:
@@ -86,6 +101,10 @@ func set_mission(m: Resource) -> void:
 	side_objective_completed = false
 	if m != null and m.win_rule == "survive_time":
 		target_duration = float(m.win_target)
+	else:
+		# Reset default so a normal run after a campaign mission
+		# doesn't inherit the mission timer.
+		target_duration = 900.0
 
 func start_run() -> void:
 	is_running = true
@@ -93,10 +112,14 @@ func start_run() -> void:
 	kills = 0
 	gold_earned = 0.0
 	boss_active = false
+	if mission == null:
+		# Reset default (a survive_time mission sets its own via set_mission)
+		target_duration = 900.0
 	mission_boss_killed = false
 	elites_killed = 0
 	max_combo_reached = 0
 	side_objective_completed = false
+	endless_milestone_reached = 0
 	EventBus.run_started.emit()
 
 func start_run_endless() -> void:
@@ -127,6 +150,10 @@ func commit_partial_rewards() -> void:
 		gold_earned = 0.0
 	if elapsed_time > float(SaveManager.get_meta_data("best_time", 0.0)):
 		SaveManager.set_meta_data("best_time", elapsed_time)
+	if endless:
+		var best: int = SaveManager.get_meta_data("endless_best_minutes", 0)
+		if endless_milestone_reached * 5 > best:
+			SaveManager.set_meta_data("endless_best_minutes", endless_milestone_reached * 5)
 
 func set_boss_active(active: bool) -> void:
 	boss_active = active

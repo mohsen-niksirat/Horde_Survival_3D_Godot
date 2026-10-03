@@ -23,6 +23,7 @@ const DEFS := [
 ]
 
 var unlocked: Dictionary = {}
+var _pending_kills: int = 0
 
 func _ready() -> void:
 	EventBus.enemy_died.connect(_on_kill)
@@ -38,6 +39,8 @@ func _process(_delta: float) -> void:
 		_check_time()
 
 func _check_time() -> void:
+	# Only when actually surviving 15 minutes — a short mission win must
+	# not unlock Hordebreaker.
 	if RunManager.elapsed_time >= 900.0:
 		_unlock("survive_15min")
 	elif RunManager.elapsed_time >= 600.0:
@@ -46,15 +49,19 @@ func _check_time() -> void:
 		_unlock("survive_5min")
 
 func _on_run_ended(victory: bool) -> void:
+	_flush_kills()
 	if victory:
 		_unlock("win_run")
-		_unlock("survive_15min")
+		# Only a genuine 15-minute survival counts (not short mission wins).
+		if RunManager.elapsed_time >= 900.0:
+			_unlock("survive_15min")
 		if RunManager.mission != null and str(RunManager.mission.id) == "m5_heartforge":
 			_unlock("torchbearer")
 
 func _on_kill(_enemy: Node, _pos: Vector3) -> void:
-	var kills: int = SaveManager.get_meta_data("total_kills", 0) + 1
-	SaveManager.set_meta_data("total_kills", kills)
+	# Accumulate in memory; flushing per kill caused a disk write per kill.
+	_pending_kills += 1
+	var kills: int = int(SaveManager.get_meta_data("total_kills", 0)) + _pending_kills
 	if kills >= 1000:
 		_unlock("kill_1000")
 	elif kills >= 100:
@@ -62,6 +69,14 @@ func _on_kill(_enemy: Node, _pos: Vector3) -> void:
 	_unlock("kill_1")
 	if _enemy != null and _enemy.get("elite") != null and _enemy.elite != null:
 		_unlock("elite_slayer")
+
+## Bank the accumulated kill count into the save (end of run / partial commit).
+func _flush_kills() -> void:
+	if _pending_kills <= 0:
+		return
+	var kills: int = int(SaveManager.get_meta_data("total_kills", 0)) + _pending_kills
+	_pending_kills = 0
+	SaveManager.set_meta_data("total_kills", kills)
 
 func _on_level(level: int) -> void:
 	if level >= 25:
