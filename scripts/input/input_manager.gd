@@ -40,7 +40,10 @@ func capture_pointer() -> void:
 func is_look_active() -> bool:
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		return true
-	return _rmb_held or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	# RMB held: allow camera look while leaving the cursor free for UI.
+	# (Read directly from Input state so we never miss a press/release
+	# edge that _input might have swallowed under heavy event load.)
+	return Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 
 func is_pointer_captured() -> bool:
 	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
