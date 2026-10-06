@@ -22,7 +22,15 @@ def main():
         with tempfile.TemporaryDirectory() as save:
             env = dict(os.environ, XDG_DATA_HOME=save, GODOT_SILENCE_ROOT_WARNING='1')
             try:
-                p = subprocess.run([args.godot, '--headless', '--path', str(root), '--script', test], capture_output=True, text=True, timeout=args.timeout, env=env)
+                # Use shell=True or bash fallback in case godot is a wrapper shell script without a shebang
+                cmd = [args.godot, '--headless', '--path', str(root), '--script', test]
+                try:
+                    p = subprocess.run(cmd, capture_output=True, text=True, timeout=args.timeout, env=env)
+                except OSError as e:
+                    if e.errno == 8:  # Exec format error
+                        p = subprocess.run(['bash', args.godot, '--headless', '--path', str(root), '--script', test], capture_output=True, text=True, timeout=args.timeout, env=env)
+                    else:
+                        raise
                 log = p.stdout + p.stderr; code = p.returncode
             except subprocess.TimeoutExpired as exc:
                 log = str(exc.stdout or '') + str(exc.stderr or '') + '\nTIMEOUT'; code = 124
