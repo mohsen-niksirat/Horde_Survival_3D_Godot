@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/progression/character_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "stormcaller"
+display_name = "Stormcaller"
+description = "Chain lightning specialist. -15% HP, +5% speed, +12% might. Starts with Ember Lens."
+color = Color(0.65, 0.55, 1, 1)
+starting_weapon_id = "lightning"
+starting_passive_id = "ember_lens"
+max_hp_pct = -0.15
+move_speed_pct = 0.05
+might_pct = 0.12

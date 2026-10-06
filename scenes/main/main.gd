@@ -86,9 +86,12 @@ func _request_rig_preload() -> void:
 		"res://assets/models/kaykit/env/wall.glb",
 		"res://assets/models/xp_shard.glb",
 	]
-	for p in rig_paths:
-		if ResourceLoader.exists(p):
-			ResourceLoader.load_threaded_request(p, "PackedScene", true)
+	# Single-thread Web and dummy headless renderers must not construct
+	# GLB subresources on worker threads. Only native graphical runs preload.
+	if not OS.has_feature("web") and DisplayServer.get_name() != "headless":
+		for p in rig_paths:
+			if ResourceLoader.exists(p):
+				ResourceLoader.load_threaded_request(p, "PackedScene", false)
 
 	# Horde spawning
 	wave_manager = Node.new()
@@ -105,6 +108,12 @@ func _request_rig_preload() -> void:
 	progression.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(progression)
 	progression.setup(player)
+	if RunManager.mission != null and str(RunManager.mission.map_id) in ["storm_ruins", "hollow_grove"]:
+		var director := Node3D.new()
+		director.set_script(preload("res://scripts/world/stage_director.gd"))
+		director.name = "StageDirector"
+		$World.add_child(director)
+		director.setup(player, str(RunManager.mission.map_id))
 	player.progression = progression
 	$HUD/LevelUpOverlay.bind_progression(progression)
 

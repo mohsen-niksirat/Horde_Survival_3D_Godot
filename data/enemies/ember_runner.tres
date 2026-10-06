@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "ember_runner"
+display_name = "Ember Runner"
+color = Color(0.9, 0.3, 0.08, 1)
+scale = 0.8
+max_hp = 23.0
+damage = 7.0
+move_speed = 4.3
+movement_type = "sine"
+attack_range = 1.2
+attack_cooldown = 1.1
+xp = 4.0
+gold = 1.0
+spawn_weight = 5.0
+threat_cost = 2.0
+ranged_attack = true
+ranged_cooldown = 4.5
+ranged_damage = 6.0

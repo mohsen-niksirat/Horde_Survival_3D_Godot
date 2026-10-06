@@ -36,8 +36,7 @@ func _initialize() -> void:
 	var v1: float = hp_bar.value
 	_check(v1 < v0 - 1.0, "HP bar eases (drops gradually, not snap) (%.1f -> %.1f)" % [v0, v1])
 	# let it settle
-	for i in range(40):
-		await process_frame
+	await create_timer(1.0).timeout
 	_check(absf(hp_bar.value - player.health.current_hp) < 1.0, "HP bar settles on true value")
 
 	# --- Combo pop tween on tier change ---

@@ -308,7 +308,7 @@ func _apply_volumes() -> void:
 		_music_player.volume_db = music_db
 	for p in _sfx_players:
 		p.volume_db = sfx_db
-	var tree := get_tree()
+	var tree: SceneTree = get_tree() if is_inside_tree() else null
 	if tree != null and tree.root != null:
 		var md: Node = tree.root.find_child("MusicDirector", true, false)
 		if md != null and md.has_method("update_volumes"):

@@ -55,6 +55,7 @@ func _prewarm_lightning() -> void:
 	var scene: PackedScene = load(SCENE_LIGHTNING_VFX)
 	for i in range(LIGHTNING_VFX_POOL):
 		var vfx := scene.instantiate()
+		vfx.set_meta("local_pool", true)
 		vfx.visible = false
 		_projectile_root.add_child(vfx)
 		_lightning_pool.append(vfx)
@@ -203,6 +204,13 @@ func _fire_aoe_strike(weapon: WeaponInstance, player: Node3D, target: Node3D) ->
 	# Round-robin pooled lightning VFX
 	if _lightning_pool.is_empty():
 		return
-	var vfx: Node3D = _lightning_pool[_lightning_idx]
+	var slot: int = _lightning_idx
+	var vfx = _lightning_pool[slot]
+	if not is_instance_valid(vfx):
+		var scene: PackedScene = load(SCENE_LIGHTNING_VFX)
+		vfx = scene.instantiate()
+		vfx.set_meta("local_pool", true)
+		_projectile_root.add_child(vfx)
+		_lightning_pool[slot] = vfx
 	_lightning_idx = (_lightning_idx + 1) % _lightning_pool.size()
 	vfx.trigger(weapon, target.global_position, _enemy_manager, player)

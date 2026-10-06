@@ -86,7 +86,7 @@ func _physics_process(delta: float) -> void:
 			_retarget_left = 0.15
 			_cached_target = _find_nearest_enemy()
 		var target := _cached_target
-		if target != null and is_instance_valid(target):
+		if target != null and is_instance_valid(target) and target.is_inside_tree() and target.get("_alive") != false:
 			var desired := (target.global_position + Vector3(0, 0.5, 0) - global_position).normalized() * speed
 			_velocity = _velocity.slerp(desired, minf(HOMING_TURN_RATE * delta, 1.0))
 

@@ -33,10 +33,21 @@ func setup(p_arena: Node3D, p_player: Node3D, p_enemy_manager: Node) -> void:
 	_active = true
 
 func _load_archetypes() -> void:
-	for id in ["basic_drone", "fast_wisp", "tank_golem", "swarm_bat", "shooter_turret", "ghost", "splitter", "healer", "mage", "brute", "specter"]:
+	for id in ["basic_drone", "fast_wisp", "tank_golem", "swarm_bat", "shooter_turret", "ghost", "splitter", "healer", "mage", "brute", "specter", "ember_runner", "crystal_guard", "broodling", "brood_keeper"]:
 		var path := "res://data/enemies/%s.tres" % id
 		if ResourceLoader.exists(path):
 			archetype_data[id] = load(path)
+
+func _allowed_archetypes(minutes: float) -> Array:
+	var allowed: Array = DifficultyManager.allowed_archetypes(minutes).duplicate()
+	var map_id: String = str(RunManager.mission.map_id) if RunManager.mission != null else "arena"
+	if minutes >= 0.5 and map_id == "storm_ruins":
+		allowed.append_array(["ember_runner", "crystal_guard"])
+	elif minutes >= 0.5 and map_id == "hollow_grove":
+		allowed.append_array(["broodling", "brood_keeper"])
+	elif RunManager.mission == null and minutes >= 3.0:
+		allowed.append_array(["ember_runner", "crystal_guard", "broodling", "brood_keeper"])
+	return allowed
 
 func stop() -> void:
 	_active = false
@@ -122,7 +133,7 @@ func _spawn_elite() -> void:
 	var cap: int = PerformanceManager.effective_enemy_cap()
 	if enemy_manager.enemy_count() >= cap:
 		return
-	var data: EnemyData = _pick_archetype(DifficultyManager.allowed_archetypes(RunManager.elapsed_time / 60.0))
+	var data: EnemyData = _pick_archetype(_allowed_archetypes(RunManager.elapsed_time / 60.0))
 	if data == null:
 		return
 	var minutes := RunManager.elapsed_time / 60.0
@@ -139,7 +150,7 @@ func _spawn_elite() -> void:
 func _spawn_wave(minutes: float) -> void:
 	# Population control first — effective cap shrinks under horde stress
 	var cap: int = PerformanceManager.effective_enemy_cap()
-	var current: int = enemy_manager.enemy_count()
+	var current: int = enemy_manager.enemy_count() + enemy_manager._spawn_queue.size()
 	if current >= cap:
 		return
 	var room: int = cap - current
@@ -159,7 +170,7 @@ func _spawn_wave(minutes: float) -> void:
 	var dmg_s := DifficultyManager.damage_scale(difficulty)
 	var spd_s := DifficultyManager.speed_scale(difficulty)
 
-	var allowed: Array = DifficultyManager.allowed_archetypes(minutes)
+	var allowed: Array = _allowed_archetypes(minutes)
 	var spawned := 0
 	for i in range(24):
 		if budget <= 0.0 or spawned >= room:
@@ -170,7 +181,8 @@ func _spawn_wave(minutes: float) -> void:
 		if data.threat_cost > budget and spawned > 0:
 			break
 		var pos: Vector3 = arena.get_spawn_position(player.global_position)
-		enemy_manager.queue_spawn(data, pos, player, hp_s, dmg_s, spd_s)
+		if not enemy_manager.queue_spawn(data, pos, player, hp_s, dmg_s, spd_s):
+			break
 		budget -= data.threat_cost
 		spawned += 1
 

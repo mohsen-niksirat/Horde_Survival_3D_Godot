@@ -44,6 +44,15 @@ func _apply_map_palette() -> void:
 			we = p.get_node_or_null("WorldEnvironment") as WorldEnvironment
 			p = p.get_parent()
 
+	if map in ["storm_ruins", "hollow_grove"]:
+		var color := Color(0.5, 0.45, 0.7) if map == "storm_ruins" else Color(0.48, 0.62, 0.42)
+		for n in ["FloorTiles", "DungeonWalls", "CornerPillars"]:
+			var batch := get_node_or_null(n) as MultiMeshInstance3D
+			if batch != null:
+				var material := StandardMaterial3D.new()
+				material.albedo_color = color
+				batch.material_override = material
+		return
 	if map == "ice":
 		if we != null and we.environment != null:
 			we.environment.ambient_light_color = Color(0.55, 0.75, 1.0)

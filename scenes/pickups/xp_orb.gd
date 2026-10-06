@@ -47,6 +47,10 @@ func _apply_value_visuals() -> void:
 		var rig := RigUtil.attach_glb(m, "res://assets/models/xp_shard.glb", size_scale, "ShardRig")
 		if rig == null:
 			return
+		# Drop overrides before the primitive mesh: the imported child owns
+		# its own materials and the placeholder must not retain stale RIDs.
+		for surface in m.get_surface_override_material_count():
+			m.set_surface_override_material(surface, null)
 		m.mesh = null
 		_visualized = true
 	# Distinct mint-cyan so XP never blends with white hit FX / red orbs

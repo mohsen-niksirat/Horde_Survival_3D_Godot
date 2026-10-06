@@ -135,7 +135,8 @@ func _initialize() -> void:
 		await physics_frame
 	em.get_all_enemies()[0].health.take_damage(DamageEvent.new(9999.0, "test"))
 	await process_frame
-	_check(save_manager.get_meta_data("total_kills", 0) >= 1, "kill persisted to save")
+	root.get_node("EventBus").run_ended.emit(false)
+	_check(save_manager.get_meta_data("total_kills", 0) >= 1, "kill persisted at run end")
 	_check(save_manager.get_meta_data("achievements", {}).has("kill_1"), "First Blood unlocked")
 
 	if failures == 0:

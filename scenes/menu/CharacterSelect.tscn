@@ -39,11 +39,19 @@ theme_override_font_sizes/font_size=28
 text="CHOOSE YOUR HERO"
 horizontal_alignment=1
 
-[node name="Cards" type="HBoxContainer" parent="Center/Layout"]
+[node name="Scroll" type="ScrollContainer" parent="Center/Layout"]
+custom_minimum_size=Vector2(900, 440)
 layout_mode=2
-theme_override_constants/separation=14
+horizontal_scroll_mode=0
+
+[node name="Cards" type="GridContainer" parent="Center/Layout/Scroll"]
+layout_mode=2
+size_flags_horizontal=3
+columns=3
+theme_override_constants/h_separation=14
+theme_override_constants/v_separation=14
 
 [node name="Close" type="Button" parent="Center/Layout"]
-custom_minimum_size=Vector2(360, 38)
+custom_minimum_size=Vector2(0, 42)
 layout_mode=2
 text="CLOSE"

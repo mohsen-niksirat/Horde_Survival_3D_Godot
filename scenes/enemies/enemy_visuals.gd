@@ -9,6 +9,10 @@ static var _mat_cache: Dictionary = {}
 ## glowing projectiles never blur into one wash.
 ## Playtest: darker tints — white arena made pale enemies hard to see.
 const ENEMY_TINTS := {
+	"ember_runner": Color(0.8, 0.2, 0.04),
+	"crystal_guard": Color(0.35, 0.2, 0.65),
+	"broodling": Color(0.12, 0.4, 0.08),
+	"brood_keeper": Color(0.4, 0.42, 0.05),
 	"basic_drone": Color(0.12, 0.22, 0.55),
 	"fast_wisp": Color(0.03, 0.35, 0.5),
 	"tank_golem": Color(0.28, 0.15, 0.06),
@@ -24,6 +28,10 @@ const ENEMY_TINTS := {
 }
 
 const ENEMY_SCENES := {
+	"ember_runner": "res://assets/models/enemies/enemy_wisp.glb",
+	"crystal_guard": "res://assets/models/enemies/enemy_golem.glb",
+	"broodling": "res://assets/models/enemies/enemy_bat.glb",
+	"brood_keeper": "res://assets/models/enemies/enemy_healer.glb",
 	"basic_drone": "res://assets/models/enemies/enemy_drone.glb",
 	"fast_wisp": "res://assets/models/enemies/enemy_wisp.glb",
 	"tank_golem": "res://assets/models/enemies/enemy_golem.glb",
@@ -39,6 +47,10 @@ const ENEMY_SCENES := {
 }
 
 const GLB_SCALES := {
+	"ember_runner": 0.8,
+	"crystal_guard": 1.3,
+	"broodling": 0.6,
+	"brood_keeper": 1.25,
 	"basic_drone": 1.15,
 	"fast_wisp": 1.05,
 	"tank_golem": 1.45,

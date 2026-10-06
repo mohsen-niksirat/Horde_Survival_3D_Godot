@@ -24,20 +24,21 @@ var selected_character_id: String = "mage"
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	EventBus.game_state_changed.connect(_on_game_state_changed)
-	# Restore the persisted character choice (SaveManager loads in its own
-	# _ready; autoload order guarantees it is ready first).
+	SaveManager.save_loaded.connect(_restore_selected_character)
+	_restore_selected_character()
+
+func _restore_selected_character() -> void:
+	# Preserve an explicit choice made before save loading completes.
+	if selected_character_id != "mage":
+		return
+	# GameManager is registered before SaveManager; restore after loading.
 	# Unlock state is victories-driven (character_select.UNLOCK_WINS), not
 	# the legacy unlocked_characters array (which is never updated).
 	if SaveManager.get_meta_data("selected_character", null) != null and state == State.BOOT:
 		var saved: String = str(SaveManager.get_meta_data("selected_character"))
 		var wins: int = int(SaveManager.get_meta_data("victories", 0))
-		var need: int = 0
-		match saved:
-			"paladin": need = 1
-			"rogue": need = 3
-			"cleric": need = 2
-			"ranger": need = 4
-		if wins >= need:
+		var need: int = CharacterData.unlock_requirement(saved)
+		if CharacterData.UNLOCK_WINS.has(saved) and wins >= need:
 			selected_character_id = saved
 
 func change_state(new_state: int) -> void:
@@ -96,10 +97,15 @@ func close_level_up() -> void:
 			change_state(State.PLAYING)
 
 func game_over(victory: bool) -> void:
+	# Multiple simultaneous lethal/win events must not award twice.
+	if state == State.GAME_OVER or state == State.RESULTS:
+		return
+	RunManager.is_running = false
 	get_tree().paused = false
+	# Deliver the result before the overlay commits rewards on GAME_OVER.
+	EventBus.run_ended.emit(victory)
 	change_state(State.GAME_OVER)
 	InputManager.release_pointer()
-	EventBus.run_ended.emit(victory)
 
 func _on_game_state_changed(_new_state: int, _old: int) -> void:
 	pass

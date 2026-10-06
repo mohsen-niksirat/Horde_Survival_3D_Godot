@@ -7,6 +7,42 @@ var _pools: Dictionary = {}
 var _release_queue: Array = []
 var _pending_release: Dictionary = {}  # instance_id -> true (dedupe)
 
+func _exit_tree() -> void:
+	# Pooled free nodes have no parent, so scene-tree teardown cannot free
+	# them. Release them synchronously while their resources are valid.
+	for pool in _pools.values():
+		for node in pool["free"]:
+			if is_instance_valid(node):
+				_free_detached(node)
+	for item in _release_queue:
+		if is_instance_valid(item[1]):
+			var node: Node = item[1]
+			if node.get_parent() == null:
+				_free_detached(node)
+	_pools.clear()
+	_release_queue.clear()
+	_pending_release.clear()
+
+func _free_detached(node: Node) -> void:
+	# A mesh can own its last material reference. Keep render resources alive
+	# until every MeshInstance in this detached hierarchy has been destroyed.
+	var resources: Array[Resource] = []
+	_retain_render_resources(node, resources)
+	node.free()
+	resources.clear()
+
+func _retain_render_resources(node: Node, resources: Array[Resource]) -> void:
+	if node is MeshInstance3D:
+		var mesh_node := node as MeshInstance3D
+		if mesh_node.mesh != null:
+			resources.append(mesh_node.mesh)
+			for surface in mesh_node.mesh.get_surface_count():
+				var material := mesh_node.get_active_material(surface)
+				if material != null:
+					resources.append(material)
+	for child in node.get_children():
+		_retain_render_resources(child, resources)
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
@@ -18,7 +54,10 @@ func _process(_delta: float) -> void:
 	_release_queue = []
 	_pending_release.clear()
 	for item in queue:
-		_release_now(item[0], item[1])
+		# Validate before passing a typed Node argument: freed references
+		# fail GDScript's type check before _release_now can guard them.
+		if is_instance_valid(item[1]):
+			_release_now(item[0], item[1])
 
 ## Create (or get) a pool for a scene with an initial prewarm size.
 func create_pool(scene_path: String, prewarm: int = 0) -> void:

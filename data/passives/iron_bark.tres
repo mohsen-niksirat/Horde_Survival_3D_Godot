@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/progression/passive_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "iron_bark"
+display_name = "Iron Bark"
+description = "+1.5 armor per level. Hold your ground."
+max_level = 5
+modifiers = [{"stat": "armor", "flat": 1.5, "percent": 0.0}]

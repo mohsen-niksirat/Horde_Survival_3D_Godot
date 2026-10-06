@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="MissionData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/core/mission_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "m6_storm"
+display_name = "The Shattered Observatory"
+briefing = "Survive four minutes among the storm ruins. Amber rings warn of lightning: step out before they turn white."
+map_id = "storm_ruins"
+win_rule = "survive_time"
+win_target = 240.0
+gold_reward = 700
+unlock_wins = 5
+act = 4
+act_name = "Act IV — Beyond the Forge"
+side_objective_type = "combo_streak"
+side_objective_target = 40
+side_gold_reward = 200

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/progression/passive_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "ember_lens"
+display_name = "Ember Lens"
+description = "+6% area and +3% might per level."
+max_level = 5
+modifiers = [{"stat": "area_mult", "flat": 0.0, "percent": 0.06}, {"stat": "might", "flat": 0.0, "percent": 0.03}]

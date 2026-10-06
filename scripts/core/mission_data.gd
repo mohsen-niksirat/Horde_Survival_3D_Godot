@@ -44,6 +44,8 @@ func is_unlocked(victories: int, completed_missions: Array = []) -> bool:
 		"m3_nest": "m2_frost",
 		"m4_warden": "m3_nest",
 		"m5_heartforge": "m4_warden",
+		"m6_storm": "m5_heartforge",
+		"m7_hollow": "m6_storm",
 	}
 	var prev: String = str(prev_map.get(id, ""))
 	if prev != "" and completed_missions.has(prev):

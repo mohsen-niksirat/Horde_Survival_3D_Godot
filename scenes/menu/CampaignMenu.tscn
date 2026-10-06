@@ -38,19 +38,21 @@ theme_override_constants/separation=10
 
 [node name="Title" type="Label" parent="Center/Panel/Layout"]
 layout_mode=2
-theme_override_font_sizes/font_size=24
+theme_override_font_sizes/font_size=20
 text="CAMPAIGN — TORCHFALL"
 horizontal_alignment=1
 
 [node name="Scroll" type="ScrollContainer" parent="Center/Panel/Layout"]
-custom_minimum_size=Vector2(560, 340)
+custom_minimum_size=Vector2(280, 340)
 layout_mode=2
+horizontal_scroll_mode=0
 
 [node name="Rows" type="VBoxContainer" parent="Center/Panel/Layout/Scroll"]
 layout_mode=2
+size_flags_horizontal=3
 theme_override_constants/separation=8
 
 [node name="Close" type="Button" parent="Center/Panel/Layout"]
-custom_minimum_size=Vector2(560, 40)
+custom_minimum_size=Vector2(0, 42)
 layout_mode=2
 text="CLOSE"

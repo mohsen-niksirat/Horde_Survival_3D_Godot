@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "brood_keeper"
+display_name = "Brood Keeper"
+color = Color(0.45, 0.55, 0.15, 1)
+scale = 1.2
+max_hp = 48.0
+damage = 5.0
+move_speed = 2.3
+movement_type = "kite"
+attack_range = 1.4
+attack_cooldown = 1.5
+xp = 8.0
+gold = 3.0
+spawn_weight = 2.0
+threat_cost = 5.0
+heal_radius = 5.0
+heal_pct = 0.025
+heal_cooldown = 3.0
+splits_into = "broodling"
+split_count = 2

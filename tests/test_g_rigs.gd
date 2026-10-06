@@ -107,6 +107,7 @@ func _initialize() -> void:
 	var orb: Node = pool.acquire("res://scenes/pickups/XpOrb.tscn")
 	pool.tag(orb, "res://scenes/pickups/XpOrb.tscn")
 	main.get_node("World").add_child(orb)
+	orb.setup(1.0, player, player.global_position + Vector3(4, 0, 0))
 	await process_frame
 	_check(orb.get_node_or_null("Mesh/ShardRig") != null, "xp shard model attached")
 	if orb.get_node_or_null("Mesh/ShardRig") != null:

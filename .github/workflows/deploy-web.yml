@@ -24,13 +24,29 @@ jobs:
       - name: Setup Godot
         uses: lihop/setup-godot@v2
         with:
-          version: "4.7-stable"
+          version: "4.7.2-stable"
           export-templates: true
 
       - name: Import assets (headless)
+        shell: bash
         run: |
-          godot --headless --import 2>&1 | true
-          godot --headless --import 2>&1 | true
+          set -euo pipefail
+          godot --headless --editor --import --quit 2>&1 | tee import.log
+          if grep -Eq "^ERROR:|SCRIPT ERROR:" import.log; then
+            echo "Asset import reported errors; refusing to deploy."
+            exit 1
+          fi
+
+      - name: Run headless tests
+        run: |
+          python3 tools/run_tests.py --godot godot
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: headless-test-results
+          path: build/test-results
 
       - name: Export Web build
         run: |

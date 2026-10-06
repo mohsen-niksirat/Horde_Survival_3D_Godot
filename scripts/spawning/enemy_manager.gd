@@ -29,7 +29,11 @@ var _grid_time_ms: int = -100000
 ## Queue a spawn. Returns false when the hitch-guard queue is full, so
 ## callers (dev tools, burst spawners) can retry on a later frame.
 func queue_spawn(data: EnemyData, position: Vector3, player: Node3D, hp_scale: float, dmg_scale: float, spd_scale: float, elite: Array = []) -> bool:
+	if data == null or not is_instance_valid(player):
+		return false
 	if _spawn_queue.size() >= MAX_SPAWN_QUEUE:
+		return false
+	if active_enemies.size() + _spawn_queue.size() >= PerformanceManager.effective_enemy_cap():
 		return false
 	_spawn_queue.append({
 		"data": data,
@@ -56,11 +60,21 @@ func prewarm_pool(count: int) -> void:
 
 func _process(_delta: float) -> void:
 	# Spawn budget: max N new enemies per frame to avoid load spikes
-	var budget := MAX_SPAWNS_PER_FRAME
+	var web := OS.has_feature("web")
+	var budget := 4 if web else MAX_SPAWNS_PER_FRAME
+	var started := Time.get_ticks_usec()
 	while budget > 0 and not _spawn_queue.is_empty():
-		var req = _spawn_queue.pop_front()
-		_spawn_now(req)
+		if active_enemies.size() >= PerformanceManager.effective_enemy_cap():
+			_spawn_queue.clear()
+			break
+		var req: Dictionary = _spawn_queue.pop_front()
+		if is_instance_valid(req["player"]):
+			_spawn_now(req)
 		budget -= 1
+		# Soft time budget: one expensive spawn may exceed it, but no further
+		# spawns are admitted in that browser frame.
+		if web and Time.get_ticks_usec() - started >= 2500:
+			break
 	_cull_far_enemies()
 	_ensure_grid()
 

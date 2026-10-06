@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="MissionData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/core/mission_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "m7_hollow"
+display_name = "The Hollow Grove"
+briefing = "Defeat 250 enemies. The green sanctuary restores health, but relocates every 18 seconds. Prioritize Brood Keepers before their allies recover."
+map_id = "hollow_grove"
+win_rule = "kill_count"
+win_target = 250.0
+gold_reward = 850
+unlock_wins = 6
+act = 4
+act_name = "Act IV — Beyond the Forge"
+side_objective_type = "combo_streak"
+side_objective_target = 60
+side_gold_reward = 250

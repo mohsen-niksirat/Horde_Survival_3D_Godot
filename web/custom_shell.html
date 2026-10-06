@@ -80,14 +80,14 @@
 		function webglSupported() {
 			try {
 				const c = document.createElement('canvas');
-				return !!(window.WebGL2RenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
+				return !!(window.WebGL2RenderingContext && c.getContext('webgl2'));
 			} catch (e) { return false; }
 		}
 
 		if (!webglSupported()) {
 			statusEl.textContent = 'Loading failed';
 			errorEl.style.display = 'block';
-			errorEl.textContent = 'WebGL is not available in this browser. Please use a modern browser with hardware acceleration enabled.';
+			errorEl.textContent = 'WebGL 2 is not available in this browser. Please use a modern browser with hardware acceleration enabled.';
 			document.getElementById('bar-outer').style.display = 'none';
 		} else {
 			GODOT_CONFIG['onProgress'] = function (current, total) {

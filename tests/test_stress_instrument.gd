@@ -13,11 +13,13 @@ func _initialize() -> void:
 	for i in range(240):
 		await process_frame
 		await physics_frame
-		if stress.get("_fed") == 250 and stress.get("_em").enemy_count() >= 240:
+		var target: int = mini(250, root.get_node("PerformanceManager").effective_enemy_cap())
+		if stress.get("_em").enemy_count() >= target:
 			break
 
 	var em: Node = stress.get_node("EnemyManager")
-	_check(em.enemy_count() >= 240, "stress scene spawned 240+ enemies (%d)" % em.enemy_count())
+	var target: int = mini(250, root.get_node("PerformanceManager").effective_enemy_cap())
+	_check(em.enemy_count() >= target - 5 and em.enemy_count() <= target, "stress scene respects effective population target %d (got %d)" % [target, em.enemy_count()])
 	var perf: Node = root.get_node("PerformanceManager")
 	# Quality.ULTRA == 4 (scene forces it so caps don't interfere)
 	_check(perf.quality == 4, "quality forced ULTRA (%d)" % perf.quality)

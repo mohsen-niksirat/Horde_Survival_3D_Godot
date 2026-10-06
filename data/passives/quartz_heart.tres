@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/progression/passive_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "quartz_heart"
+display_name = "Quartz Heart"
+description = "+0.3 HP regeneration and +3% max HP per level."
+max_level = 5
+modifiers = [{"stat": "regen", "flat": 0.3, "percent": 0.0}, {"stat": "max_hp", "flat": 0.0, "percent": 0.03}]

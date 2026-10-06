@@ -5,7 +5,7 @@ extends Node
 const PASSIVE_IDS := [
 	"spinach", "empty_tome", "crown", "wings",
 	"magnet", "heart", "growth", "vampire",
-	"hunters_mark",
+	"hunters_mark", "iron_bark", "ember_lens", "time_sand", "quartz_heart",
 ]
 const MAX_WEAPON_SLOTS_CAP := 5
 const BASE_WEAPON_SLOTS := 3
@@ -42,6 +42,14 @@ func setup(p_player: CharacterBody3D) -> void:
 	for evo_path in ["res://data/weapons/evo_hellfire.tres", "res://data/weapons/evo_holy_bible.tres", "res://data/weapons/evo_aurora.tres", "res://data/weapons/evo_judgment.tres", "res://data/weapons/evo_thunderstorm.tres", "res://data/weapons/evo_void_reaver.tres"]:
 		if ResourceLoader.exists(evo_path):
 			evolutions.append(load(evo_path))
+	var character_path := "res://data/characters/%s.tres" % GameManager.selected_character_id
+	if ResourceLoader.exists(character_path):
+		var character: CharacterData = load(character_path)
+		var id: String = character.starting_passive_id
+		if passive_data.has(id) and not passive_levels.has(id):
+			passive_levels[id] = 1
+			passive_data[id].apply_per_level(player.stat_block, 1)
+			player.on_stats_changed()
 
 ## Called when the player levels up. Queues the level and shows choices;
 ## stacked multi-level ups wait until the current pick is made.
@@ -220,6 +228,8 @@ func apply_choice(option: UpgradeOption) -> void:
 				_check_synergies()
 		UpgradeOption.Kind.PASSIVE:
 			var id: String = option.target.id
+			if int(passive_levels.get(id, 0)) >= int(option.target.max_level):
+				return
 			passive_levels[id] = passive_levels.get(id, 0) + 1
 			option.target.apply_per_level(player.stat_block, 1)
 			player.on_stats_changed()

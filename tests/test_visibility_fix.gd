@@ -57,6 +57,9 @@ func _initialize() -> void:
 	_check(not orb1.visible, "released orb hidden")
 	var orb2: Node3D = pool_manager.acquire(orb_scene)
 	_check(orb2.visible, "recycled orb visible again")
+	# This acquired node is detached; return it before process teardown.
+	pool_manager.release(orb2)
+	await process_frame
 
 	# --- Targeting prefers in-front-of-camera enemies ---
 	player.global_position = Vector3(0, 0.5, 0)

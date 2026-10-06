@@ -45,7 +45,7 @@ func _process(delta: float) -> void:
 		_active = false
 		visible = false
 		scale = Vector3.ONE
-		# Meteor-strike VFX is instantiated per cast (not pooled) — free it
-		# so it doesn't leak. Pooled nodes (pool_scene meta) just hide.
-		if get_meta("pool_scene", "") == "":
+		# Free one-shot VFX; global and controller-local pool nodes hide.
+		# Local VFX must not claim ownership by the global PoolManager.
+		if get_meta("pool_scene", "") == "" and not bool(get_meta("local_pool", false)):
 			queue_free()

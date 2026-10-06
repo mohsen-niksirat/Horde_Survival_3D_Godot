@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/progression/character_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "warden"
+display_name = "Grove Warden"
+description = "Close-range defender. +25% HP, -8% speed, +5% might. Starts with Iron Bark."
+color = Color(0.35, 0.85, 0.72, 1)
+starting_weapon_id = "orbiting_shield"
+starting_passive_id = "iron_bark"
+max_hp_pct = 0.25
+move_speed_pct = -0.08
+might_pct = 0.05

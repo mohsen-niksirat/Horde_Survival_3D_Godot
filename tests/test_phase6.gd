@@ -17,7 +17,7 @@ func _initialize() -> void:
 	var game_manager := root.get_node("GameManager")
 	game_manager.state = game_manager.State.PLAYING
 
-	_check(progression.passive_data.size() == 9, "9 passives loaded (got %d)" % progression.passive_data.size())
+	_check(progression.passive_data.size() == 13, "13 passives loaded (got %d)" % progression.passive_data.size())
 
 	# --- Level up via direct XP ---
 	var choices_container := {"list": []}
@@ -98,7 +98,7 @@ func _initialize() -> void:
 	if tier_opt != null:
 		var target_w = null
 		for w in player.weapon_controller.weapons:
-			if w.data.id == tier_opt.target_id:
+			if w.data.id == tier_opt.target.id:
 				target_w = w
 				break
 		var lvl0: int = target_w.level if target_w != null else 0
@@ -110,9 +110,10 @@ func _initialize() -> void:
 	# --- Heal option works ---
 	var hp0: float = player.health.current_hp
 	player.health.take_damage(DamageEvent.new(50.0, "test"))
+	var hp_after_damage: float = player.health.current_hp
 	var heal_opt: UpgradeOption = progression._make_heal_option()
 	progression.apply_choice(heal_opt)
-	_check(player.health.current_hp > player.health.current_hp - 1.0, "heal applied")
+	_check(player.health.current_hp > hp_after_damage, "heal applied")
 
 	if failures == 0:
 		print("PHASE6_TEST_PASS")

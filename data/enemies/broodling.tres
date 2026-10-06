@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "broodling"
+display_name = "Broodling"
+color = Color(0.25, 0.55, 0.12, 1)
+scale = 0.6
+max_hp = 10.0
+damage = 4.0
+move_speed = 4.0
+movement_type = "wobble"
+attack_range = 1.0
+attack_cooldown = 1.0
+xp = 1.0
+gold = 0.25
+spawn_weight = 7.0
+threat_cost = 1.0
