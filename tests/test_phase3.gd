@@ -54,7 +54,8 @@ func _initialize() -> void:
 
 	# Position player within magnet range (3.5m) so orbs drop and are visible
 	# before being immediately collected.
-	player.global_position = enemy.global_position + Vector3(3.5, 0, 0)
+	var drop_pos: Vector3 = enemy.global_position
+	player.global_position = drop_pos + Vector3(3.5, 0, 0)
 	var run_manager := root.get_node("RunManager")
 	var kills_before: int = run_manager.kills
 	var xp_before: float = player.experience.current_xp
@@ -74,7 +75,7 @@ func _initialize() -> void:
 	_check(orbs >= 1 or player.experience.current_xp > xp_before, "xp orbs dropped (%d)" % orbs)
 
 	# --- XP collection: move player to dropped position to collect ---
-	player.global_position = enemy.global_position
+	player.global_position = drop_pos
 	for i in range(60):
 		await physics_frame
 		if player.experience.current_xp > xp_before:
