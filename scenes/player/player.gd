@@ -21,6 +21,7 @@ var has_revive: bool = false
 var _face_yaw: float = 0.0
 var _base_hp: float = 100.0
 var _identity: Node3D = null
+var heart_drop_rate_override: float = -1.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -133,7 +134,8 @@ func _drop_xp(enemy: Node, position: Vector3, xp_mult: float = 1.0) -> void:
 		get_parent().add_child(orb)
 		orb.setup(per_orb, self, position)
 	# Heart drop — ANY enemy can drop (5%); early survival lifeline
-	if randf() < 0.05:
+	var heart_chance := heart_drop_rate_override if heart_drop_rate_override >= 0.0 else 0.05
+	if randf() < heart_chance:
 		var heart := PoolManager.acquire("res://scenes/pickups/HeartPickup.tscn")
 		PoolManager.tag(heart, "res://scenes/pickups/HeartPickup.tscn")
 		get_parent().add_child(heart)

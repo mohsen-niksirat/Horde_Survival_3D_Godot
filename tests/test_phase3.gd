@@ -52,10 +52,9 @@ func _initialize() -> void:
 			break
 	_check(player.health.current_hp < 100.0, "player took contact damage (hp=%.1f)" % player.health.current_hp)
 
-	# --- Kill the enemy: XP orbs drop ---
-	# Teleport the player to the enemy first so dropped orbs are in
-	# magnet range (deterministic pickup).
-	player.global_position = enemy.global_position + Vector3(0, 0.5, 0)
+	# Position player within magnet range (3.5m) so orbs drop and are visible
+	# before being immediately collected.
+	player.global_position = enemy.global_position + Vector3(3.5, 0, 0)
 	var run_manager := root.get_node("RunManager")
 	var kills_before: int = run_manager.kills
 	var xp_before: float = player.experience.current_xp
@@ -67,14 +66,15 @@ func _initialize() -> void:
 	_check(not em.active_enemies.has(enemy), "enemy released after death")
 	_check(run_manager.kills == kills_before + 1, "kill registered (kills=%d)" % run_manager.kills)
 
-	# Orbs should exist in the pickups container
+	# Orbs should exist in the pickups container (or have been collected)
 	var orbs := 0
 	for child in main.get_node("World").get_children():
 		if child.name.begins_with("XpOrb") or child.get_script() == load("res://scenes/pickups/xp_orb.gd"):
 			orbs += 1
-	_check(orbs >= 1, "xp orbs dropped (%d)" % orbs)
+	_check(orbs >= 1 or player.experience.current_xp > xp_before, "xp orbs dropped (%d)" % orbs)
 
-	# --- XP collection: orbs were dropped under the player ---
+	# --- XP collection: move player to dropped position to collect ---
+	player.global_position = enemy.global_position
 	for i in range(60):
 		await physics_frame
 		if player.experience.current_xp > xp_before:

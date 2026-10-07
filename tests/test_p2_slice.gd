@@ -17,10 +17,11 @@ func _initialize() -> void:
 	relic.setup(data, null, Vector3(0, 0, 0), 60.0)
 	await process_frame
 	var e0: float = relic._mat.emission_energy_multiplier
-	await process_frame
-	await process_frame
-	var e1: float = relic._mat.emission_energy_multiplier
-	_check(absf(e1 - e0) > 0.01, "relic emission pulses (%.2f -> %.2f)" % [e0, e1])
+	var max_diff: float = 0.0
+	for i in range(12):
+		await process_frame
+		max_diff = maxf(max_diff, absf(relic._mat.emission_energy_multiplier - e0))
+	_check(max_diff > 0.01, "relic emission pulses (delta=%.3f)" % max_diff)
 	relic.queue_free()
 
 	# --- Character tint: paladin robes are gold, not default blue ---

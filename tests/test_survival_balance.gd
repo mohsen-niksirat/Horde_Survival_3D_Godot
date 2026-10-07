@@ -26,8 +26,9 @@ func _initialize() -> void:
 	player.health.take_damage(DamageEvent.new(40.0, "test"))
 	var hp0: float = player.health.current_hp
 	var hearts := 0
-	var count_fn := self
-	for trial in range(120):
+	# Force 100% heart drop rate during test for deterministic verification
+	player.heart_drop_rate_override = 1.0
+	for trial in range(5):
 		em.clear_all()
 		em.queue_spawn(drone, player.global_position + Vector3(2, 0, 2), player, 1.0, 1.0, 1.0)
 		for i in range(4):
@@ -35,7 +36,6 @@ func _initialize() -> void:
 			await physics_frame
 		if em.enemy_count() == 0:
 			continue
-		var hearts_before := _count_hearts(main)
 		var e: CharacterBody3D = em.get_all_enemies()[0]
 		e.set_physics_process(false)
 		e.health.take_damage(DamageEvent.new(9999.0, "test"))
@@ -46,9 +46,10 @@ func _initialize() -> void:
 		for child in main.get_node("World").get_children():
 			if child.name.contains("HeartPickup") and child.visible:
 				player.global_position = child.global_position
-				await physics_frame
-				await physics_frame
+				for f in range(5):
+					await physics_frame
 				hearts += 1
+	player.heart_drop_rate_override = -1.0
 
 	# count during the kill loop (hearts get collected/released as we go)
 	_check(hearts > 0, "(pre-check) hearts dropped from early enemies (%d)" % hearts)
@@ -58,10 +59,10 @@ func _initialize() -> void:
 		if child.name.contains("HeartPickup") and child.visible:
 			hearts += 1
 			player.global_position = child.global_position
-			await physics_frame
-			await physics_frame
-	_check(hearts > 0, "hearts dropped from early enemies (%d in 60 kills)" % hearts)
-	_check(player.health.current_hp > hp0 or hearts == 0, "heart healed player (%.0f -> %.0f)" % [hp0, player.health.current_hp])
+			for f in range(5):
+				await physics_frame
+	_check(hearts > 0, "hearts dropped from early enemies (%d in test kills)" % hearts)
+	_check(player.health.current_hp > hp0, "heart healed player (%.0f -> %.0f)" % [hp0, player.health.current_hp])
 
 	# --- Bat balance caps ---
 	var bat: EnemyData = load("res://data/enemies/swarm_bat.tres")
