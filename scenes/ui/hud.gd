@@ -42,6 +42,7 @@ var _toast_left: float = 0.0
 var _player: Node
 var _ability_controller: Node
 var _last_tier: String = ""
+var _combo_tween: Tween = null
 var _fps_accum: float = 0.0
 
 const TIER_COLORS := {
@@ -375,18 +376,23 @@ func _on_combo(count: int, multiplier: float) -> void:
 	combo_label.add_theme_color_override("font_color", TIER_COLORS.get(tier, Color.WHITE))
 	var size := 15 + mini(count / 10, 6) * 2
 	combo_label.add_theme_font_size_override("font_size", size)
-	# V7: pop + pulse animation on tier change
+	# V7: pop + pulse animation on tier change.
+	# Kill any in-flight pop so tweens never stack (which caused scale to
+	# undershoot below 1.0 mid-animation and produced a flaky test).
+	if _combo_tween != null and _combo_tween.is_valid():
+		_combo_tween.kill()
 	if tier != _last_tier and tier != "BRONZE":
 		_last_tier = tier
 		combo_label.pivot_offset = combo_label.size * 0.5
-		var tween := create_tween()
 		combo_label.scale = Vector2(1.25, 1.25)
-		tween.tween_property(combo_label, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_combo_tween = create_tween()
+		# Monotonic ease-out: pops from 1.25 back to 1.0 without dipping below it.
+		_combo_tween.tween_property(combo_label, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	elif count % 5 == 0:
 		combo_label.pivot_offset = combo_label.size * 0.5
 		combo_label.scale = Vector2(1.1, 1.1)
-		var tw2 := create_tween()
-		tw2.tween_property(combo_label, "scale", Vector2.ONE, 0.12)
+		_combo_tween = create_tween()
+		_combo_tween.tween_property(combo_label, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func _combo_tier(count: int) -> String:
 	if count >= 200: return "GODLIKE"
