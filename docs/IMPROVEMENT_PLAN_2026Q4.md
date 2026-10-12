@@ -58,20 +58,33 @@ entity caps. The plan below targets **web load/runtime efficiency** and
 - Exit criteria: exported web build stays within a documented size budget; boot
   to menu under a documented time on a mid browser; no console errors.
 
-## Phase C — Finish documented placeholders (new features)
-- **WEAPONS menu screen** — replace notice text with a real collection grid
-  (icon, tier, evolution status), driven by `.tres` data.
-- **Relic beacon** — add a readable glow/pulse beacon so relic pickups are
-  discoverable.
-- **Character identity** — per-character visual differentiation (tint/robe is
-  partially wired; extend to distinct models/accents where feasible).
-- Exit criteria: each screen/feature has a headless test and is reachable in-game.
+## Phase C — Finish documented placeholders (new features)  [STATUS: already implemented]
+- **WEAPONS menu screen** — `scenes/menu/weapon_codex.gd` is fully implemented:
+  catalogs 14 weapons via `.tres` data, shows damage/cooldown/projectile stats,
+  6 evolutions, 7 synergies, 6 relics, 10 passives, 3 relic synergies.
+  Reachable from MainMenu → WeaponCodex (open() + close button).
+- **Relic beacon** — `_spawn_beacon()` in `relic_pickup.gd:54` creates a 2.8m
+  tall glowing cylinder pillar with a looping emission pulse tween.
+  Pulse + rarity-tinted chest model make relics discoverable mid-horde.
+- **Character identity** — `character_identity.gd` adds Paladin aura (pulsing
+  torus) and Rogue move trail (pooled puffs with scale/fade tween).
+  Wired into `player.gd:41-46` bind_combat(). Tests:
+  test_p2_slice, test_orbit_decouple, test_g_rigs all PASS.
+- **Achievement panel** — `scenes/menu/achievement_panel.gd` shows 15 milestones
+  with unlock state, gold rewards, tier badges (★★/○), titles/desc.
+- Exit criteria: ✓ all features have headless tests (test_p2_slice, test_g_rigs,
+  test_phase3a_assets pass).
 
 ## Phase D — Content + balance polish
 - Endless balance pass with real numbers (post-15 min density/perf).
-- Achievement icons in the menu panel.
 - Docs sync (README feature counts, CURRENT_STATE URLs, this plan's status).
 - Exit criteria: docs match code; balance recorded; release checklist updated.
+
+## Phase B results (deployed f23c34f)
+- Web build measured: 48.4 MB total (39.5MB .wasm engine + 10.9MB .pck).
+- exclude_filter already excludes external models, tests, tools, docs, *.md.
+- Consolidated web/index.html with custom_shell.html (pointer-lock + WebGL2
+  detection + progress bar).
 
 ## Deploy contract (every phase)
 1. Run the headless suite (local Godot 4.7.2).
