@@ -75,10 +75,15 @@ entity caps. The plan below targets **web load/runtime efficiency** and
 - Exit criteria: ✓ all features have headless tests (test_p2_slice, test_g_rigs,
   test_phase3a_assets pass).
 
-## Phase D — Content + balance polish
+## Phase D — Content + balance polish  [STATUS: docs synced]
 - Endless balance pass with real numbers (post-15 min density/perf).
 - Docs sync (README feature counts, CURRENT_STATE URLs, this plan's status).
 - Exit criteria: docs match code; balance recorded; release checklist updated.
+
+## Phase D results (2026-10-12)
+- **Docs synced:** README feature counts corrected (14 weapons + 6 evolutions, 7 characters, 15 achievements, 13 passives, 15 enemies, 8 missions, 9 meta upgrades); CURRENT_STATE.md + POST_MVP_STATE.md addendum updated.
+- **Balance verified:** DifficultyManager caps (HP 12x, dmg 6.5x, speed 1.9x) confirmed; threat budget + spawn budget already tuned.
+- **Release gate:** device-level balance/FPS still needs real-browser QA per `EXPANSION_QA_FA.md` before a public tag.
 
 ## Phase B results (deployed f23c34f)
 - Web build measured: 48.4 MB total (39.5MB .wasm engine + 10.9MB .pck).

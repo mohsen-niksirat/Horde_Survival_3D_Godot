@@ -1,13 +1,15 @@
 # CURRENT STATE — HordeSurvival 3D
 
-> Updated: 2026-10-12 · Version: post-MVP + V1–V11 + P1–P4 (Phase C verified, deployed)
+> Updated: 2026-10-12 · Version: campaign + After the Forge expansion (Phase D docs synced, deployed)
 
 ## Implemented Systems (working, tested)
-- **Core loop**: menu → character select (Mage/Paladin/Rogue) → arena → horde → XP → level-up (3 choices) → builds → game over/results → gold
-- **Combat**: 14 base weapons + 6 evolutions (Hellfire/HolyBible/Aurora/Judgment/Thunderstorm/VoidReaver), unified DamageEvent pipeline, statuses (burn/slow/freeze), crit, armor
-- **Enemies**: 9 archetypes (drone/wisp/golem/turret/bat/ghost/splitter/healer/mage) — distinct primitive models + behaviors; elites (8 abilities); 1 boss (3 phases, telegraphs, volleys, minions)
-- **Spawning**: threat budget, difficulty timeline (caps: HP 12x, damage 6.5x, speed 1.9x), cull 55m, spawn ring 22–30m, endless recurring bosses, 13–15min density ramp
-- **Progression**: XP curve, 8 passives, 6 relics (incl. Phoenix Feather revive), Dragon Welp pet, 2 active abilities (Meteor/Time Freeze), combo (6 tiers), 15 achievements with gold rewards, meta gold shop (8 upgrades × 20 lvls), versioned meta save (IndexedDB on web)
+- **Core loop**: menu → character select (7 heroes) → campaign mission or endless arena → horde → XP → level-up (3 choices) → builds → game over/results → gold
+- **Campaign**: 8 story missions (Torchfall, Acts I–III + Act IV expansion), MissionData win rules, briefing toast, objective HUD, arena palette variants (ice, Heartforge, storm, grove)
+- **Combat**: 20 weapons (14 base + 6 evolutions: Hellfire/HolyBible/Aurora/Judgment/Thunderstorm/VoidReaver), unified DamageEvent pipeline, statuses (burn/slow/freeze), crit, armor, 7 synergies
+- **Enemies**: 15 archetypes (drone/wisp/golem/turret/bat/ghost/splitter/healer/mage/specter/brute/ember_runner/crystal_guard/broodling/brood_keeper) with rigs + behaviors; elites (8 abilities); 1 boss (3 phases, telegraphs, volleys, minions)
+- **Spawning**: threat budget, difficulty timeline (caps: HP 12x, damage 6.5x, speed 1.9x), cull 55m, spawn ring 22–30m, endless recurring bosses, 13–15min density ramp, web spawn budget (perf-gated)
+- **Progression**: XP curve, 13 passives (incl. Iron Bark, Ember Lens, Time Sand, Quartz Heart), 6 relics (incl. Phoenix Feather revive), Dragon Welp pet, 2 active abilities (Meteor/Time Freeze), combo (6 tiers), 15 achievements with gold rewards, meta gold shop (9 upgrades × 20 lvls), versioned meta save (IndexedDB on web)
+- **Heroes**: 7 characters (Mage free, Paladin 1 win, Cleric 2 wins, Rogue 3 wins, Ranger 3 wins, Stormcaller 5 wins incl. Ember Lens, Warden 6 wins incl. Iron Bark)
 - **Controls**: desktop (WASD + pointer-locked mouse + wheel zoom + Esc/P), mobile (floating joystick left, look right, zoom buttons, pause — fully independent)
 - **Presentation**: 3D hero/enemy models from .tres data, character identity VFX (Paladin aura, Rogue trail), muzzle flashes, trails, damage numbers, kill bursts, arena decor, procedural music (3 intensity layers), SFX presets
 - **Web**: 48.4 MB build (39.5MB .wasm + 10.9MB .pck), custom HTML shell (progress bar, Click-to-Play, WebGL2 fallback, pointer-lock cleanup)
@@ -27,11 +29,11 @@
 
 ## Deployment
 - GitHub Actions → Pages: green. Live: https://mohsen-niksirat.github.io/Horde_Survival_3D_Godot/
-- Phases 1–4 landed: bugs + browser FPS fixes, web shell consolidation, Phase C features
+- Phases 1–4 + campaign + After the Forge expansion landed; HEAD at docs sync (Phase D)
 
 ## Recommended Next Phases
-> See docs/POST_MVP_STATE.md §12 (authoritative P-phase order).
+> See docs/POST_MVP_STATE.md §12 (authoritative P-phase order) and docs/EXPANSION_QA_FA.md (browser QA gate before release).
 
-- **V12 — combat depth**: status interactions (burn+lightning), weapon synergy tuning
-- **V14 — meta**: best-run stats panel, unlock conditions
+- **EXPANSION_QA browser gate**: real WASM/WebGL2 + phone FPS verification per EXPANSION_QA_FA.md; balance is initial until measured on device
+- **V14 — meta**: best-run stats panel, expanded unlock conditions
 - Post-15min endless balance pass with real playtest numbers

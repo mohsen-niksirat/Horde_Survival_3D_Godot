@@ -37,18 +37,20 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 
 - Third-person 3D arena combat, camera-relative movement, zero aiming
 - **Standard run: survive 15 minutes for VICTORY** — or toggle **Endless** for infinite scaling
-- 6 auto-firing weapons (incl. Void Lance) + 5 evolutions (Hellfire, Holy Bible, Aurora, Judgment, Thunderstorm)
+- **Campaign mode:** 8 story missions across 3 acts (Torchfall) with briefing cards, objective HUD, and palette-shifted arenas
+- **14 base weapons** (incl. Void Lance, Soul Fire) + **6 evolutions** (Hellfire, Holy Bible, Aurora, Judgment, Thunderstorm, Void Reaver)
 - 7 weapon synergies + relic synergy hooks (Inferno Band, Favored Fortune, Mobile Bulwark)
-- 9 enemy archetypes + 8 modular elite abilities + one complete 3-phase boss
-- Character unlocks: Mage free, Paladin (1 win), Rogue (3 wins)
-- XP orbs with magnet pickup, level-ups with 3 rarity-colored choices, 8 passive items
+- **13 enemy archetypes** (drone→brood_keeper) + 8 modular elite abilities + one complete 3-phase boss
+- **7 playable characters:** Mage free → Paladin (1 win) → Rogue (3 wins) → Cleric (2 wins) → Ranger (3 wins) → Stormcaller (5 wins) → Warden (6 wins)
+- XP orbs with magnet pickup, level-ups with 3 rarity-colored choices, **13 passive items**
 - Relics (rarity-weighted map pickups incl. Phoenix Feather revive), a pet (Dragon Welp), 2 active abilities (Meteor Strike, Time Freeze)
-- Combo system with XP multiplier (capped) and 6 visual tiers, 12 achievements with gold rewards
+- Combo system with XP multiplier (capped) and 6 visual tiers, **15 achievements** with gold rewards
 - Threat-budget horde spawning, difficulty timeline, quality-tier entity caps
 - Versioned meta save (gold, bests, wins, unlocks, achievements) that persists in the browser
 - Responsive HUD (boss HP bar with phase tint, ability cooldowns); virtual joystick + touch camera
 - Settings: UI scale, reduced VFX, damage numbers, quality tiers, screen shake
 - Kenney CC0 GLB heroes/enemies/weapons/skybox (see docs/ASSET_CREDITS.md); quality Very Low→Ultra + FPS counter
+- **Meta shop:** 9 permanent upgrades × 20 levels (Vitality, Might, Frenzy, Swiftness, Luck, Greed, Bulwark, Precision, Arsenal)
 
 ## Win / Unlock Roadmap
 
@@ -58,17 +60,27 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 | 1 win | Unlock **Paladin** |
 | 3 wins | Unlock **Rogue** |
 | Achievements | Bonus gold (see in-game list) |
+| Stormcaller | 5 wins (Lightning + Ember Lens) |
+| Warden | 6 wins (Orbiting Shield + Iron Bark) |
 
-## Recent polish (R/S/T series)
+## Recent polish (R/S/T series + After the Forge expansion)
 
 - 15-minute victory ending + endless mode
 - Void Lance → **Void Reaver** evolution, Hunter's Mark passive, extra synergies
-- Character unlocks by wins, achievements panel (14), victory gold + interest
+- Character unlocks by wins, achievements panel (15), victory gold + interest
 - Live boss HP bar, enrage aura, fan flash, elite rings/bursts/warnings
 - Victory fanfare, combo tier toasts, phoenix revive toast
-- Meta shop: 8 upgrades including Bulwark + Precision
+- Meta shop: 9 upgrades (incl. Bulwark, Precision, Arsenal slots)
 - XP shard value tiers (gold = big XP), relic beacons, rarity toasts
 - HUD win countdown, run phase, NEW BEST TIME, pause run stats
+
+## Expansion — After the Forge
+
+- **Act IV missions:** Shattered Observatory (storm hazards, 240s survive) + Hollow Grove (2·50 kills, healing sanctuary)
+- **New heroes:** Stormcaller (5 wins) + Warden (6 wins) with starting passives
+- **New enemies:** ember_runner, crystal_guard, broodling, brood_keeper (broodlings on death)
+- **New passives:** Iron Bark, Ember Lens, Time Sand, Quartz Heart
+- Web spawn budget + lifecycle guards (see `docs/EXPANSION_ROADMAP_FA.md`)
 
 ## How to Run Locally
 

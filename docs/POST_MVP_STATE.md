@@ -92,6 +92,17 @@ moments) â†’ P6 Endless balance passes with real device numbers â†’
 P7 mobile verification round â†’ P8 measured perf â†’ P9 meta polish â†’
 P10 release sweep
 
+## 14. Addendum 2026-10-12 (campaign + After the Forge expansion, code-verified)
+> Supplements §§1–13 (stamped at `dcf183e`) without rewriting the historical audit. Verified from `data/*.tres` + passing headless tests (`test_campaign_flow`, `test_expansion_*`).
+
+- **Campaign:** 8 missions (`m1_gate` … `m7_hollow`), MissionData win rules (survive/kill_count/kill_boss), briefing + objective HUD, palette variants (ice/Heartforge/storm/grove), `CampaignMenu`.
+- **Heroes:** 7 — Stormcaller (5 wins, Lightning+Ember Lens, −15% HP/+5% spd/+12% Might), Warden (6 wins, Shield+Iron Bark, +25% HP/−8% spd/+5% Might).
+- **Enemies:** 15 `.tres` (base 9 + specter/brute + ember_runner/crystal_guard/broodling/brood_keeper; keeper spawns 2 broodlings on death).
+- **Content:** 20 weapons (14+6 evo), 13 passives, 6 relics, 15 achievements, meta shop 9×20 (incl. meta_slots 3→5).
+- **Act IV mechanics:** m6_storm (240s survive, pooled 3 warning rings, r2.4, 18 dmg, combo +200 @40); m7_hollow (250 kills, r3 sanctuary +2 HP/s relocating every 18s, combo +250 @60).
+- **Web perf guards:** spawn queue + capacity, per-frame budget (4 web/8 native), no threaded GLB on web, WebGL2 shell check.
+- **Release gate:** balance initial until device-measured — see `docs/EXPANSION_QA_FA.md` QA checklist.
+
 ## 13. G-series graphics overhaul (this commit)
 - Heroes: KayKit Adventures rigged+animated (Mage/Knight/Rogue) with AnimationPlayer locomotion
 - Enemies: KayKit Skeletons (minion/warrior/mage) + Barbarian/Rogue rigs; Kenney props for bat/wisp/ghost; rigs at EVERY quality tier
