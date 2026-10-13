@@ -77,7 +77,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_zoom = clampf(_zoom + wheel_zoom_step, 0.0, 1.0)
 		return
 	if event is InputEventMouseMotion:
-		# Look only when RMB held (cursor stays free for UI buttons)
+		# Look when the pointer is captured (primary) or RMB held (fallback).
 		if not InputManager.is_look_active():
 			return
 		_yaw -= event.relative.x * yaw_sensitivity

@@ -28,19 +28,23 @@ func release_pointer() -> void:
 	if OS.get_name() == "Web":
 		JavaScriptBridge.eval("try{if(window.__hordePointerRelease)window.__hordePointerRelease();else if(document.exitPointerLock)document.exitPointerLock();}catch(e){}", true)
 
-## Capture mouse for gameplay camera look (desktop only).
-## V2 playtest: do NOT lock the cursor — on-screen buttons must stay clickable.
-## Look uses hold-RMB instead (see camera_rig).
+## Capture the mouse for gameplay camera look (desktop only).
+## Pointer-lock hides the cursor so relative motion rotates the camera
+## without holding a button (the classic behaviour). Esc / menus / pause
+## release it via release_pointer(). UI stays clickable because we only
+## capture on an explicit click into the game view (see main.gd).
 func capture_pointer() -> void:
 	if DisplayServer.is_touchscreen_available() or OS.has_feature("mobile"):
 		return
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 ## True when the player is actively aiming the camera with the mouse.
+## Primary path is pointer-lock; RMB held is a fallback for environments
+## where Pointer Lock is unavailable (e.g. some embedded webviews).
 func is_look_active() -> bool:
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		return true
-	# RMB held: allow camera look while leaving the cursor free for UI.
+	# RMB held fallback: allow camera look while leaving the cursor free.
 	# (Read directly from Input state so we never miss a press/release
 	# edge that _input might have swallowed under heavy event load.)
 	return Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)

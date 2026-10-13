@@ -16,11 +16,24 @@ func _initialize() -> void:
 	var game_manager := root.get_node("GameManager")
 	game_manager.state = game_manager.State.PLAYING
 
+	# Primary look path = pointer lock (plain mouse motion). Headless drivers
+	# can't truly hold CAPTURED, so only assert when capture actually took.
+	var im = root.get_node("InputManager")
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	await process_frame
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		_check(im.is_look_active(), "look active under pointer lock")
+	else:
+		print("SKIP: pointer lock not held headless")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+	# Fallback path: RMB held (pointer lock unavailable).
 	var mb := InputEventMouseButton.new()
 	mb.button_index = MOUSE_BUTTON_RIGHT
 	mb.pressed = true
 	Input.parse_input_event(mb)
 	await process_frame
+	_check(im.is_look_active(), "look active while RMB held")
 
 	var yaw0: float = rig._yaw
 	# Simulate large mouse motion: 20 events x 500px = far beyond one screen

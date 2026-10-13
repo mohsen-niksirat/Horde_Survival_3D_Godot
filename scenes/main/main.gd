@@ -279,7 +279,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			PerformanceManager.toggle_perf_logging()
 			get_viewport().set_input_as_handled()
 			return
-	# V2 playtest: do not steal clicks for pointer lock — UI buttons need the mouse.
+	# Pointer-lock camera look: a click into the game view (unconsumed by UI,
+	# so it reaches _unhandled_input) while playing captures the cursor —
+	# plain mouse motion then orbits the camera. Esc / pause / menus release.
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT:
+			if (GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS) \
+					and not InputManager.is_pointer_captured():
+				InputManager.capture_pointer()
 
 func _toggle_pause() -> void:
 	if GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS:

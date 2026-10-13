@@ -125,7 +125,7 @@ Third-party art/audio (Kenney, KayKit): **CC0** — see [docs/ASSET_CREDITS.md](
 | Action | Desktop | Mobile | Gamepad |
 |---|---|---|---|
 | Move | WASD / Arrows | Left virtual joystick | Left stick |
-| Camera | Mouse (captured) / Arrow keys | Right touch drag | Right stick |
+| Camera | Click to capture mouse, then move / Arrow keys | Right touch drag | Right stick |
 | Ability 1 (Meteor) | Q | Button | Trigger |
 | Ability 2 (Freeze) | E | Button | Trigger |
 | Fullscreen toggle | F11 or Alt+Enter | FS button (next to zoom) | — |
