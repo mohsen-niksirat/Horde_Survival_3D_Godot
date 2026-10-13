@@ -85,6 +85,12 @@ entity caps. The plan below targets **web load/runtime efficiency** and
 - **Balance verified:** DifficultyManager caps (HP 12x, dmg 6.5x, speed 1.9x) confirmed; threat budget + spawn budget already tuned.
 - **Release gate:** device-level balance/FPS still needs real-browser QA per `EXPANSION_QA_FA.md` before a public tag.
 
+## Phase E — Release readiness sweep (2026-10-12, this commit)
+- Full headless suite re-run at HEAD: **50/50 PASS** (4 batches; `stress_scene.gd` excluded — manual scene, not a suite).
+- Local web export verified: `--export-release "Web"` → exit 0, **0 errors**, ~48.3 MB (wasm 37.7 + pck 10.4 + js 0.3). Excludes still hold.
+- `RELEASE_CHECKLIST.md` Build + Headless sections marked verified.
+- **Remaining (deferred — needs real device):** browser cold-boot/reload, mobile touch/FPS, full 10-min pressure run, Storm/Grove playthrough balance. These are manual gates in `EXPANSION_QA_FA.md`, not automatable headless.
+
 ## Phase B results (deployed f23c34f)
 - Web build measured: 48.4 MB total (39.5MB .wasm engine + 10.9MB .pck).
 - exclude_filter already excludes external models, tests, tools, docs, *.md.

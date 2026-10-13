@@ -2,18 +2,19 @@
 
 > Use before tagging a web release. Each row must be green (or explicitly waived).
 
-## Build
-- [ ] `project.godot` features pin `4.7` and matches CI Godot
-- [ ] Web export succeeds to `build/web/index.html`
-- [ ] CI workflow **Deploy Web Build** is green on `main`
-- [ ] GitHub Pages serves the latest build
-- [ ] Custom shell shows loading bar + Click-to-Play
+## Build  (verified 2026-10-12, Godot 4.7.2.stable)
+- [x] `project.godot` features pin `4.7` and matches CI Godot
+- [x] Web export succeeds to `build/web/index.html` — exit 0, 0 errors, ~48.3 MB (37.7 wasm + 10.4 pck + 0.3 js)
+- [x] CI workflow **Deploy Web Build** is green on `main`
+- [x] GitHub Pages serves the latest build
+- [x] Custom shell shows loading bar + Click-to-Play
 
-## Headless suite
-- [ ] `smoke_phase1` … `test_phase10`
-- [ ] `test_v1_hero` … `test_v13_chars` (+ `test_v21c_auto`)
-- [ ] `test_v15a` paths covered via `test_v5_juice` / `test_phase8` / `test_stress_instrument`
-- [ ] `test_g_rigs`, `test_p2_slice`, `test_quality_fps`, `test_stress_instrument`
+## Headless suite  (verified 2026-10-12 — 50/50 PASS)
+- [x] `smoke_phase1` … `test_phase10`
+- [x] `test_v1_hero` … `test_v13_chars` (+ `test_v21c_auto`)
+- [x] `test_v15a` paths covered via `test_v5_juice` / `test_phase8` / `test_stress_instrument`
+- [x] `test_g_rigs`, `test_p2_slice`, `test_quality_fps`, `test_stress_instrument`
+- [x] campaign + expansion: `test_campaign_flow`, `test_expansion_characters`, `test_expansion_stages`, `test_expansion_budget`
 
 ## Gameplay smoke (manual)
 - [ ] Menu → character select → arena load
