@@ -73,6 +73,18 @@ var active_enemies: int = 0
 var active_projectiles: int = 0
 var active_particles: int = 0
 
+## Release-readiness session logger (opt-in, F4). Captures a 1s telemetry
+## sample while a run is active so a real-device playthrough leaves a
+## paste-able trace for the balance/perf pass. Zero cost when off.
+var perf_logging: bool = false
+var _perf_samples: PackedStringArray = []
+var _perf_sample_accum: float = 0.0
+## Peak stats across the capture window (for the summary line).
+var _perf_min_fps: int = 9999
+var _perf_max_enemies: int = 0
+var _perf_sum_fps: int = 0
+var _perf_frames: int = 0
+
 var _system_times: Dictionary = {}
 var _sun_cache: Array = []
 var _sun_cache_time: int = -10000
@@ -196,6 +208,64 @@ func _process(delta: float) -> void:
 	if auto_mode:
 		_auto_tick(delta)
 	_update_stress(delta)
+	if perf_logging:
+		_perf_tick(delta)
+
+## Toggle with F4 (or PerfLogger key). Starts/stops a capture window.
+func toggle_perf_logging() -> void:
+	if perf_logging:
+		stop_perf_logging()
+	else:
+		start_perf_logging()
+
+func start_perf_logging() -> void:
+	perf_logging = true
+	_perf_samples.clear()
+	_perf_sample_accum = 0.0
+	_perf_min_fps = 9999
+	_perf_max_enemies = 0
+	_perf_sum_fps = 0
+	_perf_frames = 0
+	push_warning("[PerfLog] capture started — play through a run, F4 or game-over dumps the report")
+
+func stop_perf_logging() -> String:
+	perf_logging = false
+	var report := _perf_report()
+	print(report)
+	# On web the console is the only reliable sink; also try clipboard on native.
+	if not _is_web() and DisplayServer.has_feature(DisplayServer.FEATURE_CLIPBOARD):
+		DisplayServer.clipboard_set(report)
+	return report
+
+func _perf_tick(delta: float) -> void:
+	# Only sample during an active run; menu frames would pollute the trace.
+	if RunManager == null or not RunManager.is_running:
+		return
+	_perf_sample_accum += delta
+	var fps := Engine.get_frames_per_second()
+	_perf_min_fps = mini(_perf_min_fps, fps)
+	_perf_sum_fps += fps
+	_perf_frames += 1
+	_perf_max_enemies = maxi(_perf_max_enemies, active_enemies)
+	if _perf_sample_accum < 1.0:
+		return
+	_perf_sample_accum = 0.0
+	var mins := RunManager.elapsed_time / 60.0
+	_perf_samples.append("%.1f,%d,%d,%s" % [mins, fps, active_enemies, quality_name()])
+
+func _perf_report() -> String:
+	var avg_fps := int(round(float(_perf_sum_fps) / maxf(float(_perf_frames), 1.0)))
+	var mins := 0.0
+	if RunManager != null:
+		mins = RunManager.elapsed_time / 60.0
+	var lines: Array[String] = []
+	lines.append("=== PerfLog report — %.1f min run ===" % mins)
+	lines.append("samples: %d | avg_fps: %d | min_fps: %s | peak_enemies: %d" % [
+		_perf_samples.size(), avg_fps, (_perf_min_fps if _perf_min_fps < 9999 else 0), _perf_max_enemies])
+	lines.append("cols: minute,fps,enemies,quality")
+	lines.append_array(_perf_samples)
+	lines.append("=== end PerfLog ===")
+	return "\n".join(lines)
 
 ## Called by EnemyManager whenever the live horde count changes.
 func update_horde_pressure(enemy_count: int) -> void:

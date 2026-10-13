@@ -131,6 +131,7 @@ Third-party art/audio (Kenney, KayKit): **CC0** — see [docs/ASSET_CREDITS.md](
 | Fullscreen toggle | F11 or Alt+Enter | FS button (next to zoom) | — |
 | Pause | Esc | — | Start |
 | Debug overlay | F3 | — | — |
+| Perf session log | F4 (dump at run end) | — | — |
 
 ## Architecture Overview
 

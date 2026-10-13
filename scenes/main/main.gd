@@ -216,6 +216,9 @@ func _build_music() -> void:
 	# Release/capture the cursor as game states change (menus/level-up need
 	# a visible cursor; gameplay locks it for unbounded camera rotation).
 	EventBus.game_state_changed.connect(_on_game_state_changed_for_mouse)
+	# Perf logger: a natural run end (game over / back to menu) dumps the
+	# captured trace even if the player forgot to press F4 again.
+	EventBus.game_state_changed.connect(_on_game_state_changed_for_perf)
 
 	debug_label.visible = false
 
@@ -235,6 +238,13 @@ func _on_game_state_changed_for_music(new_state: int, _old: int) -> void:
 
 func _on_game_state_changed_for_mouse(new_state: int, _old: int) -> void:
 	_apply_mouse_mode(new_state)
+
+func _on_game_state_changed_for_perf(new_state: int, _old: int) -> void:
+	# Run ended (game over or player backed out to menu): flush the trace.
+	if not PerformanceManager.perf_logging:
+		return
+	if new_state == GameManager.State.GAME_OVER or new_state == GameManager.State.MAIN_MENU:
+		PerformanceManager.stop_perf_logging()
 
 func _apply_mouse_mode(state: int) -> void:
 	if DisplayServer.is_touchscreen_available():
@@ -262,6 +272,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.physical_keycode == KEY_F3:
 			_debug_enabled = not _debug_enabled
 			debug_label.visible = _debug_enabled
+			get_viewport().set_input_as_handled()
+			return
+		# F4: session perf logger for the release-readiness QA pass.
+		if event.physical_keycode == KEY_F4:
+			PerformanceManager.toggle_perf_logging()
 			get_viewport().set_input_as_handled()
 			return
 	# V2 playtest: do not steal clicks for pointer lock — UI buttons need the mouse.
