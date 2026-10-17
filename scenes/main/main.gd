@@ -209,7 +209,7 @@ func _build_music() -> void:
 	else:
 		touch_controls.visible = false
 	# Show fullscreen toggle next to zoom (especially useful on mobile)
-	var fs_btn: Button = $HUD/Hud.get_node_or_null("Abilities/ZoomRow/Fullscreen")
+	var fs_btn: Button = $HUD/Hud.get_node_or_null("Abilities/Fullscreen")
 	if fs_btn != null:
 		fs_btn.text = "Win" if InputManager.is_fullscreen() else "FS"
 	_apply_mouse_mode(GameManager.state)

@@ -175,16 +175,19 @@ func bind_abilities(controller: Node) -> void:
 	ability1_button.text = "Q Meteor"
 	ability2_button.text = "E Freeze"
 	# V-fix: touch ability buttons actually execute on mobile
-	ability1_button.pressed.connect(func():
-		var ac: Node = _ability_controller
-		if ac != null and ac.get_cooldown_ratio("meteor_strike") == 0.0:
-			ac._execute(ac.abilities[0]["data"])
-			ac.abilities[0]["cooldown_left"] = ac.abilities[0]["data"].cooldown)
-	ability2_button.pressed.connect(func():
-		var ac: Node = _ability_controller
-		if ac != null and ac.get_cooldown_ratio("time_freeze") == 0.0:
-			ac._execute(ac.abilities[1]["data"])
-			ac.abilities[1]["cooldown_left"] = ac.abilities[1]["data"].cooldown)
+	ability1_button.pressed.connect(func(): _trigger_ability("meteor_strike"))
+	ability2_button.pressed.connect(func(): _trigger_ability("time_freeze"))
+
+func _trigger_ability(id: String) -> void:
+	var ac: Node = _ability_controller
+	if ac == null or ac.get_cooldown_ratio(id) != 0.0:
+		return
+	for entry in ac.abilities:
+		if entry["data"].id == id:
+			entry["cooldown_left"] = entry["data"].cooldown
+			if not ac._execute(entry["data"]):
+				entry["cooldown_left"] = 0.0
+			return
 
 func _build_objective_label() -> void:
 	_objective_label = Label.new()

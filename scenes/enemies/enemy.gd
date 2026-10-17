@@ -158,7 +158,12 @@ func make_elite(p_abilities: Array) -> void:
 	add_child(ring)
 	_elite_ring = ring
 	elite = $EliteComponent
-	elite.setup(self, _player, get_parent().get_parent().get_enemy_manager() if get_parent().get_parent().has_method("get_enemy_manager") else get_parent().get_parent(), p_abilities)
+	var em: Node = get_tree().get_first_node_in_group("enemy_manager") if get_tree() != null else null
+	if em == null:
+		var scene := get_tree().current_scene if get_tree() != null else null
+		if scene != null and scene.has_method("get_enemy_manager"):
+			em = scene.get_enemy_manager()
+	elite.setup(self, _player, em, p_abilities)
 	if EventBus != null:
 		EventBus.upgrade_applied.emit("ELITE approaches!")
 

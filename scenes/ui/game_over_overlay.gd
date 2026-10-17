@@ -86,15 +86,7 @@ func _commit_run() -> void:
 	stats_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35) if _victory else Color(1.0, 0.55, 0.5))
 
 func _max_combo() -> int:
-	var combos := get_tree().get_nodes_in_group("combo_manager") if get_tree() != null else []
-	# ComboManager is a plain Node under Main — search by script
-	var main := get_tree().current_scene if get_tree() != null else null
-	if main != null:
-		var found: Array = main.find_children("*", "Node", true, false)
-		for n in found:
-			if n.get("max_combo") != null:
-				return int(n.max_combo)
-	return 0
+	return RunManager.max_combo_reached
 
 func _on_retry() -> void:
 	GameManager.start_game()

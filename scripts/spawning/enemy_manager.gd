@@ -121,7 +121,15 @@ func _spawn_now(req: Dictionary) -> void:
 	PoolManager.tag(enemy, ENEMY_SCENE)
 	var container: Node = get_node_or_null("../World")
 	if container == null:
-		container = get_parent()
+		# Fallback: pausable container so enemies still freeze on pause
+		# (Main itself is PROCESS_MODE_ALWAYS — spawning under it would break pause).
+		container = get_parent().get_node_or_null("EnemyFallbackRoot")
+		if container == null:
+			var root := Node3D.new()
+			root.name = "EnemyFallbackRoot"
+			root.process_mode = Node.PROCESS_MODE_PAUSABLE
+			get_parent().add_child(root)
+			container = root
 	container.add_child(enemy)
 	enemy.global_position = req["position"]
 	enemy.setup(req["data"], req["player"], req["hp"], req["dmg"], req["spd"])

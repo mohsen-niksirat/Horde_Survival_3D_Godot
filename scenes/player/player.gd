@@ -50,8 +50,14 @@ func bind_combat(enemy_manager: Node, projectile_root: Node3D) -> void:
 	var char_path := "res://data/characters/%s.tres" % GameManager.selected_character_id
 	var weapon_id := "fireball"
 	if ResourceLoader.exists(char_path):
-		weapon_id = (load(char_path) as CharacterData).starting_weapon_id
-	weapon_controller.add_weapon(load("res://data/weapons/%s.tres" % weapon_id))
+		var char_data := load(char_path) as CharacterData
+		if char_data != null and char_data.starting_weapon_id != "":
+			weapon_id = char_data.starting_weapon_id
+	var weapon_path := "res://data/weapons/%s.tres" % weapon_id
+	if ResourceLoader.exists(weapon_path):
+		weapon_controller.add_weapon(load(weapon_path))
+	else:
+		weapon_controller.add_weapon(load("res://data/weapons/fireball.tres"))
 
 func get_pickup_radius() -> float:
 	return stat_block.get_stat("pickup_radius")

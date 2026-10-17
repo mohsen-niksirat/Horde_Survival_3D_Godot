@@ -51,7 +51,6 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_ensure_players()
 	PerformanceManager.quality_changed.connect(_on_performance_tier_changed)
-	PerformanceManager.quality_changed.connect(_on_stress_changed)
 
 func _ensure_players() -> void:
 	if _music_player == null:
