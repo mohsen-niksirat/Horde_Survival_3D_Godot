@@ -8,6 +8,9 @@ func _initialize() -> void:
 	perf.auto_mode = true
 	perf.stress_mode = false
 	perf.set_quality(perf.Quality.ULTRA, false)  # 4
+	perf._auto_grace_left = 0.0  # skip startup grace — test asserts step-down behaviour
+	perf._auto_next_sample = 0.0
+	perf._auto_sample_delta = 0.0
 
 	# Desktop non-stress: low_hold=4s → ~2 steps in 10s at 20 FPS
 	for i in range(20):

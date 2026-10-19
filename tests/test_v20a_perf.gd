@@ -57,16 +57,13 @@ func _initialize() -> void:
 	var proj_root: Node3D = main.get_node("Projectiles")
 	_check(proj_root.get_child_count() > 0, "spread spawned a projectile from the cached set")
 	var aimed_ok := true
-	var dbg_print: String = ""
 	for p in proj_root.get_children():
 		var vel = p.get("_velocity")
-		dbg_print += " node=" + p.name + " vel=" + str(vel) + " "
 		if vel == null or vel == Vector3.ZERO:
 			continue
 		var to_enemy: Vector3 = enemy.global_position - p.global_position
 		if vel.normalized().dot(to_enemy.normalized()) < 0.5:
 			aimed_ok = false
-	push_error("DBG projectile loop: " + dbg_print)
 	_check(aimed_ok, "projectile aims at the enemy, not the injected player marker")
 
 	# --- XP orb: same-tier recycle skips the material rebuild ---

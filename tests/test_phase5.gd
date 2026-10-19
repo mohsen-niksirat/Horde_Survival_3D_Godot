@@ -31,14 +31,19 @@ func _initialize() -> void:
 		frames += 1
 	_check(em.enemy_count() >= 10, "waves spawned enemies (count=%d after %d frames)" % [em.enemy_count(), frames])
 
-	# --- Composition: after 2 min, only basic+swarm should exist ---
+	# --- Composition: every spawned enemy must be in the timeline's allowed
+	# set at the CURRENT elapsed time. RunManager ticks while the soak runs,
+	# so elapsed_time may drift past the 2.5-min fast_wisp threshold — check
+	# against the allowed set for the time actually reached, not a frozen
+	# assumption of 2.0 min.
 	var ids := {}
 	for e in em.active_enemies:
 		if is_instance_valid(e) and e.data != null:
 			ids[e.data.id] = true
+	var allowed_at_now: Array = wm._allowed_archetypes(run_manager.elapsed_time / 60.0)
 	var legal := true
 	for id in ids:
-		if not ["basic_drone", "swarm_bat"].has(id):
+		if not allowed_at_now.has(id):
 			legal = false
 	_check(legal, "composition respects timeline (got %s)" % [ids.keys()])
 

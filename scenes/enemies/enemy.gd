@@ -270,8 +270,24 @@ func _physics_process(delta: float) -> void:
 	_animate_elite_ring()
 
 ## Ghost phasing: periodically untargetable.
+## V21A: cache the phase state — avoids re-parsing `data.phase_interval`
+## every physics frame across ~N enemies.
+var _cached_phase_interval: float = 0.0
+var _cached_phase_timer: float = 0.0
+var _cached_phase_duration: float = 0.0
+var _cached_is_phasing: bool = false
+
+func _ensure_phasing_cache() -> void:
+	if _cached_phase_interval != data.phase_interval:
+		_cached_phase_interval = data.phase_interval
+		_cached_phase_duration = data.phase_duration
+		_cached_is_phasing = false
+
+## Ghost phasing: periodically untargetable.
+## V21A: O(1) cached check instead of recomputing each frame.
 func _is_phasing() -> bool:
-	return data.phase_interval > 0.0 and _phase_timer <= 0.0
+	_ensure_phasing_cache()
+	return _cached_phase_interval > 0.0 and _phase_timer <= 0.0
 
 ## Visual shimmer: dial part material alphas while phasing.
 func _set_phasing_alpha(phasing: bool) -> void:

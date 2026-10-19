@@ -72,6 +72,13 @@ var _stress_low_time: float = 0.0
 ## asset churn read as "slow" and would drop the tier pointlessly).
 const AUTO_STARTUP_GRACE := 6.0
 var _auto_grace_left: float = 0.0
+## V21A: throttle Auto quality checks to once per second so we do not
+## repeatedly look up Engine.get_frames_per_second() every physics frame.
+var _auto_next_sample: float = 0.0
+## Preserve elapsed time while sampling is throttled. Without this accumulator,
+## Auto quality would react to one half-second slice per sample instead of the
+## full interval and would step down too slowly on low-FPS web devices.
+var _auto_sample_delta: float = 0.0
 
 var active_enemies: int = 0
 var active_projectiles: int = 0
@@ -301,6 +308,16 @@ func _auto_tick(delta: float, fps_override: int = -1) -> void:
 	if _auto_grace_left > 0.0:
 		_auto_grace_left -= delta
 		return
+	# V21A: only re-read Engine FPS when there is enough time to act on it;
+	# Engine.get_frames_per_second() is a per-frame global lookup — batch it.
+	_auto_sample_delta += delta
+	if _auto_next_sample > 0.0:
+		_auto_next_sample -= delta
+		return
+	_auto_next_sample = 1.0
+	var sample_delta := _auto_sample_delta
+	_auto_sample_delta = 0.0
+
 	var fps := Engine.get_frames_per_second()
 	if fps_override > 0:
 		fps = fps_override
@@ -308,13 +325,13 @@ func _auto_tick(delta: float, fps_override: int = -1) -> void:
 	var low_threshold := 32 if (_is_web() or _is_touch() or stress_mode) else 26
 	var low_hold := 0.75 if (_is_web() or _is_touch() or stress_mode) else 4.0
 	if fps < low_threshold:
-		_low_time += delta
+		_low_time += sample_delta
 		_high_time = 0.0
 		if _low_time > low_hold and quality > Quality.VERY_LOW:
 			_low_time = 0.0
 			set_quality(quality - 1, false)
 	elif fps > 55 and not stress_mode:
-		_high_time += delta
+		_high_time += sample_delta
 		_low_time = 0.0
 		if _high_time > 20.0 and quality < Quality.ULTRA:
 			_high_time = 0.0

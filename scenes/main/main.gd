@@ -77,6 +77,7 @@ func _ready() -> void:
 
 ## Kick off threaded GLB loads so the first enemy/hero spawn doesn't pay
 ## the full parse cost in one hitchy frame.
+## V21A: also add the hero GLB variants so character switching never hitches.
 func _request_rig_preload() -> void:
 	var rig_paths := [
 		"res://assets/models/kaykit/heroes/adventurer_mage.glb",
@@ -86,6 +87,10 @@ func _request_rig_preload() -> void:
 		"res://assets/models/kaykit/env/floor_tile_large.glb",
 		"res://assets/models/kaykit/env/wall.glb",
 		"res://assets/models/xp_shard.glb",
+		# Hero GLB variants for character identity (V16)
+		"res://assets/models/hero_mage.glb",
+		"res://assets/models/hero_paladin.glb",
+		"res://assets/models/hero_rogue.glb",
 	]
 	# Single-thread Web and dummy headless renderers must not construct
 	# GLB subresources on worker threads. Only native graphical runs preload.
