@@ -31,14 +31,46 @@ func _prefetch_resources() -> void:
 	var paths := [
 		"res://scenes/menu/MainMenu.tscn",
 		"res://data/characters/mage.tres",
-		"res://data/characters/knight.tres",
+		"res://data/characters/paladin.tres",
 		"res://data/characters/rogue.tres",
 		"res://data/weapons/fireball.tres",
-		"res://data/weapons/spear.tres",
+		"res://data/weapons/magic_missile.tres",
 	]
 	for p in paths:
 		if ResourceLoader.exists(p):
 			ResourceLoader.load_threaded_request(p)
+	_load_phase = 2
+
+## V22A: Web single-threaded warmup — ResourceLoader.load_threaded_request is
+## a no-op without threads, so GLBs would sync-load on first spawn mid-run.
+## Instead we touch each hot resource one frame at a time between the click
+## and the menu so the cost spreads across frames instead of landing inside
+## gameplay. Each await yields a frame; ~15 resources ≈ 15 frames ≈ 0.25s.
+func _web_warmup() -> void:
+	if _load_phase != 0:
+		return
+	_load_phase = 1
+	var paths := [
+		"res://scenes/menu/MainMenu.tscn",
+		"res://scenes/menu/CharacterSelect.tscn",
+		"res://data/characters/mage.tres",
+		"res://data/characters/paladin.tres",
+		"res://data/characters/rogue.tres",
+		"res://data/weapons/magic_missile.tres",
+		"res://data/weapons/fireball.tres",
+		"res://assets/models/kaykit/heroes/adventurer_mage.glb",
+		"res://assets/models/kaykit/heroes/adventurer_knight.glb",
+		"res://assets/models/kaykit/heroes/adventurer_rogue.glb",
+		"res://assets/models/heroes/hero_mage.glb",
+		"res://assets/models/enemies/enemy_drone.glb",
+		"res://assets/models/enemies/enemy_bat.glb",
+		"res://assets/models/enemies/enemy_wisp.glb",
+	]
+	for p in paths:
+		if ResourceLoader.exists(p):
+			# Force the sync load; the engine resource cache holds it for the run.
+			var _r = ResourceLoader.load(p)
+		await get_tree().process_frame
 	_load_phase = 2
 
 func _input(event: InputEvent) -> void:
@@ -47,6 +79,9 @@ func _input(event: InputEvent) -> void:
 	if (event is InputEventMouseButton and event.pressed) or (event is InputEventKey and event.pressed):
 		_waiting_for_click = false
 		click_label.visible = false
+		# Warm the hot resources while the user transitions to the menu —
+		# the loads happen across frames, not in one hitch.
+		_web_warmup()
 		_go_menu()
 
 func _go_menu() -> void:
