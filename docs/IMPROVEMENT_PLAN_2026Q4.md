@@ -97,6 +97,19 @@ entity caps. The plan below targets **web load/runtime efficiency** and
 - Consolidated web/index.html with custom_shell.html (pointer-lock + WebGL2
   detection + progress bar).
 
+## V16A update (2026-10-19)
+- **Dash shipped:** the `dash` input action (Space) existed in `project.godot` and was routed
+  through InputManager but consumed by nothing — `scripts/player/dash_component.gd` closes the
+  gap (18 m/s burst, 0.25s i-frames, 2.5s cooldown, SFX + camera shake). HUD/touch button
+  mirrors it; onboarding hint updated.
+- **Menu polish:** main-menu stats line now shows runs / campaign progress / endless best /
+  best combo / best level; achievement panel shows progress bars for numeric goals;
+  `best_combo` + `best_level` persist via RunManager's `run_ended` hook.
+- **Repo hygiene:** `*.zip` gitignored; the committed 22 MB fixes archive untracked from git
+  (use GitHub Releases for distributables).
+- **Tests:** `tests/test_v16a_dash.gd`, `tests/test_v16a_menu.gd` (new); full headless suite
+  re-run at this commit.
+
 ## Deploy contract (every phase)
 1. Run the headless suite (local Godot 4.7.2).
 2. Stage only intended files; commit with `fix/perf/feat/docs` prefix.

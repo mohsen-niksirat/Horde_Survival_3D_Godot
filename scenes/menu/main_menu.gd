@@ -78,8 +78,13 @@ func _update_stats() -> void:
 	var victories: int = SaveManager.get_meta_data("victories", 0)
 	var minutes := int(best_time) / 60
 	var seconds := int(best_time) % 60
-	stats_label.text = "Gold: %d | Best: %02d:%02d | Wins: %d | Kills: %d | Achievements: %d" % [
-		gold, minutes, seconds, victories, total_kills, achievements.size()
+	stats_label.text = "Gold: %d | Best: %02d:%02d | Wins: %d | Kills: %d | Achievements: %d\nRuns: %d | Missions: %d/8 | Endless best: %d min | Best combo: %d | Best level: %d" % [
+		gold, minutes, seconds, victories, total_kills, achievements.size(),
+		int(SaveManager.get_meta_data("total_runs", 0)),
+		SaveManager.get_meta_data("completed_missions", []).size(),
+		int(SaveManager.get_meta_data("endless_best_minutes", 0)),
+		int(SaveManager.get_meta_data("best_combo", 0)),
+		int(SaveManager.get_meta_data("best_level", 0)),
 	]
 
 func _on_characters_pressed() -> void:

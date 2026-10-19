@@ -43,7 +43,7 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 - **13 enemy archetypes** (drone→brood_keeper) + 8 modular elite abilities + one complete 3-phase boss
 - **7 playable characters:** Mage free → Paladin (1 win) → Rogue (3 wins) → Cleric (2 wins) → Ranger (3 wins) → Stormcaller (5 wins) → Warden (6 wins)
 - XP orbs with magnet pickup, level-ups with 3 rarity-colored choices, **13 passive items**
-- Relics (rarity-weighted map pickups incl. Phoenix Feather revive), a pet (Dragon Welp), 2 active abilities (Meteor Strike, Time Freeze)
+- Relics (rarity-weighted map pickups incl. Phoenix Feather revive), a pet (Dragon Welp), 2 active abilities (Meteor Strike, Time Freeze), plus a Space dash with brief invincibility frames
 - Combo system with XP multiplier (capped) and 6 visual tiers, **15 achievements** with gold rewards
 - Threat-budget horde spawning, difficulty timeline, quality-tier entity caps
 - Versioned meta save (gold, bests, wins, unlocks, achievements) that persists in the browser
@@ -66,6 +66,7 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 ## Recent polish (R/S/T series + After the Forge expansion)
 
 - 15-minute victory ending + endless mode
+- V16A: Space dash (18 m/s burst, 0.25s i-frames, 2.5s cooldown) with HUD/touch button, career stats line in the menu, achievement progress bars, best combo/level persistence
 - Void Lance → **Void Reaver** evolution, Hunter's Mark passive, extra synergies
 - Character unlocks by wins, achievements panel (15), victory gold + interest
 - Live boss HP bar, enrage aura, fan flash, elite rings/bursts/warnings
@@ -128,6 +129,7 @@ Third-party art/audio (Kenney, KayKit): **CC0** — see [docs/ASSET_CREDITS.md](
 | Camera | Click to capture mouse, then move / Arrow keys | Right touch drag | Right stick |
 | Ability 1 (Meteor) | Q | Button | Trigger |
 | Ability 2 (Freeze) | E | Button | Trigger |
+| Dash (brief i-frames) | Space | Dash button | — |
 | Fullscreen toggle | F11 or Alt+Enter | FS button (next to zoom) | — |
 | Pause | Esc | — | Start |
 | Debug overlay | F3 | — | — |

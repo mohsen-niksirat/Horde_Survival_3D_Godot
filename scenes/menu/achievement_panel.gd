@@ -67,5 +67,60 @@ func _build() -> void:
 		desc.add_theme_font_size_override("font_size", 13)
 		desc.add_theme_color_override("font_color", Color(0.7, 0.72, 0.8))
 		text_col.add_child(desc)
+		if not got:
+			# V16A: numeric goals show a progress bar; binary goals show the requirement.
+			var progress: Array = _progress_for(def["id"])
+			if progress.size() == 2:
+				var bar := ProgressBar.new()
+				bar.custom_minimum_size = Vector2(0, 8)
+				bar.max_value = float(progress[1])
+				bar.value = minf(float(progress[0]), float(progress[1]))
+				bar.show_percentage = false
+				var fill := StyleBoxFlat.new()
+				fill.bg_color = Color(0.55, 0.95, 0.55) if float(progress[0]) >= float(progress[1]) else Color(0.3, 0.75, 1.0)
+				fill.set_corner_radius_all(4)
+				bar.add_theme_stylebox_override("fill", fill)
+				var bg := StyleBoxFlat.new()
+				bg.bg_color = Color(0.16, 0.18, 0.24)
+				bg.set_corner_radius_all(4)
+				bar.add_theme_stylebox_override("background", bg)
+				text_col.add_child(bar)
+			else:
+				desc.text = "%s — %s" % [def["desc"], str(progress[0])]
 		row.add_child(text_col)
 		rows.add_child(row)
+
+## V16A: [current, target] for numeric goals, [requirement_text] otherwise.
+func _progress_for(id: String) -> Array:
+	match id:
+		"kill_1":
+			return [mini(int(SaveManager.get_meta_data("total_kills", 0)), 1), 1]
+		"kill_100":
+			return [int(SaveManager.get_meta_data("total_kills", 0)), 100]
+		"kill_1000":
+			return [int(SaveManager.get_meta_data("total_kills", 0)), 1000]
+		"level_10":
+			return [int(SaveManager.get_meta_data("best_level", 0)), 10]
+		"level_25":
+			return [int(SaveManager.get_meta_data("best_level", 0)), 25]
+		"combo_25":
+			return [int(SaveManager.get_meta_data("best_combo", 0)), 25]
+		"combo_100":
+			return [int(SaveManager.get_meta_data("best_combo", 0)), 100]
+		"survive_5min":
+			return [int(SaveManager.get_meta_data("best_time", 0.0)) / 60, 5]
+		"survive_10min":
+			return [int(SaveManager.get_meta_data("best_time", 0.0)) / 60, 10]
+		"survive_15min":
+			return [int(SaveManager.get_meta_data("best_time", 0.0)) / 60, 15]
+		"win_run":
+			return ["Win a standard 15-minute run"]
+		"first_boss":
+			return ["Defeat the Warden boss"]
+		"weapon_evolved":
+			return ["Evolve any weapon"]
+		"elite_slayer":
+			return ["Defeat an elite enemy"]
+		"torchbearer":
+			return ["Finish the Heartforge finale (m5)"]
+	return []

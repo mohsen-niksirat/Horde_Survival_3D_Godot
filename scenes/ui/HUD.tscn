@@ -212,3 +212,9 @@ custom_minimum_size=Vector2(96, 96)
 layout_mode=2
 theme_override_font_sizes/font_size=14
 text="E"
+
+[node name="DashButton" type="Button" parent="AbilityPanel/AbilityCol"]
+custom_minimum_size=Vector2(96, 96)
+layout_mode=2
+theme_override_font_sizes/font_size=14
+text="SPACE Dash"

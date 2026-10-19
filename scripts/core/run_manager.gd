@@ -5,6 +5,8 @@ signal time_changed(elapsed: float)
 signal kills_changed(kills: int)
 ## Endless milestone: emitted once per 5-minute interval crossed.
 signal endless_milestone(minutes: int)
+## V16A: highest player level seen this run (persisted as best_level on run end).
+var _last_level_seen: int = 0
 
 var is_running: bool = false
 var endless: bool = false
@@ -27,6 +29,8 @@ func _ready() -> void:
 	EventBus.enemy_died.connect(_on_enemy_died)
 	EventBus.combo_changed.connect(_on_combo_changed)
 	EventBus.boss_died.connect(on_boss_killed)
+	EventBus.run_ended.connect(_on_run_ended)
+	EventBus.player_leveled_up.connect(_on_level_up)
 
 func _on_enemy_died(enemy: Node, _pos: Vector3) -> void:
 	if enemy != null and enemy.get("elite") != null and enemy.elite != null:
@@ -106,12 +110,26 @@ func set_mission(m: Resource) -> void:
 		# doesn't inherit the mission timer.
 		target_duration = 900.0
 
+func _on_run_ended(victory: bool) -> void:
+	is_running = false
+	# V16A: persist career bests for the menu stats line.
+	var best_combo: int = SaveManager.get_meta_data("best_combo", 0)
+	if max_combo_reached > best_combo:
+		SaveManager.set_meta_data("best_combo", max_combo_reached)
+	var best_level: int = SaveManager.get_meta_data("best_level", 0)
+	if _last_level_seen > best_level:
+		SaveManager.set_meta_data("best_level", _last_level_seen)
+
+func _on_level_up(level: int) -> void:
+	_last_level_seen = maxi(_last_level_seen, level)
+
 func start_run() -> void:
 	is_running = true
 	elapsed_time = 0.0
 	kills = 0
 	gold_earned = 0.0
 	boss_active = false
+	_last_level_seen = 0
 	if mission == null:
 		# Reset default (a survive_time mission sets its own via set_mission)
 		target_duration = 900.0
@@ -129,6 +147,12 @@ func start_run_endless() -> void:
 func end_run() -> void:
 	is_running = false
 	boss_active = false
+
+## V16A: reset per-run trackers between runs (retry keeps stats honest).
+func reset_run() -> void:
+	_last_level_seen = 0
+	max_combo_reached = 0
+	endless_milestone_reached = 0
 
 func register_kill() -> void:
 	kills += 1

@@ -5,6 +5,7 @@ extends CharacterBody3D
 const CONTACT_INVINCIBILITY := 0.5
 
 @onready var movement: Node = $MovementComponent
+@onready var dash: Node = $DashComponent
 @onready var camera_rig: Node3D = $CameraRig
 @onready var mesh: Node3D = $Mesh
 @onready var hero: Node3D = $Mesh/HeroModel
@@ -27,6 +28,7 @@ func _ready() -> void:
 	add_to_group("player")
 	stat_block = StatBlock.new({"max_hp": _base_hp, "move_speed": 6.0, "pickup_radius": 3.0})
 	movement.setup(self)
+	dash.setup(self)
 	_face_yaw = rotation.y
 	camera_rig.set_target(self)
 	health.setup(_base_hp)
@@ -85,6 +87,9 @@ func _physics_process(delta: float) -> void:
 	var dir := (basis * Vector3(input_vec.x, 0, input_vec.y))
 	var move2 := Vector2(dir.x, dir.z)
 
+	# V16A: dash burst takes over movement while active (Space / touch button)
+	if dash.tick(delta, dir):
+		return
 	movement.tick(delta, move2)
 
 	if move2.length_squared() > 0.04:

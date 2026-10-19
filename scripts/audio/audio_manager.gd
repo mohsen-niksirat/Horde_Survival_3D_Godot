@@ -24,6 +24,7 @@ const SFX_IMPORTANCE := {
 	"player_hurt": SfxTier.CRITICAL,
 	"relic_pickup": SfxTier.CRITICAL,
 	"ability": SfxTier.IMPORTANT,
+	"dash": SfxTier.IMPORTANT,
 	"ui_click": SfxTier.LOW,
 }
 

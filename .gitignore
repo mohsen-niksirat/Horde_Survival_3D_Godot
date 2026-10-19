@@ -39,3 +39,7 @@ assets/models/external/
 # Local tooling temps
 .ffmpeg-tmp/
 .venv-ffmpeg/
+
+# Distributable archives - use GitHub Releases instead of committing
+*.zip
+

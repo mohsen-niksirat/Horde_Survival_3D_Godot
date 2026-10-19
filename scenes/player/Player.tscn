@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://player00000001"]
+[gd_scene load_steps=23 format=3 uid="uid://player00000001"]
 
 [ext_resource type="Script" path="res://scenes/player/player.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/player/movement_component.gd" id="2"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/player/experience_component.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_controller.gd" id="6"]
 [ext_resource type="Script" path="res://scenes/player/hero_model.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/player/dash_component.gd" id="8"]
 
 [sub_resource type="CapsuleShape3D" id="capsule"]
 radius=0.45
@@ -138,6 +139,9 @@ script=ExtResource("7")
 
 [node name="MovementComponent" type="Node" parent="."]
 script=ExtResource("2")
+
+[node name="DashComponent" type="Node" parent="."]
+script=ExtResource("8")
 
 [node name="HealthComponent" type="Node" parent="."]
 script=ExtResource("4")

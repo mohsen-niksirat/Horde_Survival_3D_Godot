@@ -15,6 +15,7 @@ extends Control
 @onready var zoom_out_button: Button = $Abilities/ZoomCol/ZoomOut
 @onready var fullscreen_button: Button = $Abilities/Fullscreen
 @onready var pause_button: Button = $PauseButton
+@onready var dash_button: Button = $AbilityPanel/AbilityCol/DashButton
 @onready var weapon_icons: HBoxContainer = $TopLeft/WeaponIcons
 @onready var boss_bar: ProgressBar = $BossBar
 @onready var hint_label: Label = $HintLabel
@@ -26,7 +27,7 @@ const HINTS := [
 	"Weapons fire automatically - stay close to enemies",
 	"Cyan crystals = XP - walk near them",
 	"Gold drops from every kill - spend it on UPGRADES",
-	"Abilities: Q / E (or touch buttons)",
+	"Abilities: Q / E abilities · SPACE to dash (short invincibility)",
 	"Hearts heal you - grab them!",
 	"Glowing chests give relics - walk over them",
 	"Survive 15 minutes to WIN",
@@ -177,8 +178,26 @@ func bind_abilities(controller: Node) -> void:
 	# V-fix: touch ability buttons actually execute on mobile
 	ability1_button.pressed.connect(func(): _trigger_ability("meteor_strike"))
 	ability2_button.pressed.connect(func(): _trigger_ability("time_freeze"))
+	# V16A: dash button mirrors the Space dash (touch parity)
+	dash_button.text = "SPACE Dash"
+	dash_button.pressed.connect(_on_dash_pressed)
+
+func _on_dash_pressed() -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+	AudioManager.play_game_sfx("ui_click")
+	# Direction: current camera-relative move input, else the facing direction.
+	var input_vec: Vector2 = InputManager.get_move_vector()
+	var basis: Basis = _player.camera_rig.get_move_basis()
+	var dir := basis * Vector3(input_vec.x, 0, input_vec.y)
+	if Vector2(dir.x, dir.z).length_squared() < 0.0001:
+		dir = Vector3(-sin(_player.rotation.y), 0.0, -cos(_player.rotation.y))
+	_player.dash.try_dash(dir)
 
 func _trigger_ability(id: String) -> void:
+	if id == "dash":
+		_on_dash_pressed()
+		return
 	var ac: Node = _ability_controller
 	if ac == null or ac.get_cooldown_ratio(id) != 0.0:
 		return
@@ -299,6 +318,17 @@ func _process(delta: float) -> void:
 			else:
 				btn.text = base
 
+	# V16A: dash cooldown indicator (Space / touch button)
+	if dash_button != null and _player != null and is_instance_valid(_player):
+		var dr: float = _player.dash.get_cooldown_ratio()
+		dash_button.modulate = Color(1, 1, 1, 0.4 if dr > 0.0 else 1.0)
+		if dr <= 0.0:
+			dash_button.modulate = Color(0.75, 1.0, 0.75, 1.0)
+			dash_button.add_theme_color_override("font_color", Color(0.05, 0.25, 0.08))
+		else:
+			dash_button.add_theme_color_override("font_color", Color(0.75, 0.78, 0.85))
+			dash_button.text = "%.1f" % (_player.dash.cooldown_left)
+
 func _process_boss_bar() -> void:
 	if boss_bar == null:
 		return
@@ -372,6 +402,7 @@ func _process_hints(delta: float) -> void:
 func _on_combo(count: int, multiplier: float) -> void:
 	if count <= 0:
 		combo_label.visible = false
+		_last_tier = ""
 		return
 	combo_label.visible = true
 	var tier: String = _combo_tier(count)

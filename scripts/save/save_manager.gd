@@ -75,6 +75,8 @@ func _default_data() -> Dictionary:
 			"best_time": 0.0,
 			"best_level": 0,
 			"total_runs": 0,
+		"best_combo": 0,
+
 			"total_kills": 0,
 			"meta_upgrades": {},
 		},
