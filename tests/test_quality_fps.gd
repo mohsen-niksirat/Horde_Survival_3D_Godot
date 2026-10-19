@@ -58,9 +58,11 @@ func _initialize() -> void:
 		_check(fps_label.text.contains("FPS"), "FPS label shows FPS text (%s)" % fps_label.text)
 
 	# Auto tick steps down under stress-like low FPS from ULTRA
+	# (V20A: bypass the startup grace so the judgment loop runs immediately)
 	perf.auto_mode = true
 	perf.stress_mode = true
 	perf.set_quality(perf.Quality.ULTRA, false)
+	perf._auto_grace_left = 0.0
 	for i in range(8):
 		perf._auto_tick(0.5, 20)
 	_check(perf.quality < perf.Quality.ULTRA, "auto steps down under stress FPS (now %d)" % perf.quality)

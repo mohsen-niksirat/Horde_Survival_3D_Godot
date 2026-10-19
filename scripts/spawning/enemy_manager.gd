@@ -62,6 +62,11 @@ func _process(_delta: float) -> void:
 	# Spawn budget: max N new enemies per frame to avoid load spikes
 	var web := OS.has_feature("web")
 	var budget := 4 if web else MAX_SPAWNS_PER_FRAME
+	# V20A: under horde stress the spawn budget shrinks to 2 — admission cost
+	# (instantiate + add_child + setup) is a real per-frame spike when the
+	# frame is already drowning in AI ticks.
+	if PerformanceManager != null and PerformanceManager.stress_mode and not web:
+		budget = 2
 	var started := Time.get_ticks_usec()
 	while budget > 0 and not _spawn_queue.is_empty():
 		if active_enemies.size() >= PerformanceManager.effective_enemy_cap():

@@ -67,6 +67,7 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 
 - 15-minute victory ending + endless mode
 - V16A: Space dash (18 m/s burst, 0.25s i-frames, 2.5s cooldown) with HUD/touch button, career stats line in the menu, achievement progress bars, best combo/level persistence
+- V20A perf pass: deferred menu panel builds, auto-quality startup grace, horde AI/animation LOD, weapon query reuse, XP-orb material recycle guard, throttled HUD boss bar/objective — smoother on weak hardware
 - Void Lance → **Void Reaver** evolution, Hunter's Mark passive, extra synergies
 - Character unlocks by wins, achievements panel (15), victory gold + interest
 - Live boss HP bar, enrage aura, fan flash, elite rings/bursts/warnings

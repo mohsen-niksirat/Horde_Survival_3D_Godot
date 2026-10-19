@@ -110,6 +110,28 @@ entity caps. The plan below targets **web load/runtime efficiency** and
 - **Tests:** `tests/test_v16a_dash.gd`, `tests/test_v16a_menu.gd` (new); full headless suite
   re-run at this commit.
 
+## V20A update (2026-10-19) — performance / weak-hardware pass
+- **Startup hitch:** the menu built the achievement panel + campaign list synchronously in
+  `_ready` (two PackedScene loads + UI trees on the first frame). Both now instantiate via
+  `call_deferred` builders so the menu paints first; the stats line renders immediately.
+- **Auto-tier grace:** `PerformanceManager._auto_tick` now waits 6 s before judging FPS —
+  shader compilation and first-frame asset churn read as "slow" and previously dropped the
+  tier right at spawn (forcing a re-warm when FPS recovered). Stress reactions unaffected.
+- **Horde LOD:** far-enemy throttle frames now early-out before the transform math; the
+  procedural micro-motion pass (per-enemy sin/tween work) is staggered 1-in-3 physics frames
+  for mid-range enemies and skipped entirely beyond 28 m.
+- **Query reuse:** `WeaponInstance` caches its radius-query candidates each volley; the
+  controller's multi-projectile spread reuses them instead of issuing a second spatial
+  query + sort per shot.
+- **Allocation trims:** XP orbs skip the material-duplication pass when recycling at the
+  same value tier; enemy archetype GLBs resolve through Godot's resource cache (template
+  node caching was tried and reverted — leaked RIDs at exit).
+- **HUD cadence:** the boss-bar group lookup + phase-tint stylebox churn run at 5 Hz
+  instead of every frame; the mission objective label rebuilds at 4 Hz.
+- **Spawn budget:** under horde stress the per-frame spawn admission drops to 2 (native).
+- **Tests:** `tests/test_v20a_perf.gd` (new, 12 checks: deferred menu builders, query
+  reuse, orb recycle guard, boss-bar gate, auto-grace).
+
 ## Deploy contract (every phase)
 1. Run the headless suite (local Godot 4.7.2).
 2. Stage only intended files; commit with `fix/perf/feat/docs` prefix.

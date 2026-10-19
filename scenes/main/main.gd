@@ -9,6 +9,7 @@ const PROGRESSION := preload("res://scripts/progression/progression_manager.gd")
 const RELIC_SYSTEM := preload("res://scripts/items/relic_system.gd")
 const COMBO_MANAGER := preload("res://scripts/progression/combo_manager.gd")
 const ACHIEVEMENT_SYSTEM := preload("res://scripts/progression/achievement_system.gd")
+const STAGE_DIRECTOR := preload("res://scripts/world/stage_director.gd")
 
 @onready var player: CharacterBody3D = $World/Player
 @onready var touch_controls: Control = $HUD/TouchControls
@@ -110,7 +111,7 @@ func _request_rig_preload() -> void:
 	progression.setup(player)
 	if RunManager.mission != null and str(RunManager.mission.map_id) in ["storm_ruins", "hollow_grove"]:
 		var director := Node3D.new()
-		director.set_script(preload("res://scripts/world/stage_director.gd"))
+		director.set_script(STAGE_DIRECTOR)
 		director.name = "StageDirector"
 		$World.add_child(director)
 		director.setup(player, str(RunManager.mission.map_id))

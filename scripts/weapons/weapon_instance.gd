@@ -9,6 +9,9 @@ var data: WeaponData
 var level: int = 1
 var evolved: bool = false
 var _cooldown_left: float = 0.0
+## V20A: candidates fetched for this volley's targeting — reused by the
+## controller's multi-projectile spread so each shot does not re-query.
+var last_query_targets: Array = []
 
 var _combat_context: Node = null  # set by WeaponController
 
@@ -25,6 +28,7 @@ func tick(delta: float, player: Node3D, enemies: Node) -> void:
 		return
 
 	var candidates: Array = enemies.get_enemies_in_radius(player.global_position, data.max_range)
+	last_query_targets = candidates
 	if candidates.is_empty():
 		_cooldown_left = 0.1
 		return

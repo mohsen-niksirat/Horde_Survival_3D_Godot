@@ -68,6 +68,10 @@ var stress_mode: bool = false
 var _low_time: float = 0.0
 var _high_time: float = 0.0
 var _stress_low_time: float = 0.0
+## V20A: startup grace before Auto judges FPS (shader compile + first-frame
+## asset churn read as "slow" and would drop the tier pointlessly).
+const AUTO_STARTUP_GRACE := 6.0
+var _auto_grace_left: float = 0.0
 
 var active_enemies: int = 0
 var active_projectiles: int = 0
@@ -92,6 +96,7 @@ var _fog_cache: Array = []
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_auto_grace_left = AUTO_STARTUP_GRACE
 	var saved = SaveManager.get_setting("quality", -1)
 	var scheme := int(SaveManager.get_setting("quality_schema", QUALITY_SCHEMA))
 	var saved_i := int(saved)
@@ -289,6 +294,13 @@ func _update_stress(delta: float) -> void:
 			stress_mode = false
 
 func _auto_tick(delta: float, fps_override: int = -1) -> void:
+	# V20A: startup grace — shader compilation + first-frame asset churn make
+	# the opening seconds read as "low FPS" and would instantly drop the tier
+	# (forcing a full re-warm when it climbs back). Judge quality only after
+	# the scene has settled; the stress path still reacts immediately.
+	if _auto_grace_left > 0.0:
+		_auto_grace_left -= delta
+		return
 	var fps := Engine.get_frames_per_second()
 	if fps_override > 0:
 		fps = fps_override

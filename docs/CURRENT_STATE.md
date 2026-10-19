@@ -1,6 +1,6 @@
 # CURRENT STATE — HordeSurvival 3D
 
-> Updated: 2026-10-19 · Version: V16A — dash + menu polish (deployed)
+> Updated: 2026-10-19 · Version: V20A — performance / weak-hardware pass (V16A dash + menu polish deployed)
 
 ## Implemented Systems (working, tested)
 - **Core loop**: menu → character select (7 heroes) → campaign mission or endless arena → horde → XP → level-up (3 choices) → builds → game over/results → gold
@@ -13,7 +13,7 @@
 - **Controls**: desktop (WASD + pointer-locked mouse + wheel zoom + Esc/P + Space dash), mobile (floating joystick left, look right, zoom buttons, dash button, pause — fully independent)
 - **Presentation**: 3D hero/enemy models from .tres data, character identity VFX (Paladin aura, Rogue trail), muzzle flashes, trails, damage numbers, kill bursts, arena decor, procedural music (3 intensity layers), SFX presets
 - **Web**: 48.4 MB build (39.5MB .wasm + 10.9MB .pck), custom HTML shell (progress bar, Click-to-Play, WebGL2 fallback, pointer-lock cleanup)
-- **Perf**: quality auto-detect (LOW drops shadows + caps), entity caps, pooling everywhere, F3 overlay + stress scene
+- **Perf**: quality auto-detect (LOW drops shadows + caps), entity caps, pooling everywhere, F3 overlay + stress scene; V20A: 6 s auto-tier startup grace, horde animation LOD (mid-range 1-in-3 physics frames, far skipped), weapon volley query reuse, XP-orb same-tier material guard, 5 Hz boss-bar / 4 Hz objective HUD cadence, stress spawn budget 2/frame, deferred menu panel builds
 
 ## Documented Placeholders — Resolved (Phase C verified)
 - [RESOLVED] Menu weapon collection screen → **WeaponCodex** (full catalog, .tres-driven)

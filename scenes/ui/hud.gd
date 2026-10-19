@@ -45,6 +45,10 @@ var _ability_controller: Node
 var _last_tier: String = ""
 var _combo_tween: Tween = null
 var _fps_accum: float = 0.0
+## V20A: boss bar check cadence — the group lookup + phase-tint stylebox
+## churn run at 5 Hz instead of every frame.
+const BOSS_BAR_CHECK_INTERVAL := 0.2
+var boss_check_accum: float = 0.0
 
 const TIER_COLORS := {
 	"BRONZE": Color(0.8, 0.65, 0.4),
@@ -219,9 +223,18 @@ func _build_objective_label() -> void:
 	_objective_label.visible = false
 	add_child(_objective_label)
 
-func _process_objective() -> void:
+const OBJECTIVE_UPDATE_INTERVAL := 0.25
+## V20A: the objective label rebuilds a multi-branch string every frame;
+## mission objectives change at second granularity — 4 Hz is plenty.
+var _objective_accum: float = 0.0
+
+func _process_objective(delta: float) -> void:
 	if _objective_label == null:
 		return
+	_objective_accum -= delta
+	if _objective_accum > 0.0:
+		return
+	_objective_accum = OBJECTIVE_UPDATE_INTERVAL
 	var m = RunManager.mission
 	if m == null or not RunManager.is_running:
 		_objective_label.visible = false
@@ -252,7 +265,7 @@ func _process_objective() -> void:
 
 func _process(delta: float) -> void:
 	timer_label.text = RunManager.get_time_string()
-	_process_objective()
+	_process_objective(delta)
 	# R9: standard runs show remaining time to victory — but only for
 	# survive_time win rules (kill_boss/kill_count missions have no time target).
 	var mission = RunManager.mission
@@ -332,6 +345,13 @@ func _process(delta: float) -> void:
 func _process_boss_bar() -> void:
 	if boss_bar == null:
 		return
+	# V20A: the group lookup + stylebox churn every frame is wasted work —
+	# bar state changes at second granularity. Throttle the whole check to
+	# 5 Hz (HP still reads smooth; a spawning boss shows within 0.2 s).
+	boss_check_accum -= get_process_delta_time()
+	if boss_check_accum > 0.0:
+		return
+	boss_check_accum = BOSS_BAR_CHECK_INTERVAL
 	var boss := get_tree().get_first_node_in_group("boss") if get_tree() != null else null
 	if boss == null or not is_instance_valid(boss) or not boss.is_enemy_alive():
 		boss_bar.visible = false

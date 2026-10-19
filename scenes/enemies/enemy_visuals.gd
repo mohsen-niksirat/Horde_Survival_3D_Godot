@@ -116,6 +116,10 @@ static func _try_glb(visual_root: Node3D, archetype_id: String) -> bool:
 	var path: String = ENEMY_SCENES.get(archetype_id, ENEMY_SCENES["basic_drone"])
 	if not ResourceLoader.exists(path):
 		return false
+	# V20A note: the PackedScene itself is already resource-cached by Godot
+	# after the first archetype spawn, so re-load() here is cheap; caching
+	# instantiated template NODES was tried and reverted — out-of-tree
+	# templates leak renderer RIDs at exit and break the leak gate.
 	var packed = load(path)
 	if packed == null:
 		return false

@@ -25,22 +25,34 @@ func _ready() -> void:
 	how_to_play_button.pressed.connect(_on_placeholder_pressed.bind("WASD move · auto-attack · Q/E abilities · cyan shards = XP · chests = relics · survive 15 min to WIN (or Endless)"))
 	quit_button.pressed.connect(_on_quit_pressed)
 	notice_label.text = ""
-	# P9: full achievements panel
+	# P9: full achievements panel — V20A: instantiate deferred one frame so
+	# the menu's first frame (and the Play button) appear without the panel
+	# build cost stalling the startup path.
 	if get_node_or_null("AchievementPanel") == null:
-		var ps: PackedScene = load("res://scenes/menu/AchievementPanel.tscn")
-		if ps != null:
-			var panel := ps.instantiate()
-			panel.name = "AchievementPanel"
-			add_child(panel)
-	# S1: campaign mission list
+		_instantiate_panel.call_deferred()
+	# S1: campaign mission list (same deferred treatment)
 	if get_node_or_null("CampaignMenu") == null:
-		var cps: PackedScene = load("res://scenes/menu/CampaignMenu.tscn")
-		if cps != null:
-			var cpanel := cps.instantiate()
-			cpanel.name = "CampaignMenu"
-			add_child(cpanel)
+		_instantiate_campaign.call_deferred()
 	_build_campaign_button()
 	_update_stats()
+
+func _instantiate_panel() -> void:
+	if not is_inside_tree() or get_node_or_null("AchievementPanel") != null:
+		return
+	var ps: PackedScene = load("res://scenes/menu/AchievementPanel.tscn")
+	if ps != null:
+		var panel := ps.instantiate()
+		panel.name = "AchievementPanel"
+		add_child(panel)
+
+func _instantiate_campaign() -> void:
+	if not is_inside_tree() or get_node_or_null("CampaignMenu") != null:
+		return
+	var cps: PackedScene = load("res://scenes/menu/CampaignMenu.tscn")
+	if cps != null:
+		var cpanel := cps.instantiate()
+		cpanel.name = "CampaignMenu"
+		add_child(cpanel)
 
 func _build_campaign_button() -> void:
 	if campaign_button != null or play_button == null:

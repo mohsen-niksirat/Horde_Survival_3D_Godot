@@ -183,17 +183,21 @@ func _physics_process(delta: float) -> void:
 	var throttle := PerformanceManager != null and PerformanceManager.should_throttle_enemy_ai() and dist > 22.0
 	if throttle:
 		var stagger := int(absf(_wobble_seed) * 97.0) % 3
+		# V20A: on skip frames do nothing at all — the previous position
+		# persists, so the enemy visually drifts at 1/3 rate without the
+		# per-frame transform math.
 		if Engine.get_physics_frames() % 3 != stagger:
-			# Cheap face + drift, no move_and_slide
-			if dist > 0.01:
-				var face_dir := to_player / dist
-				rotation.y = lerp_angle(rotation.y, atan2(face_dir.x, face_dir.z), 4.0 * delta)
-				velocity.x = face_dir.x * 2.0
-				velocity.z = face_dir.z * 2.0
-				global_position += velocity * delta
-			if dist < 32.0:
-				PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
 			return
+		# Cheap face + drift, no move_and_slide
+		if dist > 0.01:
+			var face_dir := to_player / dist
+			rotation.y = lerp_angle(rotation.y, atan2(face_dir.x, face_dir.z), 4.0 * delta)
+			velocity.x = face_dir.x * 2.0
+			velocity.z = face_dir.z * 2.0
+			global_position += velocity * delta
+		if dist < 32.0:
+			PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
+		return
 
 	if dist > 0.01:
 		var dir := to_player / dist
@@ -254,8 +258,15 @@ func _physics_process(delta: float) -> void:
 			_set_phasing_alpha(phasing)
 	if dist < 32.0:
 		PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
+	# V20A: procedural micro-motion is the last per-enemy CPU cost in dense
+	# hordes — near enemies animate every frame, mid-range every 3rd physics
+	# frame (staggered by wobble seed so the crowd never pulses in sync), and
+	# far enemies skip it entirely (they are sub-pixel at default zoom).
 	if dist < 28.0:
-		EnemyVisuals.animate(_mesh, data.id, Time.get_ticks_msec() / 1000.0, _wobble_seed, Vector2(velocity.x, velocity.z).length())
+		var t := Time.get_ticks_msec() / 1000.0
+		var speed := Vector2(velocity.x, velocity.z).length()
+		if dist < 14.0 or Engine.get_physics_frames() % 3 == int(absf(_wobble_seed) * 97.0) % 3:
+			EnemyVisuals.animate(_mesh, data.id, t, _wobble_seed, speed)
 	_animate_elite_ring()
 
 ## Ghost phasing: periodically untargetable.

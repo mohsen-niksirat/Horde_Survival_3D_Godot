@@ -25,6 +25,9 @@ var _pulse_stagger: float = 0.0
 var _pulse_active: bool = false
 var _wobble: float = 0.0
 var _visualized: bool = false
+## V20A: value tier the visuals were last built for (0/1/2) — skips the
+## material-duplication pass when an orb recycles at the same tier.
+var _last_visual_tier: int = -1
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -37,6 +40,18 @@ func _apply_value_visuals() -> void:
 	var m := get_node_or_null("Mesh") as MeshInstance3D
 	if m == null:
 		return
+	# V20A: the tint pass duplicates one material per MeshInstance per call —
+	# on a busy frame that is dozens of StandardMaterial3D allocations. The
+	# rig geometry only changes when the value tier changes, so skip the
+	# whole pass for the common same-tier recycle.
+	var tier := 0
+	if value >= 8.0:
+		tier = 2
+	elif value >= 4.0:
+		tier = 1
+	if _visualized and _last_visual_tier == tier:
+		return
+	_last_visual_tier = tier
 	if m.get_child_count() == 0 or not _visualized:
 		# Playtest: smaller pickup so the floor stays readable in hordes
 		var size_scale := 0.28

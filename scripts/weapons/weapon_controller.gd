@@ -123,9 +123,15 @@ func _spawn_projectile(weapon: WeaponInstance, player: Node3D, target: Node3D, s
 	var area_mult: float = player.get_stat("area_mult")
 	var pool_manager: Node = get_node("/root/PoolManager")
 	var count := weapon.get_projectile_count()
-	# V-fix: spread across the N NEAREST DISTINCT enemies instead of firing
-	# multiple shots at one target (wasted shots into space).
-	var candidates: Array = _enemy_manager.get_enemies_in_radius(player.global_position, weapon.data.max_range)
+	# V20A: WeaponInstance.tick already fetched the radius candidates this
+	# volley — reuse them instead of issuing a second spatial query + sort
+	# over the same enemies.
+	var candidates: Array = weapon.last_query_targets
+	if candidates.is_empty():
+		candidates = _enemy_manager.get_enemies_in_radius(player.global_position, weapon.data.max_range)
+	# The cached set can hold stale entries (an enemy freed between the query
+	# and this fire) — never aim a shot at a non-enemy.
+	candidates = candidates.filter(func(c): return is_instance_valid(c) and c.is_in_group("enemies"))
 	candidates.sort_custom(func(a, b):
 		return a.global_position.distance_squared_to(player.global_position) < b.global_position.distance_squared_to(player.global_position))
 	var targets: Array = candidates.slice(0, mini(count, candidates.size()))
