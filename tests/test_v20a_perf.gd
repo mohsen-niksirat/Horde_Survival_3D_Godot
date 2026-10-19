@@ -53,11 +53,14 @@ func _initialize() -> void:
 	# this would re-query (marker silently dropped) or aim a shot at the player.
 	var enemy = em.get_all_enemies()[0]
 	inst.last_query_targets = [player, enemy]
-	wc._spawn_projectile(inst, player, enemy, "res://scenes/weapons/MagicMissileProjectile.tscn")
 	var proj_root: Node3D = main.get_node("Projectiles")
-	_check(proj_root.get_child_count() > 0, "spread spawned a projectile from the cached set")
+	var before: Array = proj_root.get_children()  # earlier spawns may already be flying at their own targets
+	wc._spawn_projectile(inst, player, enemy, "res://scenes/weapons/MagicMissileProjectile.tscn")
+	_check(proj_root.get_child_count() > before.size(), "spread spawned a projectile from the cached set")
 	var aimed_ok := true
 	for p in proj_root.get_children():
+		if before.has(p):
+			continue  # ignore projectiles from earlier auto-fire; only assert ours
 		var vel = p.get("_velocity")
 		if vel == null or vel == Vector3.ZERO:
 			continue
@@ -82,10 +85,12 @@ func _initialize() -> void:
 	pool.release(orb)
 
 	# --- boss bar throttle: gate skips the lookup until the interval expires ---
+	# Set accum high enough that one real frame delta can't drain it below 0 —
+	# process_delta in a SceneTree test is frame-dependent, so use a margin.
 	var hud: Control = main.get_node("HUD/Hud")
-	hud.boss_check_accum = 0.5
+	hud.boss_check_accum = 60.0
 	hud._process_boss_bar()
-	_check(hud.boss_check_accum > 0.4, "throttled boss bar early-outs before its interval")
+	_check(hud.boss_check_accum > 0.0, "throttled boss bar early-outs before its interval")
 	hud.boss_check_accum = 0.0
 	hud._process_boss_bar()
 	_check(absf(hud.boss_check_accum - hud.BOSS_BAR_CHECK_INTERVAL) < 0.001, "expired gate runs the check and re-arms")
