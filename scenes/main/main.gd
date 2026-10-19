@@ -88,9 +88,9 @@ func _request_rig_preload() -> void:
 		"res://assets/models/kaykit/env/wall.glb",
 		"res://assets/models/xp_shard.glb",
 		# Hero GLB variants for character identity (V16)
-		"res://assets/models/hero_mage.glb",
-		"res://assets/models/hero_paladin.glb",
-		"res://assets/models/hero_rogue.glb",
+		"res://assets/models/heroes/hero_mage.glb",
+		"res://assets/models/heroes/hero_paladin.glb",
+		"res://assets/models/heroes/hero_rogue.glb",
 	]
 	# Single-thread Web and dummy headless renderers must not construct
 	# GLB subresources on worker threads. Only native graphical runs preload.

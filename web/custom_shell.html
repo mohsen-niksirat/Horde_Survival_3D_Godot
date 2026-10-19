@@ -93,19 +93,32 @@
 			GODOT_CONFIG['onProgress'] = function (current, total) {
 				const pct = total > 0 ? (current / total) * 100 : 0;
 				bar.style.width = pct + '%';
-				statusEl.textContent = 'Loading assets... ' + Math.round(pct) + '%';
+				statusEl.textContent = 'Loading game data... ' + Math.round(pct) + '%';
 			};
 			engine = new Engine(GODOT_CONFIG);
 			statusEl.textContent = 'Ready!';
 			playBtn.style.display = 'block';
+			let tickMsg = null;
 			playBtn.addEventListener('click', () => {
 				playBtn.style.display = 'none';
-				statusEl.textContent = 'Downloading game (first visit is slower)...';
 				bar.style.width = '0%';
 				forceUnlockPointer();
+				// WASM download+compile dominates on GitHub Pages (no
+				// Cross-Origin-Isolation → recompiles every visit). Show a
+				// live timer so it doesn't look hung during the long tail.
+				const startTime = Date.now();
+				statusEl.textContent = 'Downloading engine...';
+				tickMsg = setInterval(() => {
+					const s = Math.round((Date.now() - startTime) / 1000);
+					// After ~5s the wasm fetch is usually done and we're in
+					// the compile phase, which has no progress events.
+					statusEl.textContent = (s < 6 ? 'Downloading engine... ' : 'Compiling engine (first load ~1 min)... ') + s + 's';
+				}, 1000);
 				engine.startGame().then(() => {
+					clearInterval(tickMsg);
 					loader.classList.add('hidden');
 				}).catch(err => {
+					clearInterval(tickMsg);
 					errorEl.style.display = 'block';
 					errorEl.textContent = 'Failed to start: ' + err;
 					loader.classList.remove('hidden');
