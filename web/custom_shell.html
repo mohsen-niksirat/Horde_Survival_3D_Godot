@@ -51,6 +51,11 @@
 	</div>
 	<script src="$GODOT_URL"></script>
 	<script>
+		// Register the engine-payload cache so repeat visits skip the wasm
+		// download+compile — the biggest single win on GitHub Pages.
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+		}
 		const GODOT_CONFIG = $GODOT_CONFIG;
 		const loader = document.getElementById('loader');
 		const bar = document.getElementById('bar-inner');
