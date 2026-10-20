@@ -58,8 +58,15 @@
 		let swReady = Promise.resolve(null);
 		if ('serviceWorker' in navigator) {
 			swReady = navigator.serviceWorker.register('sw.js', { scope: './' })
-				.then(reg => reg.update().catch(() => {}).then(() => navigator.serviceWorker.ready))
+				.then(reg => reg.update().catch(() => {}))
 				.catch(() => null);
+			// Cap the wait: serviceWorker.ready can stay pending forever (SW
+			// disabled, private windows, install stalls) and startGame must
+			// never be gated on it.
+			swReady = Promise.race([
+				swReady.then(() => navigator.serviceWorker.ready).catch(() => null),
+				new Promise(resolve => setTimeout(resolve, 4000)),
+			]);
 		}
 		const GODOT_CONFIG = $GODOT_CONFIG;
 		const loader = document.getElementById('loader');
@@ -129,10 +136,26 @@
 					const s = Math.round((Date.now() - startTime) / 1000);
 					statusEl.textContent = (s < 6 ? 'Downloading engine... ' : 'Compiling engine (first load ~1 min)... ') + s + 's';
 				}, 1000);
-				swReady.then(() => engine.startGame()).then(() => {
+				// Hard watchdog: if startGame neither resolves nor rejects after
+				// 5 minutes, surface a retry instead of spinning forever.
+				let watchdog = setTimeout(() => {
+					clearInterval(tickMsg);
+					errorEl.style.display = 'block';
+					errorEl.textContent = 'Loading is taking too long. Check your connection and press PLAY to retry.';
+					playBtn.style.display = 'block';
+					forceUnlockPointer();
+				}, 300000);
+				// Wait for the SW handshake with a short timeout, then kick off
+				// the engine. The watchdog is cleared on either outcome.
+				Promise.race([
+					swReady,
+					new Promise(resolve => setTimeout(resolve, 4000)),
+				]).then(() => engine.startGame()).then(() => {
+					clearTimeout(watchdog);
 					clearInterval(tickMsg);
 					loader.classList.add('hidden');
 				}).catch(err => {
+					clearTimeout(watchdog);
 					clearInterval(tickMsg);
 					errorEl.style.display = 'block';
 					errorEl.textContent = 'Failed to start: ' + err;
