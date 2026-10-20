@@ -1,9 +1,8 @@
 // HordeSurvival 3D — Service Worker
-// Cache-first for the versioned engine payload (wasm/pck/js), network-first
-// for the HTML shell. Audio worklets are deliberately never cached: mixing a
-// worklet from one Godot export with index.js from another causes
-// `GodotAudio.sampleNodes is null` during startup.
-const CACHE_NAME = 'hs3d-v3';
+// Network-first for the Godot engine payload and HTML shell. Large wasm/pck
+// responses are intentionally not intercepted by Cache Storage: on some
+// browsers a service-worker response stays pending and blocks startGame.
+const CACHE_NAME = 'hs3d-v4';
 
 // Engine payload — fingerprinted by Godot export; safe to cache forever
 // until CACHE_NAME changes (files are content-stable between builds).
@@ -44,7 +43,8 @@ self.addEventListener('fetch', (event) => {
       return;
     }
     if (ENGINE_FILES.includes(file)) {
-      event.respondWith(cacheFirst(event.request));
+      // Let the browser fetch the large payload directly. Do not call
+      // respondWith/cacheFirst for wasm or pck.
       return;
     }
   }
@@ -52,27 +52,6 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(event.request));
   }
 });
-
-async function cacheFirst(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const hit = await cache.match(request, { ignoreSearch: true });
-  if (hit) return hit;
-  // Cache the network response before resolving respondWith; Godot's engine
-  // fetches stream large files and a clone() before the body finishes can
-  // leave the promise pending forever in some browsers.
-  const res = await fetch(request);
-  if (res && res.ok) {
-    const copy = res.clone();
-    copy.arrayBuffer().then(buf =>
-      cache.put(request, new Response(buf, {
-        status: res.status,
-        statusText: res.statusText,
-        headers: res.headers,
-      }))
-    ).catch(() => {});
-  }
-  return res;
-}
 
 async function networkFirst(request) {
   try {

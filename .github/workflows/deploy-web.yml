@@ -59,7 +59,7 @@ jobs:
           # Stamp the SW cache name with the commit SHA so each deploy
           # invalidates the engine cache — otherwise clients would keep
           # serving the previous build's wasm/pck forever.
-          sed "s/hs3d-v3/hs3d-$GITHUB_SHA/" web/sw.js > build/web/sw.js
+          sed "s/hs3d-v4/hs3d-$GITHUB_SHA/" web/sw.js > build/web/sw.js
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
