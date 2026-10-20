@@ -88,7 +88,7 @@ func _physics_process(delta: float) -> void:
 	var move2 := Vector2(dir.x, dir.z)
 
 	# V16A: dash burst takes over movement while active (Space / touch button)
-	if dash.tick(delta, dir):
+	if dash.tick(delta, dir, InputManager.is_action_pressed("dash")):
 		return
 	movement.tick(delta, move2)
 

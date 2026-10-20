@@ -6,8 +6,8 @@ extends Node
 
 signal dashed(direction: Vector3)
 
-const DASH_SPEED := 18.0   # m/s during the burst (player base speed is 6)
-const DASH_TIME := 0.18    # seconds of boosted movement (~3.2 m)
+const DASH_SPEED := 22.0   # m/s during the burst (player base speed is 6)
+const DASH_TIME := 0.22    # seconds of boosted movement (~4.8 m — reads as a real dodge)
 const IFRAMES := 0.25      # invulnerability window (slightly longer than the burst)
 const COOLDOWN := 2.5      # seconds between dashes
 
@@ -29,9 +29,10 @@ func get_cooldown_ratio() -> float:
 
 ## Called from player._physics_process every physics frame.
 ## Returns true when this frame was dash-driven (player skips movement.tick).
-## Also polls the dash input on normal frames so holding Space re-dashes
-## when the cooldown allows it.
-func tick(delta: float, move_dir: Vector3) -> bool:
+## `want_dash` must be the edge/held state of the dash input — pass the
+## action, not just "is the player moving". Without it every frame counts
+## as a request and the dash fires automatically when cooldown ends.
+func tick(delta: float, move_dir: Vector3, want_dash: bool) -> bool:
 	cooldown_left = maxf(cooldown_left - delta, 0.0)
 	if dash_time_left > 0.0:
 		dash_time_left = maxf(dash_time_left - delta, 0.0)
@@ -42,7 +43,7 @@ func tick(delta: float, move_dir: Vector3) -> bool:
 		if dash_time_left <= 0.0:
 			dash_dir = Vector3.ZERO
 		return true
-	if _player != null and is_instance_valid(_player):
+	if want_dash and _player != null and is_instance_valid(_player):
 		try_dash(move_dir)
 	return false
 

@@ -13,6 +13,19 @@ emission=Color(1, 1, 1, 1)
 emission_energy_multiplier=2.0
 transparency=1
 
+[sub_resource type="SphereMesh" id="core_mesh"]
+radius=0.16
+height=0.32
+radial_segments=8
+rings=4
+
+[sub_resource type="StandardMaterial3D" id="core_mat"]
+albedo_color=Color(1, 0.8, 0.2, 0.95)
+emission_enabled=true
+emission=Color(1, 0.6, 0.1, 1)
+emission_energy_multiplier=3.0
+transparency=1
+
 [node name="KillBurst" type="Node3D"]
 script=ExtResource("1")
 
@@ -20,6 +33,10 @@ script=ExtResource("1")
 transform=Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
 mesh=SubResource("ring_mesh")
 surface_material_override/0=SubResource("ring_mat")
+
+[node name="Core" type="MeshInstance3D" parent="."]
+mesh=SubResource("core_mesh")
+surface_material_override/0=SubResource("core_mat")
 
 [node name="Light" type="OmniLight3D" parent="."]
 omni_range=3.0

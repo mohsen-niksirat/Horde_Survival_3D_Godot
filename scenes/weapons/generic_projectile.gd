@@ -59,6 +59,9 @@ func setup_generic(p_damage: float, p_speed: float, p_pierce: int, p_crit: float
 	status_effect = p_status
 	status_duration = p_status_dur
 	_weapon_id = p_weapon_id
+	# The weapon id is only known at setup time. Attach the matching CC0
+	# Kenney prop now; _ready() runs before this and cannot choose a model.
+	_attach_model()
 	global_position = from_pos
 	_hit_enemies.clear()
 	_velocity = dir * speed
