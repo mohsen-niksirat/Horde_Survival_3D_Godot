@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://bosproj000001"]
+[gd_scene load_steps=11 format=3 uid="uid://bosproj000001"]
 
 [ext_resource type="Script" path="res://scenes/weapons/boss_projectile.gd" id="1"]
 
@@ -13,7 +13,43 @@ height=0.6
 albedo_color=Color(1, 0.3, 0.2, 1)
 emission_enabled=true
 emission=Color(1, 0.25, 0.1, 1)
-emission_energy_multiplier=0.8
+emission_energy_multiplier=1.6
+
+[sub_resource type="SphereMesh" id="core_mesh"]
+radius=0.14
+height=0.28
+radial_segments=8
+rings=4
+
+[sub_resource type="StandardMaterial3D" id="core_mat"]
+albedo_color=Color(1, 0.95, 0.7, 1)
+emission_enabled=true
+emission=Color(1, 0.6, 0.15, 1)
+emission_energy_multiplier=3.0
+
+[sub_resource type="ParticleProcessMaterial" id="trail_process"]
+direction=Vector3(0, 0, 0)
+spread=45.0
+initial_velocity_min=0.2
+initial_velocity_max=0.6
+gravity=Vector3(0, -0.8, 0)
+damping_min=1.5
+damping_max=2.5
+scale_min=0.4
+scale_max=1.0
+
+[sub_resource type="StandardMaterial3D" id="trail_mat"]
+albedo_color=Color(1, 0.45, 0.1, 0.75)
+emission_enabled=true
+emission=Color(1, 0.35, 0.05, 1)
+emission_energy_multiplier=2.0
+transparency=1
+
+[sub_resource type="SphereMesh" id="trail_mesh"]
+radius=0.07
+height=0.14
+radial_segments=6
+rings=3
 
 [node name="BossProjectile" type="Area3D"]
 collision_layer=4
@@ -27,3 +63,19 @@ shape=SubResource("shape")
 [node name="Mesh" type="MeshInstance3D" parent="."]
 mesh=SubResource("mesh")
 surface_material_override/0=SubResource("mat")
+
+[node name="Core" type="MeshInstance3D" parent="."]
+mesh=SubResource("core_mesh")
+surface_material_override/0=SubResource("core_mat")
+
+[node name="Light" type="OmniLight3D" parent="."]
+omni_range=3.5
+light_color=Color(1, 0.5, 0.15, 1)
+light_energy=1.2
+
+[node name="Trail" type="GPUParticles3D" parent="."]
+amount=8
+lifetime=0.4
+local_coords=false
+process_material=SubResource("trail_process")
+draw_pass_1=SubResource("trail_mesh")

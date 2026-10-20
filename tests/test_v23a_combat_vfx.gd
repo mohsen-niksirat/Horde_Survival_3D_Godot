@@ -24,7 +24,16 @@ func _initialize() -> void:
 		player.global_position, Vector3.FORWARD, "magic_missile")
 	var mesh: Node3D = proj.get_node("Mesh")
 	_check(mesh.get_node_or_null("PropRig") != null, "generic projectile attaches Kenney prop after setup")
+	# Frost bolt gets its own tint — different weapons must not look identical.
+	var frost_proj: Node3D = root.get_node("PoolManager").acquire("res://scenes/weapons/MagicMissileProjectile.tscn")
+	root.get_node("PoolManager").tag(frost_proj, "res://scenes/weapons/MagicMissileProjectile.tscn")
+	main.get_node("Projectiles").add_child(frost_proj)
+	frost_proj.setup_generic(10.0, 20.0, 0, 0.0, false, "freeze", 1.0,
+		player.global_position, Vector3.FORWARD, "frost_bolt")
+	var frost_mesh: Node3D = frost_proj.get_node("Mesh")
+	_check(frost_mesh.get_node_or_null("PropRig") != null, "frost bolt attaches prop")
 	root.get_node("PoolManager").release(proj)
+	root.get_node("PoolManager").release(frost_proj)
 
 	# Impact pool is initialized by JuiceManager and responds to a damage event.
 	var juice: Node = main.get_node("JuiceManager")

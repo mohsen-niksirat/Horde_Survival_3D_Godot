@@ -31,6 +31,15 @@ func _physics_process(delta: float) -> void:
 		_deactivate()
 		return
 	global_position += _velocity * delta
+	# Tumble + flicker so the bolt reads as an unstable energy orb.
+	rotation.y += delta * 6.0
+	rotation.z += delta * 4.0
+	var mat: StandardMaterial3D = ($Mesh as MeshInstance3D).get_surface_override_material(0)
+	if mat != null:
+		mat.emission_energy_multiplier = 1.4 + sin(_life * 25.0) * 0.3
+	var core_mat: StandardMaterial3D = ($Core as MeshInstance3D).get_surface_override_material(0)
+	if core_mat != null:
+		core_mat.emission_energy_multiplier = 2.8 + sin(_life * 40.0) * 0.6
 
 func _on_body_entered(body: Node3D) -> void:
 	if not _active:

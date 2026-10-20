@@ -26,18 +26,40 @@ func _ready() -> void:
 	_attach_model()
 
 ## Weapon visuals pass: real props instead of bare capsules when assets exist.
+## Each weapon family gets a matching CC0 Kenney prop plus a colour tint so a
+## frost bolt doesn't read like a fire-themed sword.
 func _attach_model() -> void:
 	var mesh := get_node_or_null("Mesh") as MeshInstance3D
 	if mesh == null or mesh.get_child_count() > 0:
 		return
 	var path := ""
+	var tint := Color.TRANSPARENT
+	var glow := Color.TRANSPARENT
 	match _weapon_id:
 		"divine_spear", "judgment":
 			path = "res://assets/models/weapons/weapon-spear.glb"
-		"magic_missile", "holy_bible", "frost_bolt":
+			tint = Color(1.0, 0.85, 0.3)
+			glow = Color(1.0, 0.7, 0.1)
+		"frost_bolt":
 			path = "res://assets/models/weapons/weapon-sword.glb"
-		"void_lance", "void_reaver", "soul_fire":
+			tint = Color(0.4, 0.8, 1.0)
+			glow = Color(0.2, 0.6, 1.0)
+		"holy_bible":
+			path = "res://assets/models/weapons/shield-round.glb"
+			tint = Color(1.0, 0.9, 0.4)
+			glow = Color(1.0, 0.85, 0.2)
+		"void_lance", "void_reaver":
 			path = "res://assets/models/weapons/weapon-sword.glb"
+			tint = Color(0.55, 0.2, 0.85)
+			glow = Color(0.4, 0.1, 0.7)
+		"soul_fire":
+			path = "res://assets/models/weapons/weapon-sword.glb"
+			tint = Color(0.3, 0.9, 0.7)
+			glow = Color(0.2, 0.85, 0.6)
+		"magic_missile":
+			path = "res://assets/models/weapons/weapon-sword.glb"
+			tint = Color(0.5, 0.6, 1.0)
+			glow = Color(0.3, 0.4, 1.0)
 		_:
 			return
 	if not ResourceLoader.exists(path):
@@ -47,6 +69,18 @@ func _attach_model() -> void:
 	if rig != null:
 		mesh.mesh = null
 		rig.rotation.y = RigUtil.RIG_YAW
+		# Tint the prop surfaces so the silhouette still reads per-weapon.
+		for mi in rig.find_children("*", "MeshInstance3D", true, false):
+			var active = mi.get_active_material(0)
+			if active is StandardMaterial3D:
+				var m: StandardMaterial3D = (active as StandardMaterial3D).duplicate()
+				if tint.a > 0.0:
+					m.albedo_color = m.albedo_color.lerp(tint, 0.55)
+				if glow.a > 0.0:
+					m.emission_enabled = true
+					m.emission = glow
+					m.emission_energy_multiplier = 1.2
+				mi.set_surface_override_material(0, m)
 
 func setup_generic(p_damage: float, p_speed: float, p_pierce: int, p_crit: float,
 		p_homing: bool, p_status: String, p_status_dur: float,

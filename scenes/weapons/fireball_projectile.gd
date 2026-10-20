@@ -97,6 +97,13 @@ func _explode() -> void:
 				event.status_duration = weapon_data.status_duration
 			enemy.health.take_damage(event)
 			EventBus.enemy_damaged.emit(enemy, event.final_amount, is_crit)
+	# Explosion VFX: an expanding fire ring at the blast centre, in addition
+	# to the per-hit ImpactBursts the JuiceManager already fires.
+	var jm: Node = _get_juice_manager()
+	if jm != null:
+		var burst: Node3D = jm._acquire("res://scenes/vfx/ImpactBurst.tscn")
+		if burst != null:
+			burst.trigger(global_position, Color(1.0, 0.5, 0.1), true)
 	_deactivate()
 
 func _get_enemy_manager() -> Node:
@@ -106,6 +113,12 @@ func _get_enemy_manager() -> Node:
 			return parent.get_enemy_manager()
 		parent = parent.get_parent()
 	return null
+
+func _get_juice_manager() -> Node:
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		return null
+	return tree.current_scene.get_node_or_null("JuiceManager")
 
 func _deactivate() -> void:
 	_active = false
