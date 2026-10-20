@@ -44,8 +44,11 @@ const DAMAGE_NUMBER_CAPS := {
 
 ## Web WASM tax — keep caps tight except at the lowest tier (already low).
 const WEB_ENEMY_CAP_SCALE := 0.65
+const WEB_MEDIUM_ENEMY_CAP_SCALE := 0.45
 const WEB_PROJECTILE_CAP_SCALE := 0.7
+const WEB_MEDIUM_PROJECTILE_CAP_SCALE := 0.5
 const WEB_PARTICLE_CAP_SCALE := 0.7
+const WEB_MEDIUM_PARTICLE_CAP_SCALE := 0.5
 const WEB_DAMAGE_NUMBER_CAP_SCALE := 0.7
 ## Native mobile (Android/iOS) is also GPU-bound — use the same tight web caps.
 const TOUCH_ENEMY_CAP_SCALE := 0.65
@@ -369,7 +372,8 @@ func prefer_dynamic_lights() -> bool:
 func enemy_cap() -> int:
 	var cap: int = ENEMY_CAPS.get(quality, 40)
 	if _is_web() and quality > Quality.VERY_LOW:
-		cap = maxi(25, int(cap * WEB_ENEMY_CAP_SCALE))
+		var scale := WEB_MEDIUM_ENEMY_CAP_SCALE if quality == Quality.MEDIUM else WEB_ENEMY_CAP_SCALE
+		cap = maxi(20, int(cap * scale))
 	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
 		cap = maxi(25, int(cap * TOUCH_ENEMY_CAP_SCALE))
 	return cap
@@ -384,7 +388,8 @@ func effective_enemy_cap() -> int:
 func projectile_cap() -> int:
 	var cap: int = PROJECTILE_CAPS.get(quality, 40)
 	if _is_web() and quality > Quality.VERY_LOW:
-		cap = maxi(20, int(cap * WEB_PROJECTILE_CAP_SCALE))
+		var scale := WEB_MEDIUM_PROJECTILE_CAP_SCALE if quality == Quality.MEDIUM else WEB_PROJECTILE_CAP_SCALE
+		cap = maxi(15, int(cap * scale))
 	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
 		cap = maxi(20, int(cap * TOUCH_PROJECTILE_CAP_SCALE))
 	if stress_mode:
@@ -394,7 +399,8 @@ func projectile_cap() -> int:
 func particle_cap() -> int:
 	var cap: int = PARTICLE_CAPS.get(quality, 25)
 	if _is_web() and quality > Quality.VERY_LOW:
-		cap = maxi(12, int(cap * WEB_PARTICLE_CAP_SCALE))
+		var scale := WEB_MEDIUM_PARTICLE_CAP_SCALE if quality == Quality.MEDIUM else WEB_PARTICLE_CAP_SCALE
+		cap = maxi(8, int(cap * scale))
 	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
 		cap = maxi(12, int(cap * TOUCH_PARTICLE_CAP_SCALE))
 	# V19: reduced-VFX setting shrinks particle budget
@@ -439,7 +445,9 @@ func should_skip_damage_number(is_crit: bool, amount: float) -> bool:
 
 ## True when far enemies should skip full physics this tick (horde LOD).
 func should_throttle_enemy_ai() -> bool:
-	return stress_mode or quality <= Quality.LOW
+	# Medium on Web is still a constrained GPU/CPU budget; throttle distant
+	# enemies there as well to prevent late-run frame collapse.
+	return stress_mode or quality <= Quality.MEDIUM
 
 func report_system_time(name: String, elapsed_usec: int) -> void:
 	if not _system_times.has(name):
