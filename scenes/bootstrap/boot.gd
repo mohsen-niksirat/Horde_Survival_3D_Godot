@@ -43,9 +43,9 @@ func _prefetch_resources() -> void:
 
 ## V22A: Web single-threaded warmup — ResourceLoader.load_threaded_request is
 ## a no-op without threads, so GLBs would sync-load on first spawn mid-run.
-## Instead we touch each hot resource one frame at a time between the click
-## and the menu so the cost spreads across frames instead of landing inside
-## gameplay. Each await yields a frame; ~15 resources ≈ 15 frames ≈ 0.25s.
+## On weak devices a single big GLB can still dominate a frame; skip model
+## warmup on VERY_LOW so the click-gate stays snappy and the first-spawn
+## hitch is just a bit larger instead of freezing the menu.
 func _web_warmup() -> void:
 	if _load_phase != 0:
 		return
@@ -58,17 +58,18 @@ func _web_warmup() -> void:
 		"res://data/characters/rogue.tres",
 		"res://data/weapons/magic_missile.tres",
 		"res://data/weapons/fireball.tres",
-		"res://assets/models/kaykit/heroes/adventurer_mage.glb",
-		"res://assets/models/kaykit/heroes/adventurer_knight.glb",
-		"res://assets/models/kaykit/heroes/adventurer_rogue.glb",
-		"res://assets/models/heroes/hero_mage.glb",
-		"res://assets/models/enemies/enemy_drone.glb",
-		"res://assets/models/enemies/enemy_bat.glb",
-		"res://assets/models/enemies/enemy_wisp.glb",
 	]
+	# Model warmup only when the device already runs a higher tier — weak
+	# laptops pay the same one-time cost later during the first enemy spawn.
+	if PerformanceManager == null or PerformanceManager.quality > PerformanceManager.Quality.VERY_LOW:
+		paths.append_array([
+			"res://assets/models/kaykit/heroes/adventurer_mage.glb",
+			"res://assets/models/heroes/hero_mage.glb",
+			"res://assets/models/enemies/enemy_drone.glb",
+			"res://assets/models/enemies/enemy_wisp.glb",
+		])
 	for p in paths:
 		if ResourceLoader.exists(p):
-			# Force the sync load; the engine resource cache holds it for the run.
 			var _r = ResourceLoader.load(p)
 		await get_tree().process_frame
 	_load_phase = 2
