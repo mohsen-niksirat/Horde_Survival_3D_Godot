@@ -52,9 +52,14 @@
 	<script src="$GODOT_URL"></script>
 	<script>
 		// Register the engine-payload cache so repeat visits skip the wasm
-		// download+compile — the biggest single win on GitHub Pages.
+		// download+compile — the biggest single win on GitHub Pages. Keep the
+		// promise: starting while an old worker still controls the page can mix
+		// Godot's index.js with an old audio worklet.
+		let swReady = Promise.resolve(null);
 		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+			swReady = navigator.serviceWorker.register('sw.js', { scope: './' })
+				.then(reg => reg.update().catch(() => {}).then(() => navigator.serviceWorker.ready))
+				.catch(() => null);
 		}
 		const GODOT_CONFIG = $GODOT_CONFIG;
 		const loader = document.getElementById('loader');
@@ -108,18 +113,23 @@
 				playBtn.style.display = 'none';
 				bar.style.width = '0%';
 				forceUnlockPointer();
+				// Explicitly resume any browser audio context in the same user
+				// gesture. Godot's WebAudio backend otherwise may start with an
+				// uninitialised sampleNodes table on some browsers.
+				try {
+					const contexts = [window.AudioContext, window.webkitAudioContext].filter(Boolean);
+					contexts.forEach(Ctx => { try { const c = new Ctx(); if (c.resume) c.resume(); } catch (e) {} });
+				} catch (e) {}
 				// WASM download+compile dominates on GitHub Pages (no
 				// Cross-Origin-Isolation → recompiles every visit). Show a
 				// live timer so it doesn't look hung during the long tail.
 				const startTime = Date.now();
-				statusEl.textContent = 'Downloading engine...';
+				statusEl.textContent = 'Preparing audio and engine...';
 				tickMsg = setInterval(() => {
 					const s = Math.round((Date.now() - startTime) / 1000);
-					// After ~5s the wasm fetch is usually done and we're in
-					// the compile phase, which has no progress events.
 					statusEl.textContent = (s < 6 ? 'Downloading engine... ' : 'Compiling engine (first load ~1 min)... ') + s + 's';
 				}, 1000);
-				engine.startGame().then(() => {
+				swReady.then(() => engine.startGame()).then(() => {
 					clearInterval(tickMsg);
 					loader.classList.add('hidden');
 				}).catch(err => {

@@ -1,8 +1,9 @@
 // HordeSurvival 3D — Service Worker
-// Cache-first for the engine payload (wasm/pck/js/audio), network-first for
-// the HTML shell so new deploys are picked up immediately. Bump CACHE_NAME
-// on any asset change to invalidate stale caches across installs.
-const CACHE_NAME = 'hs3d-v1';
+// Cache-first for the versioned engine payload (wasm/pck/js), network-first
+// for the HTML shell. Audio worklets are deliberately never cached: mixing a
+// worklet from one Godot export with index.js from another causes
+// `GodotAudio.sampleNodes is null` during startup.
+const CACHE_NAME = 'hs3d-v2';
 
 // Engine payload — fingerprinted by Godot export; safe to cache forever
 // until CACHE_NAME changes (files are content-stable between builds).
@@ -10,8 +11,6 @@ const ENGINE_FILES = [
   'index.wasm',
   'index.pck',
   'index.js',
-  'index.audio.worklet.js',
-  'index.audio.position.worklet.js',
   'index.offline.html',
 ];
 
@@ -38,6 +37,12 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (!path.endsWith('/')) {
     const file = path.substring(path.lastIndexOf('/') + 1);
+    // Worklets must stay in lockstep with index.js. Bypass both SW and the
+    // browser HTTP cache so a previous deployment cannot be mixed in.
+    if (file === 'index.audio.worklet.js' || file === 'index.audio.position.worklet.js') {
+      event.respondWith(fetch(event.request, { cache: 'no-store' }));
+      return;
+    }
     if (ENGINE_FILES.includes(file)) {
       event.respondWith(cacheFirst(event.request));
       return;
