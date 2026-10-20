@@ -40,6 +40,8 @@ mesh=SubResource("tip")
 surface_material_override/0=SubResource("mat")
 
 [node name="Light" type="OmniLight3D" parent="."]
+visible=false
 omni_range=3.0
 light_color=Color(1, 0.85, 0.4, 1)
 light_energy=1.0
+shadow_enabled=false

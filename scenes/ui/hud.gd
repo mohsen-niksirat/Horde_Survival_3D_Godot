@@ -27,7 +27,7 @@ const HINTS := [
 	"Weapons fire automatically - stay close to enemies",
 	"Cyan crystals = XP - walk near them",
 	"Gold drops from every kill - spend it on UPGRADES",
-	"Abilities: Q / E abilities · SPACE to dash (short invincibility)",
+	"Abilities: Q / E abilities · F to dash (short invincibility)",
 	"Hearts heal you - grab them!",
 	"Glowing chests give relics - walk over them",
 	"Survive 15 minutes to WIN",
@@ -85,6 +85,12 @@ func _on_achievement_unlocked(_id: String, title: String, gold: int) -> void:
 	AudioManager.play_game_sfx("level_up")
 
 func _ready() -> void:
+	# HUD buttons must never take keyboard focus — Space/Enter on a focused
+	# button re-triggers its action mid-gameplay (and Space conflicts with
+	# browser fullscreen on some setups).
+	for btn in [pause_button, fullscreen_button, zoom_in_button, zoom_out_button, ability1_button, ability2_button, dash_button]:
+		if btn != null:
+			btn.focus_mode = Control.FOCUS_NONE
 	pause_button.pressed.connect(_on_pause_pressed)
 	# Connect once here — not in the visibility handler (that re-ran every state change)
 	if not zoom_in_button.pressed.is_connected(_on_zoom_in):
@@ -115,6 +121,9 @@ func _on_fullscreen_pressed() -> void:
 	InputManager.toggle_fullscreen()
 	if fullscreen_button != null:
 		fullscreen_button.text = "Win" if InputManager.is_fullscreen() else "FS"
+		# Release focus — a focused button re-fires on Space/Enter which would
+		# bounce the player out of fullscreen mid-gameplay.
+		fullscreen_button.release_focus()
 
 func _on_hud_visibility(new_state: int, _old: int) -> void:
 	visible = not (new_state == GameManager.State.PAUSED or new_state == GameManager.State.LEVEL_UP)
@@ -180,15 +189,17 @@ func bind_abilities(controller: Node) -> void:
 	ability1_button.text = "Q Meteor"
 	ability2_button.text = "E Freeze"
 	# V-fix: touch ability buttons actually execute on mobile
-	ability1_button.pressed.connect(func(): _trigger_ability("meteor_strike"))
-	ability2_button.pressed.connect(func(): _trigger_ability("time_freeze"))
-	# V16A: dash button mirrors the Space dash (touch parity)
-	dash_button.text = "SPACE Dash"
+	ability1_button.pressed.connect(func(): ability1_button.release_focus(); _trigger_ability("meteor_strike"))
+	ability2_button.pressed.connect(func(): ability2_button.release_focus(); _trigger_ability("time_freeze"))
+	# V16A: dash button mirrors the F-key dash (touch parity)
+	dash_button.text = "F Dash"
 	dash_button.pressed.connect(_on_dash_pressed)
 
 func _on_dash_pressed() -> void:
 	if _player == null or not is_instance_valid(_player):
 		return
+	if dash_button != null:
+		dash_button.release_focus()
 	AudioManager.play_game_sfx("ui_click")
 	# Direction: current camera-relative move input, else the facing direction.
 	var input_vec: Vector2 = InputManager.get_move_vector()

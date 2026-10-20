@@ -24,9 +24,11 @@ mesh=SubResource("flash_mesh")
 surface_material_override/0=SubResource("flash_mat")
 
 [node name="Light" type="OmniLight3D" parent="."]
+visible=false
 omni_range=3.0
 light_color=Color(1, 0.8, 0.4, 1)
 light_energy=3.0
+shadow_enabled=false
 
 [node name="SpikeFwd" type="MeshInstance3D" parent="."]
 transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.2)

@@ -359,8 +359,10 @@ func set_auto_mode(enabled: bool, save: bool = true) -> void:
 			SaveManager.set_setting("quality", quality)
 		SaveManager.set_setting("quality_schema", QUALITY_SCHEMA)
 
+## Whether pooled VFX may show real light sources. Web + Mobile: ULTRA only —
+## OmniLight3D shadow updates are the #1 hitch source on weak GPUs.
 func prefer_dynamic_lights() -> bool:
-	if _is_web():
+	if _is_web() or _is_touch():
 		return quality >= Quality.ULTRA
 	return quality >= Quality.HIGH
 

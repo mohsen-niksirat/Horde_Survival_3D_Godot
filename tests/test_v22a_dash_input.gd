@@ -37,8 +37,16 @@ func _initialize() -> void:
 	# in progress on the next tick) ---
 	dash.tick(0.016, Vector3(0, 0, -1), true)
 	_check(dash.dash_count == count0 + 1, "dash count increments on press")
-	# While the burst is active the component reports dash-driven frames.
 	_check(dash.is_dashing(), "dash active after press")
+
+	# Space must NOT trigger dash — the fullscreen button could be focused.
+	var evs: Array = InputMap.action_get_events("dash")
+	var keycodes: Array = []
+	for ev in evs:
+		if ev is InputEventKey:
+			keycodes.append(ev.physical_keycode)
+	_check(70 in keycodes, "dash bound to F (physical_keycode 70)")
+	_check(not (32 in keycodes), "dash NOT bound to SPACE (32)")
 
 	main.queue_free()
 	await process_frame

@@ -39,6 +39,7 @@ mesh = SubResource("core_mesh")
 surface_material_override/0 = SubResource("core_mat")
 
 [node name="Light" type="OmniLight3D" parent="."]
+visible = false
 omni_range = 2.2
 light_energy = 1.8
 shadow_enabled = false

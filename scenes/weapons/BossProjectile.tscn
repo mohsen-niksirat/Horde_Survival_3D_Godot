@@ -69,9 +69,11 @@ mesh=SubResource("core_mesh")
 surface_material_override/0=SubResource("core_mat")
 
 [node name="Light" type="OmniLight3D" parent="."]
+visible=false
 omni_range=3.5
 light_color=Color(1, 0.5, 0.15, 1)
 light_energy=1.2
+shadow_enabled=false
 
 [node name="Trail" type="GPUParticles3D" parent="."]
 amount=8
