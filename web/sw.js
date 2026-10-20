@@ -3,7 +3,7 @@
 // for the HTML shell. Audio worklets are deliberately never cached: mixing a
 // worklet from one Godot export with index.js from another causes
 // `GodotAudio.sampleNodes is null` during startup.
-const CACHE_NAME = 'hs3d-v2';
+const CACHE_NAME = 'hs3d-v3';
 
 // Engine payload — fingerprinted by Godot export; safe to cache forever
 // until CACHE_NAME changes (files are content-stable between builds).
@@ -57,8 +57,20 @@ async function cacheFirst(request) {
   const cache = await caches.open(CACHE_NAME);
   const hit = await cache.match(request, { ignoreSearch: true });
   if (hit) return hit;
+  // Cache the network response before resolving respondWith; Godot's engine
+  // fetches stream large files and a clone() before the body finishes can
+  // leave the promise pending forever in some browsers.
   const res = await fetch(request);
-  if (res && res.ok) cache.put(request, res.clone());
+  if (res && res.ok) {
+    const copy = res.clone();
+    copy.arrayBuffer().then(buf =>
+      cache.put(request, new Response(buf, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: res.headers,
+      }))
+    ).catch(() => {});
+  }
   return res;
 }
 
