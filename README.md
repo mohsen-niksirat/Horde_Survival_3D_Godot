@@ -127,7 +127,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports, balance notes, and PRs welc
 **Feedback:** use the **SEND FEEDBACK** button in the in-game Settings menu, or
 open an issue here: <https://github.com/mohsen-niksirat/Horde_Survival_3D_Godot/issues/new>
 
-**Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Weapon balance table:** [docs/WEAPON_BALANCE.md](docs/WEAPON_BALANCE.md) · **Android build:** [docs/BUILD_ANDROID.md](docs/BUILD_ANDROID.md)
+**Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Weapon balance table:** [docs/WEAPON_BALANCE.md](docs/WEAPON_BALANCE.md) · **Android build:** [docs/BUILD_ANDROID.md](docs/BUILD_ANDROID.md) · **Publish on itch.io:** [docs/PUBLISH_ITCH.md](docs/PUBLISH_ITCH.md)
 
 ## License
 

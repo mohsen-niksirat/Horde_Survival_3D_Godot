@@ -245,6 +245,22 @@ The improvement brief's Phase 1 (Android) is now implemented:
   switching, the English fallback for unsupported locales, RTL detection and
   the language button.
 
+## V29A update (2026-10-21) — itch.io + opt-in analytics (Phase 4)
+
+- **itch.io package:** the web workflow now zips an itch-ready build
+  (`build/horde-survival-3d-itch.zip`): the exported `index.html` is renamed
+  to `game.html` and wrapped in `web/itch/itch.html`, which loads it in a
+  full-viewport iframe with a readable error page if the layout is wrong.
+  Instructions: `docs/PUBLISH_ITCH.md`.
+- **Opt-in local analytics** (`scripts/core/analytics.gd`): run counters,
+  most-used weapon and death-phase buckets, stored **on the device only**.
+  Nothing is recorded while the toggle in Settings is off, and turning it
+  off clears the collected data. The summary is appended to the main-menu
+  stats line.
+- **Audio:** independent `music_muted` / `sfx_muted` flags with their own
+  Settings toggles, so the soundtrack can be silenced without losing the
+  combat SFX.
+
 ## Deploy contract (every phase)
 1. Run the headless suite (local Godot 4.7.2).
 2. Stage only intended files; commit with `fix/perf/feat/docs` prefix.
