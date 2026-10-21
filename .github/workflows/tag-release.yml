@@ -1,0 +1,61 @@
+name: Tag Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to create (e.g. v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify the tag matches the changelog
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          if ! grep -q "## \[${TAG}\]" CHANGELOG.md; then
+            echo "CHANGELOG.md has no '## [${TAG}]' section for this tag."
+            echo "Add the release notes before tagging."
+            exit 1
+          fi
+          echo "CHANGELOG.md documents ${TAG}"
+
+      - name: Create the GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body_path: CHANGELOG.md
+
+      - name: Create a tag from main
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.inputs.tag }}"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag '$TAG' is not semver (expected vMAJOR.MINOR.PATCH)."
+            exit 1
+          fi
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag '$TAG' already exists."
+            exit 1
+          fi
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "Created and pushed $TAG"

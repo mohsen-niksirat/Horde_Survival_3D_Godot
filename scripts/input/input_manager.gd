@@ -12,6 +12,7 @@ var _last_touch_move_ms: int = 0
 
 var _using_touch: bool = false
 var _rmb_held: bool = false
+var _installed_android_back: bool = false
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
@@ -21,8 +22,22 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if OS.get_name() == "Web":
 		_install_web_pointer_release()
+	# Android hardware back button.
+	if OS.get_name() == "Android" or OS.has_feature("mobile"):
+		_install_android_back_handler()
 
-## Release mouse capture / browser Pointer Lock. Safe to call anytime.
+## Android hardware back button. The Godot notification is delivered to
+## every node; we only react on Android so desktop Esc/P behaviour is
+## untouched.
+func _install_android_back_handler() -> void:
+	_installed_android_back = true
+
+## Called by the platform layer (or a test) when the Android back button is
+## pressed. Returns true when the request was consumed.
+func notify_back_requested() -> bool:
+	if GameManager == null:
+		return false
+	return GameManager.handle_back_request()
 func release_pointer() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if OS.get_name() == "Web":
@@ -79,11 +94,41 @@ func _install_web_pointer_release() -> void:
 
 func _notification(what: int) -> void:
 	match what:
-		NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT, \
-		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_GO_BACK_REQUEST:
+		NOTIFICATION_APPLICATION_PAUSED:
+			# Android: the OS may kill us at any moment after this. Pause the
+			# run and flush the save so progress is never lost.
+			_on_app_paused()
+		NOTIFICATION_APPLICATION_RESUMED:
+			_on_app_resumed()
+		NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 			release_pointer()
+		NOTIFICATION_WM_GO_BACK_REQUEST:
+			# Android back button: pause in-game, step back in menus.
+			_on_go_back_requested()
 		NOTIFICATION_EXIT_TREE, NOTIFICATION_PREDELETE:
 			release_pointer()
+
+## Android back button / gesture back. Routed through GameManager so the
+## pause / menu / exit behaviour lives in one place.
+func _on_go_back_requested() -> void:
+	release_pointer()
+	GameManager.handle_back_request()
+
+## App lifecycle: on Android the OS can kill the process at any moment after
+## the app is backgrounded. Pause the run and flush the save immediately so
+## progress (gold, achievements, run stats) survives a phone call or a
+## task switch.
+func _on_app_paused() -> void:
+	release_pointer()
+	if GameManager != null:
+		if GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS:
+			GameManager.pause_game()
+	if SaveManager != null:
+		SaveManager.save_game()
+	EventBus.app_paused.emit()
+
+func _on_app_resumed() -> void:
+	EventBus.app_resumed.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Works in menus and gameplay (autoload ALWAYS)
@@ -144,11 +189,25 @@ func is_action_just_pressed(action: String) -> bool:
 		_:
 			return Input.is_action_just_pressed(action)
 
-func _touch_action_pressed(_action: String) -> bool:
-	return false
+## Touch-held actions (dash / ability_1 / ability_2). The HUD buttons push
+## their state here so gameplay code can query the same abstraction for
+## keyboard and touch.
+var _touch_actions: Dictionary = {}
 
-func _touch_action_just_pressed(_action: String) -> bool:
-	return false
+func set_touch_action(action: String, pressed: bool) -> void:
+	if pressed:
+		_touch_actions[action] = true
+	else:
+		_touch_actions.erase(action)
+
+func is_touch_action_pressed(action: String) -> bool:
+	return _touch_actions.has(action)
+
+func _touch_action_pressed(action: String) -> bool:
+	return _touch_actions.has(action)
+
+func _touch_action_just_pressed(action: String) -> bool:
+	return _touch_actions.has(action)
 
 func is_pause_just_pressed() -> bool:
 	return Input.is_action_just_pressed("pause")

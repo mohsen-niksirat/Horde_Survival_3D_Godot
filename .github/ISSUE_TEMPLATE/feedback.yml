@@ -1,0 +1,95 @@
+name: Feedback
+description: Gameplay feedback, balance notes, or a bug report
+title: "[Feedback] "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for playing HordeSurvival 3D! This form collects the details
+        that make a report actionable. Feel free to delete anything that
+        does not apply.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Gameplay / balance
+        - Bug
+        - Performance (FPS, load time, stutter)
+        - Controls / UI
+        - Suggestion
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      description: Shown in the main menu, e.g. v1.0.0
+      placeholder: v1.0.0
+    validations:
+      required: false
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Web (GitHub Pages)
+        - Android
+        - Desktop (Windows / Linux / macOS)
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device / GPU
+      description: Helps with performance reports.
+      placeholder: e.g. Laptop with Intel UHD 620
+    validations:
+      required: false
+
+  - type: dropdown
+    id: quality
+    attributes:
+      label: Graphics quality
+      options:
+        - Very Low
+        - Low
+        - Medium
+        - High
+        - Ultra
+        - Auto
+    validations:
+      required: false
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Steps to reproduce, if it is a bug.
+      placeholder: |
+        1. Pick the Mage character
+        2. Survive ~3 minutes
+        3. ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: extras
+    attributes:
+      label: Anything else?
+      description: Screenshots, logs, or your take on the difficulty curve.
+    validations:
+      required: false

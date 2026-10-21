@@ -12,12 +12,19 @@ extends Control
 @onready var shake_check: CheckButton = $Center/Panel/Layout/ShakeCheck
 @onready var quality_option: OptionButton = $Center/Panel/Layout/QualityRow/QualityOption
 @onready var close_button: Button = $Center/Panel/Layout/CloseButton
+@onready var feedback_button: Button = $Center/Panel/Layout/FeedbackButton
 @onready var layout: Control = $Center/Panel/Layout
 
 const Q_ITEMS := ["Very Low (fastest)", "Low", "Medium", "High", "Ultra", "Auto"]
 
+var scale_label: Label
 var ui_scale_slider: HSlider
 var reduced_vfx_check: CheckButton
+var music_mute_check: CheckButton
+var sfx_mute_check: CheckButton
+var locale_button: Button
+var analytics_check: CheckButton
+var _message_label: Label
 var _save_timer: Timer
 
 ## Live-update a setting in memory and schedule a single debounced disk write.
@@ -45,6 +52,10 @@ func _ready() -> void:
 	for item in Q_ITEMS:
 		quality_option.add_item(item)
 	_build_v19_rows()
+	# Android notch / punch-hole: the settings panel is a centred box that
+	# can still land under a cutout in landscape.
+	get_viewport().size_changed.connect(_apply_safe_area)
+	call_deferred("_apply_safe_area")
 
 	master_slider.value = SaveManager.get_setting("master_volume", 0.8)
 	music_slider.value = SaveManager.get_setting("music_volume", 0.7)
@@ -80,6 +91,9 @@ func _ready() -> void:
 	if reduced_vfx_check != null:
 		reduced_vfx_check.toggled.connect(_on_reduced_vfx)
 	close_button.pressed.connect(_on_close)
+	if feedback_button != null:
+		feedback_button.pressed.connect(_on_feedback_pressed)
+		feedback_button.focus_mode = Control.FOCUS_NONE
 	EventBus.game_state_changed.connect(_on_state_changed)
 	_apply_ui_scale(float(SaveManager.get_setting("ui_scale", 1.0)))
 
@@ -89,8 +103,8 @@ func _build_v19_rows() -> void:
 		return
 	var scale_row := HBoxContainer.new()
 	scale_row.name = "UiScaleRow"
-	var scale_label := Label.new()
-	scale_label.text = "UI Scale"
+	scale_label = Label.new()
+	scale_label.text = tr("SETTINGS_UI_SCALE")
 	scale_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ui_scale_slider = HSlider.new()
 	ui_scale_slider.name = "UiScaleSlider"
@@ -107,7 +121,7 @@ func _build_v19_rows() -> void:
 
 	reduced_vfx_check = CheckButton.new()
 	reduced_vfx_check.name = "ReducedVfxCheck"
-	reduced_vfx_check.text = "Reduced VFX"
+	reduced_vfx_check.text = tr("SETTINGS_REDUCED_VFX")
 	layout.add_child(reduced_vfx_check)
 	layout.move_child(reduced_vfx_check, close_button.get_index())
 
@@ -119,9 +133,60 @@ func _build_v19_rows() -> void:
 	layout.add_child(dmg_check)
 	layout.move_child(dmg_check, close_button.get_index())
 
+	# V27A: independent mute toggles for the music mix and the SFX mix.
+	music_mute_check = CheckButton.new()
+	music_mute_check.name = "MusicMuteCheck"
+	music_mute_check.text = tr("SETTINGS_MUTE_MUSIC")
+	music_mute_check.button_pressed = AudioManager.is_music_muted()
+	music_mute_check.toggled.connect(func(p: bool): AudioManager.set_music_muted(p))
+	layout.add_child(music_mute_check)
+	layout.move_child(music_mute_check, close_button.get_index())
+
+	sfx_mute_check = CheckButton.new()
+	sfx_mute_check.name = "SfxMuteCheck"
+	sfx_mute_check.text = tr("SETTINGS_MUTE_SFX")
+	sfx_mute_check.button_pressed = AudioManager.is_sfx_muted()
+	sfx_mute_check.toggled.connect(func(p: bool): AudioManager.set_sfx_muted(p))
+	layout.add_child(sfx_mute_check)
+	layout.move_child(sfx_mute_check, close_button.get_index())
+
+	# V28A: language switcher (EN / FA). RTL locales mirror the layout.
+	locale_button = Button.new()
+	locale_button.name = "LocaleButton"
+	locale_button.text = tr("SETTINGS_LANGUAGE") + ": " + Localization.locale_display_name(Localization.current_locale)
+	locale_button.pressed.connect(_on_locale_pressed)
+	layout.add_child(locale_button)
+	layout.move_child(locale_button, close_button.get_index())
+
+	# V29A: opt-in local analytics. Nothing is recorded while it is off.
+	analytics_check = CheckButton.new()
+	analytics_check.name = "AnalyticsCheck"
+	analytics_check.text = tr("SETTINGS_ANALYTICS")
+	analytics_check.button_pressed = Analytics.enabled
+	analytics_check.toggled.connect(func(p: bool): Analytics.set_enabled(p))
+	layout.add_child(analytics_check)
+	layout.move_child(analytics_check, close_button.get_index())
+
 func _on_ui_scale(value: float) -> void:
 	_set_setting_debounced("ui_scale", value)
 	_apply_ui_scale(value)
+
+## Show a short message in the settings panel. Uses a dedicated label so the
+## message does not overwrite any setting row.
+func _label(text: String) -> void:
+	if _message_label == null:
+		_message_label = Label.new()
+		_message_label.name = "Message"
+		_message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_message_label.custom_minimum_size = Vector2(360, 0)
+		_message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_message_label.add_theme_font_size_override("font_size", 14)
+		_message_label.add_theme_color_override("font_color", Color(0.85, 0.9, 1.0))
+		if layout != null:
+			layout.add_child(_message_label)
+			layout.move_child(_message_label, close_button.get_index())
+	_message_label.text = text
+	_message_label.visible = text != ""
 
 func _apply_ui_scale(value: float) -> void:
 	var win := get_window()
@@ -150,8 +215,27 @@ func _on_fullscreen(pressed: bool) -> void:
 func _on_state_changed(_new_state: int, _old: int) -> void:
 	pass
 
+## Inset the panel to the display safe area (Android notch / punch-hole).
+## The overlay root is full-rect, so insetting it pulls the panel inward.
+func _apply_safe_area() -> void:
+	if not is_inside_tree():
+		return
+	var pads: Vector4 = SafeArea.insets_for(self)
+	offset_left = pads.x
+	offset_top = pads.y
+	offset_right = -pads.z
+	offset_bottom = -pads.w
+
 func open() -> void:
 	visible = true
+	_apply_safe_area()
+	# Keep the mute toggles in sync with the live audio state.
+	if music_mute_check != null:
+		music_mute_check.set_pressed_no_signal(AudioManager.is_music_muted())
+	if sfx_mute_check != null:
+		sfx_mute_check.set_pressed_no_signal(AudioManager.is_sfx_muted())
+	_refresh_locale_labels()
+	layout_direction = Control.LAYOUT_DIRECTION_RTL if Localization.is_rtl() else Control.LAYOUT_DIRECTION_LTR
 
 func _on_volume(value: float, key: String) -> void:
 	_set_setting_debounced(key, value)
@@ -171,3 +255,38 @@ func _on_quality(index: int) -> void:
 
 func _on_close() -> void:
 	visible = false
+
+## Open the GitHub issue form in the player's browser. This is the in-game
+## feedback channel required before a public release.
+func _on_feedback_pressed() -> void:
+	AudioManager.play_game_sfx("ui_click")
+	if not ExternalLinks.open_feedback():
+		# The platform refused to open a URL — tell the player where to go.
+		_label("Could not open the browser. Please visit:\n%s" % ExternalLinks.FEEDBACK_URL)
+
+## Cycle the UI language (EN <-> FA) and remember the choice.
+func _on_locale_pressed() -> void:
+	AudioManager.play_game_sfx("ui_click")
+	var applied: String = Localization.toggle_locale()
+	SaveManager.set_setting("locale", applied)
+	_refresh_locale_labels()
+	# The whole panel mirrors for right-to-left locales.
+	layout_direction = Control.LAYOUT_DIRECTION_RTL if Localization.is_rtl() else Control.LAYOUT_DIRECTION_LTR
+
+func _refresh_locale_labels() -> void:
+	if locale_button != null:
+		locale_button.text = tr("SETTINGS_LANGUAGE") + ": " + Localization.locale_display_name(Localization.current_locale)
+	if scale_label != null:
+		scale_label.text = tr("SETTINGS_UI_SCALE")
+	if reduced_vfx_check != null:
+		reduced_vfx_check.text = tr("SETTINGS_REDUCED_VFX")
+	if music_mute_check != null:
+		music_mute_check.text = tr("SETTINGS_MUTE_MUSIC")
+	if sfx_mute_check != null:
+		sfx_mute_check.text = tr("SETTINGS_MUTE_SFX")
+	if feedback_button != null:
+		feedback_button.text = tr("SETTINGS_FEEDBACK")
+	if close_button != null:
+		close_button.text = tr("SETTINGS_CLOSE")
+	if _message_label != null:
+		_message_label.visible = false

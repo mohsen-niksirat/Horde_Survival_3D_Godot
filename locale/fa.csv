@@ -1,0 +1,63 @@
+keys,fa
+MENU_PLAY,بازی
+MENU_CAMPAIGN,کمپین
+MENU_CHARACTERS,شخصیت‌ها
+MENU_WEAPONS,سلاح‌ها
+MENU_ACHIEVEMENTS,دستاوردها
+MENU_SETTINGS,تنظیمات
+MENU_UPGRADES,ارتقاها
+MENU_HOW_TO_PLAY,راهنمای بازی
+MENU_HOW_TO_PLAY_TEXT,حرکت با WASD · حمله خودکار · توانایی Q/E · بلورهای فیروزه‌ای = تجربه · صندوق‌ها = relic · برای بردن ۱۵ دقیقه دوام بیاور (یا بی‌پایان)
+MENU_QUIT,خروج
+MENU_ENDLESS,بی‌پایان
+SETTINGS_TITLE,تنظیمات
+SETTINGS_MASTER,صدای کل
+SETTINGS_MUSIC,موسیقی
+SETTINGS_SFX,جلوه‌های صوتی
+SETTINGS_SENS,حساسیت
+SETTINGS_TOUCH_SENS,حساسیت لمسی
+SETTINGS_HAPTICS,لرزش
+SETTINGS_FULLSCREEN,تمام‌صفحه
+SETTINGS_QUALITY,گرافیک
+SETTINGS_SHAKE,لرزش صفحه
+SETTINGS_UI_SCALE,اندازه رابط
+SETTINGS_REDUCED_VFX,جلوه‌های کمتر
+SETTINGS_DAMAGE_NUMBERS,اعداد آسیب
+SETTINGS_MUTE_MUSIC,بی‌صدا کردن موسیقی
+SETTINGS_MUTE_SFX,بی‌صدا کردن جلوه‌ها
+SETTINGS_FEEDBACK,ارسال بازخورد
+SETTINGS_CLOSE,بستن
+SETTINGS_LANGUAGE,زبان
+SETTINGS_ANALYTICS,آمار محلی (خاموش = هیچ داده‌ای ثبت نمی‌شود)
+HINT_MOVE,حرکت: WASD / جوی‌استیک (سمت چپ)
+HINT_AUTO_ATTACK,سلاح‌ها خودکار شلیک می‌کنند - نزدیک دشمنان بمان
+HINT_XP,بلورهای فیروزه‌ای = تجربه - کنارشان برو
+HINT_GOLD,از هر کشته طلا می‌افتد - خرج ارتقاها کن
+HINT_ABILITIES,توانایی‌ها: Q / E · برای جهش F (بی‌آسیب‌پذیری کوتاه)
+HINT_HEARTS,قلب‌ها شما را درمان می‌کنند - بردارشان!
+HINT_RELICS,صندوق‌های درخشان relic می‌دهند - از رویشان رد شو
+HINT_WIN,برای بردن ۱۵ دقیقه دوام بیاور
+HINT_PAUSE,مکث: دکمه II یا Esc / P
+HINT_ZOOM,زوم: چرخ ماوس / دکمه‌های + و -
+TUT_MOVE_TITLE,حرکت
+TUT_CAMERA_TITLE,دوربین
+TUT_ZOOM_TITLE,زوم
+TUT_COMBAT_TITLE,مبارزه
+TUT_XP_TITLE,تجربه و طلا
+TUT_RELIC_TITLE,صندوق‌های relic
+TUT_WIN_TITLE,شرط بردن
+TUT_ABILITY_TITLE,توانایی‌ها
+TUT_DASH_TITLE,جهش
+TUT_LEVEL_TITLE,ارتقای سطح
+TUT_PAUSE_TITLE,مکث
+SHOP_GOLD,طلا: %d
+SHOP_LEVEL,سطح %d/۲۰
+SHOP_MAX,بیشینه
+SHOP_BUY,خرید
+SHOP_TITLE,ارتقاهای دائمی
+CHAR_SELECT_TITLE,یک قهرمان انتخاب کن
+CHAR_SELECT_HINT,یک قهرمان انتخاب کن تا داستانش را بخوانی. برای شروع دوباره بزن.
+CHAR_LOCKED,قفل
+ACH_UNLOCKED,باز شده %d / %d
+ACH_GOLD_REWARD,(+%d طلا)
+CAMPAIGN_PROGRESS,پیشرفت کمپین: %d / %d ماموریت (%d%%)

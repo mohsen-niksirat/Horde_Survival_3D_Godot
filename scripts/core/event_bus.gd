@@ -31,3 +31,9 @@ signal settings_changed()
 ## Magnet pickup: XP shards start a soft staggered pull for N seconds.
 signal magnet_pulse(duration: float)
 signal achievement_unlocked(id: String, title: String, gold: int)
+## Android back button on the main menu: the UI should ask "exit?".
+signal exit_confirm_requested()
+## The app is about to lose focus (Android pause / iOS background).
+signal app_paused()
+## The app regained focus — a good moment to flush deferred writes.
+signal app_resumed()

@@ -20,4 +20,9 @@ homing = false
 status_effect = ""
 status_duration = 0.0
 status_damage = 0.0
+; Balance (V26A): same AoE tier problem as lightning, but this is the
+; EVOLUTION of lightning — it must be a clear upgrade over lightning's
+; tier-5 single-target DPS (46.7). The old curve gave only 56 (+20%) while
+; every other evolution grants +110% to +570%.
+tier_damage_mult = Array[float]([1.0, 1.3, 1.8, 2.5, 3.6])
 projectile_scene = "res://scenes/weapons/LightningStrike.tscn"

@@ -39,13 +39,18 @@ func load_game() -> void:
 	if file == null:
 		data = _default_data()
 		return
-	var parsed = JSON.parse_string(file.get_as_text())
+	var text := file.get_as_text()
 	file.close()
-	if parsed == null or typeof(parsed) != TYPE_DICTIONARY:
-		push_warning("SaveManager: corrupt save, resetting")
+	# JSON.parse_string() pushes an engine ERROR for malformed input, which
+	# pollutes the log on every device with a damaged save. The instance API
+	# returns the error code instead, so a corrupt file is only a warning.
+	var json := JSON.new()
+	var err: int = json.parse(text)
+	if err != OK or typeof(json.data) != TYPE_DICTIONARY:
+		push_warning("SaveManager: corrupt save (%s), resetting to defaults" % json.get_error_message())
 		data = _default_data()
 		return
-	data = _migrate(parsed)
+	data = _migrate(json.data)
 	save_loaded.emit()
 
 func delete_save() -> void:

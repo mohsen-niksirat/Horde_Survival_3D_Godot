@@ -1,0 +1,79 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: lihop/setup-godot@v2
+        with:
+          version: "4.7.2-stable"
+          export-templates: true
+
+      - name: Setup Java (17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle
+            ~/.android
+            ~/Android/Sdk
+          key: android-sdk-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: android-sdk-${{ runner.os }}-
+
+      - name: Import assets (headless)
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --editor --import --quit 2>&1 | tee import.log
+          if grep -Eq "^ERROR:|SCRIPT ERROR:" import.log; then
+            echo "Asset import reported errors; refusing to build."
+            exit 1
+          fi
+
+      - name: Run headless tests
+        run: |
+          python3 tools/run_tests.py --godot godot
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: headless-test-results-android
+          path: build/test-results
+
+      # Debug-signed APK: installable on a device for QA without a keystore.
+      # A release APK with a keystore secret is added later (see docs/ANDROID.md).
+      - name: Export Android debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/android
+          godot --headless --export-debug "Android" build/android/HordeSurvival3D.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HordeSurvival3D-debug-apk
+          path: build/android/*.apk
+          retention-days: 14

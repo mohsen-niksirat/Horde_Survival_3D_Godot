@@ -48,8 +48,9 @@ Inspired by the gameplay philosophy of [HordeSurvival (Android)](https://github.
 - Threat-budget horde spawning, difficulty timeline, quality-tier entity caps
 - Versioned meta save (gold, bests, wins, unlocks, achievements) that persists in the browser
 - Responsive HUD (boss HP bar with phase tint, ability cooldowns); virtual joystick + touch camera
-- Settings: UI scale, reduced VFX, damage numbers, quality tiers, screen shake
+- Settings: UI scale, reduced VFX, damage numbers, quality tiers, screen shake, independent music/SFX mute, language (English / فارسی with RTL layout), in-game feedback link
 - Kenney CC0 GLB heroes/enemies/weapons/skybox (see docs/ASSET_CREDITS.md); quality Very Low→Ultra + FPS counter
+- **Android-ready:** ARM64 export preset, safe-area insets for notches, hardware back button routing, auto-pause + save flush on background, and a CI-built debug APK
 - **Meta shop:** 9 permanent upgrades × 20 levels (Vitality, Might, Frenzy, Swiftness, Luck, Greed, Bulwark, Precision, Arsenal)
 
 ## Win / Unlock Roadmap
@@ -108,13 +109,25 @@ Deployment is automated via GitHub Actions (`.github/workflows/deploy-web.yml`):
 
 Manual URL after setup: `https://mohsen-niksirat.github.io/Horde_Survival_3D_Godot/`
 
-## How to Export Android (future)
+## How to Export Android
 
-Architecture is Android-compatible (Compatibility renderer, touch-first input abstraction). Android export steps will be added post-MVP: install Android build template (`Project → Install Android Build Template`), add the Android preset, export APK/AAB.
+Android is now a first-class target:
+
+- An `Android` export preset ships in `export_presets.cfg` (ARM64, Compatibility renderer, landscape, immersive).
+- CI builds a **debug-signed APK** on every push to `main` — see `.github/workflows/build-android.yml` and the `HordeSurvival3D-debug-apk` artifact.
+- Mobile support: safe-area insets for notches/punch-holes, Android back button routing (pause in-game, step back in menus, confirm on the main menu), and auto-pause + immediate save flush when the app is backgrounded.
+- Full instructions: [docs/BUILD_ANDROID.md](docs/BUILD_ANDROID.md).
+
+Local build: install the Android build template (`Project → Install Android Build Template`), point Godot at your SDK/keystore in Editor Settings, then export with the `Android` preset.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports, balance notes, and PRs welcome.
+
+**Feedback:** use the **SEND FEEDBACK** button in the in-game Settings menu, or
+open an issue here: <https://github.com/mohsen-niksirat/Horde_Survival_3D_Godot/issues/new>
+
+**Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Weapon balance table:** [docs/WEAPON_BALANCE.md](docs/WEAPON_BALANCE.md) · **Android build:** [docs/BUILD_ANDROID.md](docs/BUILD_ANDROID.md)
 
 ## License
 

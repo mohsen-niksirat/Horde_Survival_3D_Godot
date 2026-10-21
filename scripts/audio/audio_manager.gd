@@ -7,6 +7,9 @@ enum SfxTier { CRITICAL, IMPORTANT, AMBIENT, LOW }
 var master_volume: float = 0.8
 var music_volume: float = 0.7
 var sfx_volume: float = 0.8
+## Independent mute flags for the music mix and the SFX mix.
+var _music_muted: bool = false
+var _sfx_muted: bool = false
 
 var _music_player: AudioStreamPlayer
 var _sfx_players: Array[AudioStreamPlayer] = []
@@ -291,6 +294,35 @@ func apply_saved_volumes() -> void:
 		SaveManager.get_setting("music_volume", 0.7),
 		SaveManager.get_setting("sfx_volume", 0.8)
 	)
+	_music_muted = bool(SaveManager.get_setting("music_muted", false))
+	_sfx_muted = bool(SaveManager.get_setting("sfx_muted", false))
+	_apply_volumes()
+
+## Mute the music without touching the SFX mix (and vice versa).
+func set_music_muted(muted: bool) -> void:
+	_music_muted = muted
+	_apply_volumes()
+	SaveManager.set_setting("music_muted", muted)
+
+func set_sfx_muted(muted: bool) -> void:
+	_sfx_muted = muted
+	_apply_volumes()
+	SaveManager.set_setting("sfx_muted", muted)
+
+func is_music_muted() -> bool:
+	return _music_muted
+
+func is_sfx_muted() -> bool:
+	return _sfx_muted
+
+## Toggle helper for the Settings UI.
+func toggle_music_muted() -> bool:
+	set_music_muted(not _music_muted)
+	return _music_muted
+
+func toggle_sfx_muted() -> bool:
+	set_sfx_muted(not _sfx_muted)
+	return _sfx_muted
 
 func set_volumes(master: float, music: float, sfx: float) -> void:
 	master_volume = master
@@ -303,7 +335,7 @@ func set_volumes(master: float, music: float, sfx: float) -> void:
 
 func _apply_volumes() -> void:
 	var music_db := get_music_db()
-	var sfx_db := -80.0 if (master_volume <= 0.001 or sfx_volume <= 0.001) else linear_to_db(clampf(sfx_volume * master_volume, 0.001, 1.0))
+	var sfx_db := -80.0 if (master_volume <= 0.001 or sfx_volume <= 0.001 or _sfx_muted) else linear_to_db(clampf(sfx_volume * master_volume, 0.001, 1.0))
 	if _music_player:
 		_music_player.volume_db = music_db
 	for p in _sfx_players:
@@ -316,7 +348,7 @@ func _apply_volumes() -> void:
 
 ## Query function: MusicDirector uses this to cross-fade to the right ceiling.
 func get_music_db() -> float:
-	if master_volume <= 0.001 or music_volume <= 0.001:
+	if master_volume <= 0.001 or music_volume <= 0.001 or _music_muted:
 		return -80.0
 	return linear_to_db(clampf(music_volume * master_volume, 0.001, 1.0))
 

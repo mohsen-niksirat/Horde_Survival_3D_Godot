@@ -1,0 +1,63 @@
+keys,en
+MENU_PLAY,PLAY
+MENU_CAMPAIGN,CAMPAIGN
+MENU_CHARACTERS,CHARACTERS
+MENU_WEAPONS,WEAPONS
+MENU_ACHIEVEMENTS,ACHIEVEMENTS
+MENU_SETTINGS,SETTINGS
+MENU_UPGRADES,UPGRADES
+MENU_HOW_TO_PLAY,HOW TO PLAY
+MENU_HOW_TO_PLAY_TEXT,WASD move · auto-attack · Q/E abilities · cyan shards = XP · chests = relics · survive 15 min to WIN (or Endless)
+MENU_QUIT,QUIT
+MENU_ENDLESS,Endless
+SETTINGS_TITLE,Settings
+SETTINGS_MASTER,Master
+SETTINGS_MUSIC,Music
+SETTINGS_SFX,SFX
+SETTINGS_SENS,Sensitivity
+SETTINGS_TOUCH_SENS,Touch Sensitivity
+SETTINGS_HAPTICS,Haptics
+SETTINGS_FULLSCREEN,Fullscreen
+SETTINGS_QUALITY,Graphics
+SETTINGS_SHAKE,Screen shake
+SETTINGS_UI_SCALE,UI Scale
+SETTINGS_REDUCED_VFX,Reduced VFX
+SETTINGS_DAMAGE_NUMBERS,Damage Numbers
+SETTINGS_MUTE_MUSIC,Mute Music
+SETTINGS_MUTE_SFX,Mute SFX
+SETTINGS_FEEDBACK,SEND FEEDBACK
+SETTINGS_CLOSE,CLOSE
+SETTINGS_LANGUAGE,Language
+SETTINGS_ANALYTICS,Local analytics (off = no data recorded)
+HINT_MOVE,Move: WASD / joystick (left side)
+HINT_AUTO_ATTACK,Weapons fire automatically - stay close to enemies
+HINT_XP,Cyan crystals = XP - walk near them
+HINT_GOLD,Gold drops from every kill - spend it on UPGRADES
+HINT_ABILITIES,Abilities: Q / E abilities · F to dash (short invincibility)
+HINT_HEARTS,Hearts heal you - grab them!
+HINT_RELICS,Glowing chests give relics - walk over them
+HINT_WIN,Survive 15 minutes to WIN
+HINT_PAUSE,Pause: II button or Esc / P
+HINT_ZOOM,Zoom: mouse wheel / + and - buttons
+TUT_MOVE_TITLE,Move
+TUT_CAMERA_TITLE,Camera
+TUT_ZOOM_TITLE,Zoom
+TUT_COMBAT_TITLE,Combat
+TUT_XP_TITLE,XP & Gold
+TUT_RELIC_TITLE,Relic Chests
+TUT_WIN_TITLE,Win Condition
+TUT_ABILITY_TITLE,Abilities
+TUT_DASH_TITLE,Dash
+TUT_LEVEL_TITLE,Level Up
+TUT_PAUSE_TITLE,Pause
+SHOP_GOLD,Gold: %d
+SHOP_LEVEL,Lv %d/20
+SHOP_MAX,MAX
+SHOP_BUY,Buy
+SHOP_TITLE,META UPGRADES
+CHAR_SELECT_TITLE,Choose a hero
+CHAR_SELECT_HINT,Choose a hero to read their story. Tap again to begin.
+CHAR_LOCKED,LOCKED
+ACH_UNLOCKED,Unlocked %d / %d
+ACH_GOLD_REWARD,(+%d gold)
+CAMPAIGN_PROGRESS,Campaign Progress: %d / %d Missions Completed (%d%%)

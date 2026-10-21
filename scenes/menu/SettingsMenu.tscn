@@ -142,6 +142,12 @@ layout_mode=2
 layout_mode=2
 text="Screen shake"
 
+[node name="FeedbackButton" type="Button" parent="Center/Panel/Layout"]
+custom_minimum_size=Vector2(360, 44)
+layout_mode=2
+theme_override_font_sizes/font_size=18
+text="SEND FEEDBACK"
+
 [node name="CloseButton" type="Button" parent="Center/Panel/Layout"]
 custom_minimum_size=Vector2(360, 44)
 layout_mode=2

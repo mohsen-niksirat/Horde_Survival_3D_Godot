@@ -104,8 +104,65 @@ func game_over(victory: bool) -> void:
 	get_tree().paused = false
 	# Deliver the result before the overlay commits rewards on GAME_OVER.
 	EventBus.run_ended.emit(victory)
+	_record_analytics(victory)
 	change_state(State.GAME_OVER)
 	InputManager.release_pointer()
 
+## Opt-in local analytics: one line of run data, stored on the device only.
+func _record_analytics(victory: bool) -> void:
+	if Analytics == null or not Analytics.enabled:
+		return
+	var player: Node = null
+	var scene := get_tree().current_scene
+	if scene != null and scene.has_method("get_enemy_manager"):
+		player = scene.get("player")
+	var level := 0
+	var kills := 0
+	var weapons: Array = []
+	if player != null and is_instance_valid(player):
+		if player.has_method("get_stat"):
+			level = int(player.get_stat("level"))
+		var wc: Node = player.get("weapon_controller")
+		if wc != null and is_instance_valid(wc):
+			for w in wc.get("weapons"):
+				var d: WeaponData = w.get("data")
+				if d != null:
+					weapons.append(d.id)
+	if RunManager != null:
+		kills = int(RunManager.get("total_kills"))
+	Analytics.record_run(victory, RunManager.elapsed_time if RunManager != null else 0.0, level, kills, weapons)
+
 func _on_game_state_changed(_new_state: int, _old: int) -> void:
 	pass
+
+## Android hardware/gesture back button.
+## - In a run (PLAYING/BOSS): pause the game.
+## - In pause / level-up: return to the previous state.
+## - In the main menu: let the menu close its topmost panel; if nothing is
+##   open, ask for exit confirmation.
+## Returns true when the event was consumed.
+func handle_back_request() -> bool:
+	match state:
+		State.PLAYING, State.BOSS:
+			pause_game()
+			return true
+		State.PAUSED:
+			resume_game()
+			return true
+		State.LEVEL_UP:
+			close_level_up()
+			return true
+		State.GAME_OVER, State.RESULTS:
+			goto_menu()
+			return true
+		State.MAIN_MENU:
+			# Let the menu close an open panel (character select, codex, …)
+			# before we offer to quit the app.
+			var scene := get_tree().current_scene
+			if scene != null and scene.has_method("handle_back_request"):
+				if bool(scene.call("handle_back_request")):
+					return true
+			EventBus.exit_confirm_requested.emit()
+			return true
+		_:
+			return false

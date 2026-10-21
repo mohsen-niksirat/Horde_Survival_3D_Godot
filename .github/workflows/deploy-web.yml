@@ -53,9 +53,8 @@ jobs:
           mkdir -p build/web
           godot --headless --export-release "Web" build/web/index.html
 
-      - name: Deploy shell page + service worker
+      - name: Deploy service worker
         run: |
-          cp web/index.html build/web/index_shell.html || true
           # Stamp the SW cache name with the commit SHA so each deploy
           # invalidates the engine cache — otherwise clients would keep
           # serving the previous build's wasm/pck forever.
@@ -65,6 +64,29 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
+
+      - name: Package the itch.io build
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/itch
+          cp -r build/web/. build/itch/
+          # itch.io serves the build from an iframe wrapper; the exported
+          # entry point has to be renamed so it does not shadow the wrapper.
+          mv build/itch/index.html build/itch/game.html
+          cp web/itch/itch.html build/itch/index.html
+          # The service worker is stamped per deploy for GitHub Pages and is
+          # not needed on itch.io.
+          rm -f build/itch/sw.js
+          (cd build/itch && zip -qr ../horde-survival-3d-itch.zip .)
+          echo "itch.io package: build/horde-survival-3d-itch.zip"
+
+      - name: Upload itch.io package
+        uses: actions/upload-artifact@v4
+        with:
+          name: horde-survival-3d-itch
+          path: build/horde-survival-3d-itch.zip
+          retention-days: 30
 
   deploy:
     needs: build

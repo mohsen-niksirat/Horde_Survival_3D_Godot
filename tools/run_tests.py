@@ -6,6 +6,26 @@ from pathlib import Path
 import argparse, json, os, re, subprocess, tempfile, time
 
 
+def _isolated_env(save_dir):
+    """Point Godot's user:// at a throwaway directory.
+
+    Godot resolves user:// differently per platform:
+      - Windows: %APPDATA%\\Godot\\app_userdata\\<project>
+      - Linux:   $XDG_DATA_HOME/godot/app_userdata/<project>
+      - macOS:   ~/Library/Application Support/Godot/app_userdata/<project>
+    Setting only XDG_DATA_HOME leaves Windows tests sharing one save file,
+    which makes results depend on test execution order.
+    """
+    env = dict(os.environ, GODOT_SILENCE_ROOT_WARNING='1')
+    env['XDG_DATA_HOME'] = save_dir
+    env['XDG_CONFIG_HOME'] = save_dir
+    env['XDG_CACHE_HOME'] = save_dir
+    env['APPDATA'] = save_dir
+    env['LOCALAPPDATA'] = save_dir
+    env['USERPROFILE'] = save_dir
+    return env
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--godot', default='godot')
@@ -20,7 +40,7 @@ def main():
     for test in tests:
         start = time.monotonic()
         with tempfile.TemporaryDirectory() as save:
-            env = dict(os.environ, XDG_DATA_HOME=save, GODOT_SILENCE_ROOT_WARNING='1')
+            env = _isolated_env(save)
             try:
                 # Use shell=True or bash fallback in case godot is a wrapper shell script without a shebang
                 cmd = [args.godot, '--headless', '--path', str(root), '--script', test]

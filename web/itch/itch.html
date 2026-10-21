@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<title>HordeSurvival 3D</title>
+	<style>
+		:root { --bg: #1a1c26; }
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		html, body {
+			width: 100%; height: 100%;
+			background: var(--bg);
+			overflow: hidden;
+		}
+		#frame {
+			position: absolute; inset: 0;
+			display: flex; align-items: center; justify-content: center;
+		}
+		#game {
+			width: 100%; height: 100%;
+			border: 0;
+			display: block;
+			background: var(--bg);
+		}
+		#fallback {
+			color: #e8eaf0;
+			font-family: 'Segoe UI', system-ui, sans-serif;
+			text-align: center;
+			padding: 24px;
+			line-height: 1.6;
+		}
+		#fallback a { color: #6bb6ff; }
+	</style>
+</head>
+<body>
+	<div id="frame">
+		<iframe id="game" src="game.html" allow="autoplay; fullscreen" allowfullscreen></iframe>
+	</div>
+	<script>
+		// itch.io serves the build inside an iframe. If the exported file is
+		// missing (wrong upload layout), show a readable message instead of a
+		// blank screen.
+		var frame = document.getElementById('game');
+		var failed = false;
+		frame.addEventListener('load', function () {
+			try {
+				var doc = frame.contentDocument;
+				if (doc && doc.body && doc.body.innerHTML.trim() === '') {
+					failed = true;
+				}
+			} catch (e) { /* cross-origin: the itch sandbox, nothing to check */ }
+		});
+		frame.addEventListener('error', function () { failed = true; });
+		setTimeout(function () {
+			if (failed) {
+				document.getElementById('frame').innerHTML =
+					'<div id="fallback">The game files did not load.<br>' +
+					'Make sure the exported <b>index.html</b> was uploaded as <b>game.html</b> ' +
+					'next to this page.<br><br>' +
+					'<a href="https://github.com/mohsen-niksirat/Horde_Survival_3D_Godot">Report this</a></div>';
+			}
+		}, 8000);
+	</script>
+</body>
+</html>

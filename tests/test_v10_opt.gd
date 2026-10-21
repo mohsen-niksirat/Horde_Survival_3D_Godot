@@ -30,7 +30,13 @@ func _initialize() -> void:
 	var f := FileAccess.open("res://docs/BUILD_ANDROID.md", FileAccess.READ)
 	var content := f.get_as_text()
 	f.close()
-	_check(content.contains("V10"), "Android guide updated for V10")
+	# The guide must document the current Android support, not a stale
+	# milestone tag: preset, safe area, back button, lifecycle, CI build.
+	_check(content.contains("Android export preset") or content.contains("## Export preset"),
+		"Android guide documents the export preset")
+	_check(content.contains("Safe-area"), "Android guide documents safe-area support")
+	_check(content.contains("back button"), "Android guide documents the back button")
+	_check(content.contains("build-android.yml"), "Android guide documents the CI workflow")
 
 	if failures == 0:
 		print("V10_OPT_PASS")

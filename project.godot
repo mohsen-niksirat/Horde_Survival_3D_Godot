@@ -32,6 +32,8 @@ PoolManager="*res://scripts/utilities/pool_manager.gd"
 SaveManager="*res://scripts/save/save_manager.gd"
 AudioManager="*res://scripts/audio/audio_manager.gd"
 PerformanceManager="*res://scripts/performance/performance_manager.gd"
+Localization="*res://scripts/core/localization.gd"
+Analytics="*res://scripts/core/analytics.gd"
 
 [display]
 

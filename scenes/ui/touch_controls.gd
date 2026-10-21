@@ -29,6 +29,21 @@ func _ready() -> void:
 	EventBus.game_state_changed.connect(_on_game_state_changed)
 	zoom_in.pressed.connect(func(): InputManager.add_zoom_delta(-BUTTON_ZOOM_STEP))
 	zoom_out.pressed.connect(func(): InputManager.add_zoom_delta(BUTTON_ZOOM_STEP))
+	# Android notch / punch-hole: the zoom buttons sit in the bottom-right
+	# corner, exactly where a cutout or gesture bar lives.
+	get_viewport().size_changed.connect(_apply_safe_area)
+	call_deferred("_apply_safe_area")
+
+## Inset the touch overlay to the display safe area. The overlay root is
+## full-rect, so this pulls the zoom buttons clear of the cutout.
+func _apply_safe_area() -> void:
+	if not is_inside_tree():
+		return
+	var pads: Vector4 = SafeArea.insets_for(self)
+	offset_left = pads.x
+	offset_top = pads.y
+	offset_right = -pads.z
+	offset_bottom = -pads.w
 
 func _on_game_state_changed(new_state: int, _old: int) -> void:
 	if new_state != GameManager.State.PLAYING and new_state != GameManager.State.BOSS:

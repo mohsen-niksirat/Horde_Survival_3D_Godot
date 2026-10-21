@@ -132,6 +132,119 @@ entity caps. The plan below targets **web load/runtime efficiency** and
 - **Tests:** `tests/test_v20a_perf.gd` (new, 12 checks: deferred menu builders, query
   reuse, orb recycle guard, boss-bar gate, auto-grace).
 
+## V24A update (2026-10-21) — Android port (Phase 1 of the improvement brief)
+
+The improvement brief's Phase 1 (Android) is now implemented:
+
+- **Export preset:** `Android` added to `export_presets.cfg` — ARM64 enabled,
+  ARMv7 declared but off by default, package `com.mohsenhorde.hordesurvival3d`,
+  Compatibility renderer, landscape + immersive, no runtime permissions.
+- **Mobile defaults:** `PerformanceManager.is_mobile_platform()` recognises
+  Android/iOS; a fresh install still starts on Very Low (cheapest tier) and the
+  player can raise it in Settings.
+- **Safe area:** `scripts/ui/safe_area.gd` converts
+  `DisplayServer.get_display_safe_area()` (screen pixels) into viewport-space
+  insets and applies them to the HUD root and the touch overlay, so the notch /
+  punch-hole / gesture bar never overlaps the HUD or the zoom buttons.
+- **Back button:** `GameManager.handle_back_request()` — pause in a run, resume
+  from pause, close the level-up overlay, return to the menu from a result
+  screen, close the topmost open menu panel, and finally ask for exit
+  confirmation on the main menu (`EventBus.exit_confirm_requested`).
+- **App lifecycle:** `NOTIFICATION_APPLICATION_PAUSED` auto-pauses the run and
+  flushes `SaveManager` synchronously, so a phone call or task switch cannot
+  lose run progress.
+- **Input abstraction:** touch Dash/Ability buttons now report their held
+  state through `InputManager.set_touch_action()` instead of only firing on
+  press.
+- **CI:** `.github/workflows/build-android.yml` imports assets headless, runs
+  the headless suite and exports a debug-signed APK, uploaded as the
+  `HordeSurvival3D-debug-apk` artifact.
+- **Docs:** `docs/BUILD_ANDROID.md` rewritten (preset table, local build, CI
+  build, release/keystore plan, mobile checklist).
+- **Tests:** `tests/test_v24a_android.gd` (35 checks) — preset contents, safe
+  area math, back routing, lifecycle pause+save flush, menu panel closing.
+
+## V27A update (2026-10-21) — release plumbing (Phase 4)
+
+- **In-game feedback:** the Settings menu gained a **SEND FEEDBACK** button
+  that opens the GitHub issue form in the player's browser
+  (`scripts/utilities/external_links.gd` — Web opens a tab, Android/desktop
+  use the OS URL handler).
+- **Issue templates:** `.github/ISSUE_TEMPLATE/feedback.yml` (structured
+  feedback with category / platform / quality dropdowns) and
+  `bug_report.yml`.
+- **CHANGELOG.md** created, following Keep a Changelog + Semantic Versioning.
+- **Tag workflow:** `.github/workflows/tag-release.yml` creates a GitHub
+  release from a `v*` tag and refuses to tag when `CHANGELOG.md` has no
+  matching `## [vX.Y.Z]` section.
+- **Independent mute:** `AudioManager` gained `music_muted` / `sfx_muted`
+  flags with their own Settings toggles, so the player can silence the
+  soundtrack without losing the combat SFX.
+- **Tutorial:** a Dash step was added to both the desktop and touch step
+  lists (the key moved from Space to F).
+- **Tests:** `tests/test_v27a_release.gd` (feedback link, changelog format,
+  semver in the export preset).
+
+## V26A update (2026-10-21) — weapon balance pass (Phase 3)
+
+- **DPS table:** `tools/balance_table.gd` prints the tier-by-tier damage
+  table for every weapon straight from the `.tres` data. The model lives in
+  `scripts/weapons/weapon_balance.gd` so the tool, the guard test and the
+  game can never disagree. Documented in `docs/WEAPON_BALANCE.md`.
+- **Root cause found:** only `projectile` and `pierce` weapons receive
+  `tier_projectile_bonus` from the tier curves — the AoE path fires a single
+  strike and the orbit path uses the shield count. Lightning therefore grew
+  1.6x by tier 5 while every other weapon grew ~4.8x and it ended up the
+  weakest weapon in the pool; Thunderstorm (its evolution) was only +20%
+  over its base weapon while every other evolution grants +110% to +567%.
+- **Data fix (no hardcoding):** `lightning.tres`, `thunderstorm.tres` and
+  `orbiting_shield.tres` received custom `tier_damage_mult` curves. The
+  pickable pool now sits in a 2.2x tier-5 DPS spread (was 4.5x).
+- **Guard test:** `tests/test_v26a_balance_table.gd` locks the table in
+  place — monotonic damage, a bounded pool spread, a growth floor, and
+  "no evolution is ever a downgrade".
+- **Gotcha documented:** a typed `Array[float]` export must be written as
+  `Array[float]([...])` in a `.tres`; `PackedFloat32Array(...)` is silently
+  ignored and the property keeps its default.
+
+## V25A update (2026-10-21) — save robustness (Phase 2)
+
+- **New test** `tests/test_v25a_save_robust.gd` (25 checks): round-trip,
+  legacy migration (gold / achievements / settings survive, missing keys are
+  filled from the defaults, the legacy quality scale is preserved and
+  translated by PerformanceManager), and recovery from a corrupt, truncated,
+  empty, wrong-shaped or missing save file.
+- **`SaveManager.load_game()`** now uses the `JSON` instance API instead of
+  `JSON.parse_string()`. The static helper pushes an engine `ERROR:` for
+  malformed input, which polluted the log on every device with a damaged
+  save; the instance API returns an error code, so a corrupt file is only a
+  warning.
+- **Test isolation bug fixed:** `tools/run_tests.py` only set
+  `XDG_DATA_HOME`, which is a Linux path — on Windows every test shared the
+  same `user://` save file, so results depended on execution order (this is
+  what made `test_v12_depth.gd` fail intermittently). The runner now
+  isolates the save directory on every platform.
+
+## V28A update (2026-10-21) — localization (Phase 3)
+
+- **Infrastructure:** `scripts/core/localization.gd` is a new autoload that
+  parses `locale/<locale>.csv` at runtime and registers a `Translation` per
+  locale. Runtime parsing (instead of Godot's CSV importer) is deliberate:
+  the importer generates per-column `.translation` artifacts whose paths
+  differ between the editor and an exported build, so the catalogues would
+  only work in one of them.
+- **Catalogues:** `locale/en.csv` and `locale/fa.csv` (61 keys each) cover
+  the main menu, the settings panel, the HUD hints, the tutorial titles, the
+  meta shop, the character select and the achievement panel.
+- **Language switcher:** a button in the Settings panel cycles EN <-> FA and
+  persists the choice.
+- **RTL:** Persian flips the menu, the settings panel and the tutorial
+  overlay to `LAYOUT_DIRECTION_RTL`.
+- **Tests:** `tests/test_v28a_localization.gd` (22 checks) — the autoload
+  API, catalogue parity (same keys, no untranslated entries), locale
+  switching, the English fallback for unsupported locales, RTL detection and
+  the language button.
+
 ## Deploy contract (every phase)
 1. Run the headless suite (local Godot 4.7.2).
 2. Stage only intended files; commit with `fix/perf/feat/docs` prefix.

@@ -125,6 +125,11 @@ func _ready() -> void:
 	quality_changed.emit(quality)
 	_apply_render_settings()
 
+## True on Android/iOS. Used to pick safe defaults (Very Low) and to keep
+## the mobile render budget honest.
+func is_mobile_platform() -> bool:
+	return OS.get_name() == "Android" or OS.get_name() == "iOS" or OS.has_feature("mobile")
+
 func _migrate_legacy_quality(old_q: int) -> int:
 	# Legacy: 0=LOW 1=MED 2=HIGH 3=Auto → new 1=LOW 2=MED 3=HIGH 5=Auto
 	match old_q:

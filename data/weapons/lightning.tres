@@ -20,4 +20,10 @@ homing = false
 status_effect = ""
 status_duration = 0.0
 status_damage = 0.0
+; Balance (V26A): the AoE path fires a single strike, so lightning never
+; receives `tier_projectile_bonus` like every other weapon type. Without a
+; custom damage curve it grew 1.6x by tier 5 while the rest grew 4.8x and
+; it became the weakest weapon in the pool. This curve restores the ~4.8x
+; growth so lightning keeps its tier-1 position in the roster.
+tier_damage_mult = Array[float]([1.0, 1.4, 2.0, 3.0, 4.5])
 projectile_scene = "res://scenes/weapons/LightningStrike.tscn"

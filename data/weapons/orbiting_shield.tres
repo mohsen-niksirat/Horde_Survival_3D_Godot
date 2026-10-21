@@ -20,4 +20,8 @@ homing = false
 status_effect = ""
 status_duration = 0.0
 status_damage = 0.0
+; Balance (V26A): orbit weapons get the shield-count bonus, but their single
+; target DPS is divided by the orbit period, so they stayed behind the
+; projectile weapons (2.88x growth vs 4.8x). This curve matches the rest.
+tier_damage_mult = Array[float]([1.0, 1.2, 1.5, 1.9, 2.4])
 projectile_scene = "res://scenes/weapons/OrbitShield.tscn"

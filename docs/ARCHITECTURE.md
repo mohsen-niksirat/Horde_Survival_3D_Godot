@@ -41,6 +41,7 @@ Horde_Survival_3D/
 │   ├── weapons/  enemies/  upgrades/  relics/  pets/  abilities/  characters/
 ├── assets/               # glb models, textures, audio, fonts
 │   ├── characters/  enemies/  environment/  vfx/  ui/  audio/
+├── locale/               # translation catalogues (en.csv, fa.csv)
 ├── web/                  # export shell: loading page, PWA manifest, fallback
 ├── docs/
 └── .github/workflows/deploy-web.yml
@@ -157,6 +158,32 @@ LEVEL_UP/PAUSED implemented via `get_tree().paused` + `process_mode` whitelists 
 - Godot 4 export preset `Web` (Compatibility, `export-web` pipeline).
 - `.github/workflows/deploy-web.yml`: checkout → godot-build-tools/godot export web → upload artifact → deploy `web/` + build to GitHub Pages (`gh-pages` or actions-deploy-pages).
 - `web/`: `index.html` loading shell with progress bar, "Click to Play" (user gesture → fullscreen + audio unlock), WebGL-unsupported fallback, PWA manifest + service worker (cache shell only; gameplay assets cached by browser).
+
+### 2.11a Android deployment
+
+- Godot 4 export preset `Android` (Compatibility renderer, ARM64, landscape, immersive mode).
+- `.github/workflows/build-android.yml`: checkout → import assets headless → headless test suite → `godot --headless --export-debug "Android"` → upload the debug APK as a workflow artifact.
+- `scripts/ui/safe_area.gd`: converts `DisplayServer.get_display_safe_area()` (screen pixels) into viewport-space insets and applies them to the HUD and the touch overlay, keeping widgets clear of notches and punch-holes.
+- Back button: `InputManager._notification(NOTIFICATION_WM_GO_BACK_REQUEST)` → `GameManager.handle_back_request()` — pauses during a run, steps back in sub-menus, and asks for exit confirmation on the main menu.
+- App lifecycle: `NOTIFICATION_APPLICATION_PAUSED` pauses the run and flushes `SaveManager` synchronously, so a phone call or task switch cannot lose progress.
+
+### 2.11b Release plumbing
+
+- `CHANGELOG.md` — Keep a Changelog format, Semantic Versioning.
+- `scripts/utilities/external_links.gd` — one place that opens external URLs
+  (Web tab, Android/desktop OS handler); the Settings menu uses it for the
+  "SEND FEEDBACK" button.
+- `.github/ISSUE_TEMPLATE/` — structured feedback and bug forms.
+- `.github/workflows/tag-release.yml` — creates a GitHub release from a `v*`
+  tag and refuses to tag when the changelog has no matching section.
+- `scripts/weapons/weapon_balance.gd` — the single source of truth for the
+  weapon DPS model, shared by `tools/balance_table.gd` (the printed table),
+  `tests/test_v26a_balance_table.gd` (the guard) and the design docs.
+- `scripts/core/localization.gd` — parses `locale/<locale>.csv` at runtime and
+  registers a `Translation` per locale. Runtime parsing keeps the editor and
+  the exported build identical, which Godot's CSV importer does not
+  guarantee. `locale/en.csv` and `locale/fa.csv` ship with the game;
+  Persian flips the UI to right-to-left.
 
 ### 2.12 Testing strategy
 

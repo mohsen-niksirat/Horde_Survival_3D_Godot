@@ -22,6 +22,20 @@ extends Control
 var _objective_label: Label
 
 ## V14 onboarding: rotating contextual hints during the first 90 seconds.
+## Keys into the locale catalogue (locale/<locale>.csv).
+const HINT_KEYS := [
+	"HINT_MOVE",
+	"HINT_AUTO_ATTACK",
+	"HINT_XP",
+	"HINT_GOLD",
+	"HINT_ABILITIES",
+	"HINT_HEARTS",
+	"HINT_RELICS",
+	"HINT_WIN",
+	"HINT_PAUSE",
+	"HINT_ZOOM",
+]
+## English fallback used when a key is missing from the catalogue.
 const HINTS := [
 	"Move: WASD / joystick (left side)",
 	"Weapons fire automatically - stay close to enemies",
@@ -85,6 +99,11 @@ func _on_achievement_unlocked(_id: String, title: String, gold: int) -> void:
 	AudioManager.play_game_sfx("level_up")
 
 func _ready() -> void:
+	# Android notch / punch-hole: keep every HUD element inside the display
+	# safe area. The HUD root is full-rect, so insetting it shifts every
+	# child inward in one move.
+	get_viewport().size_changed.connect(_apply_safe_area)
+	call_deferred("_apply_safe_area")
 	# HUD buttons must never take keyboard focus — Space/Enter on a focused
 	# button re-triggers its action mid-gameplay (and Space conflicts with
 	# browser fullscreen on some setups).
@@ -177,6 +196,17 @@ func _refresh_weapon_icons() -> void:
 		icon.add_child(lv)
 		weapon_icons.add_child(icon)
 
+## Inset the HUD root to the display safe area (Android notch / punch-hole).
+## Idempotent: the HUD root is full-rect, so its children move inward with it.
+func _apply_safe_area() -> void:
+	if not is_inside_tree():
+		return
+	var pads: Vector4 = SafeArea.insets_for(self)
+	offset_left = pads.x
+	offset_top = pads.y
+	offset_right = -pads.z
+	offset_bottom = -pads.w
+
 func _on_pause_pressed() -> void:
 	AudioManager.play_game_sfx("ui_click")
 	if GameManager.state == GameManager.State.PLAYING or GameManager.state == GameManager.State.BOSS:
@@ -193,6 +223,8 @@ func bind_abilities(controller: Node) -> void:
 	ability2_button.pressed.connect(func(): ability2_button.release_focus(); _trigger_ability("time_freeze"))
 	# V16A: dash button mirrors the F-key dash (touch parity)
 	dash_button.text = "F Dash"
+	dash_button.button_down.connect(func(): InputManager.set_touch_action("dash", true))
+	dash_button.button_up.connect(func(): InputManager.set_touch_action("dash", false))
 	dash_button.pressed.connect(_on_dash_pressed)
 
 func _on_dash_pressed() -> void:
@@ -426,9 +458,20 @@ func _process_hints(delta: float) -> void:
 	_hint_time += delta
 	if _hint_time >= 11.0:
 		_hint_time = 0.0
-		_hint_index = (_hint_index + 1) % HINTS.size()
-	hint_label.text = HINTS[_hint_index]
+		_hint_index = (_hint_index + 1) % HINT_KEYS.size()
+	hint_label.text = _hint_text(_hint_index)
 	hint_label.modulate.a = clampf(1.0 - (_hint_time - 9.0) / 2.0, 0.0, 1.0) if _hint_time > 9.0 else 1.0
+
+## Localized hint text, falling back to the English string when the key is
+## not in the catalogue.
+func _hint_text(index: int) -> String:
+	if index < 0 or index >= HINT_KEYS.size():
+		return ""
+	var key: String = HINT_KEYS[index]
+	var text := tr(key)
+	if text == key:
+		return HINTS[index] if index < HINTS.size() else key
+	return text
 
 func _on_combo(count: int, multiplier: float) -> void:
 	if count <= 0:
