@@ -39,7 +39,9 @@ def main():
     results = []
     for test in tests:
         start = time.monotonic()
-        with tempfile.TemporaryDirectory() as save:
+        # Windows can keep the redirected godot.log handle open for a moment
+        # after the process exits (AV/indexer). Never let cleanup hide results.
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as save:
             env = _isolated_env(save)
             try:
                 # Use shell=True or bash fallback in case godot is a wrapper shell script without a shebang

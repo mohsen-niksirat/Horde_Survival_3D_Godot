@@ -278,6 +278,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.physical_keycode == KEY_F3:
 			_debug_enabled = not _debug_enabled
 			debug_label.visible = _debug_enabled
+			PerformanceManager.set_telemetry_enabled(_debug_enabled)
 			get_viewport().set_input_as_handled()
 			return
 		# F4: session perf logger for the release-readiness QA pass.

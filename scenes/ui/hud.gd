@@ -64,6 +64,22 @@ var _fps_accum: float = 0.0
 const BOSS_BAR_CHECK_INTERVAL := 0.2
 var boss_check_accum: float = 0.0
 
+## V30A: HUD text was reshaped 8+ times per rendered frame (timer twice,
+## kills, HP, level, ability buttons, dash, hints) and theme overrides force a
+## full re-style. Text only needs ~10 Hz, and only when the value changed.
+const UI_REFRESH_INTERVAL := 0.1
+var _ui_accum: float = 0.0
+var _last_timer_text: String = ""
+var _last_kills_text: String = ""
+var _last_hp_text: String = ""
+var _last_level_text: String = ""
+var _last_timer_warning: int = -1
+var _last_ability_text: Array = ["", ""]
+var _ability_ready_state: Array = [-1, -1]
+var _last_dash_text: String = ""
+var _dash_ready_state: int = -1
+var _hint_shown: bool = false
+
 const TIER_COLORS := {
 	"BRONZE": Color(0.8, 0.65, 0.4),
 	"SILVER": Color(0.85, 0.87, 0.9),
@@ -166,6 +182,7 @@ func _show_toast(text: String) -> void:
 	hint_label.modulate.a = 1.0
 	_toast_left = 3.5
 	_hints_active = false
+	_hint_shown = false
 
 ## V7: data-driven weapon icons with level pips.
 func _refresh_weapon_icons() -> void:
@@ -307,83 +324,134 @@ func _process_objective(delta: float) -> void:
 	_objective_label.text = obj_text
 
 func _process(delta: float) -> void:
-	timer_label.text = RunManager.get_time_string()
+	# Cheap per-frame work: fading hints, throttled objective/boss reads.
 	_process_objective(delta)
-	# R9: standard runs show remaining time to victory — but only for
-	# survive_time win rules (kill_boss/kill_count missions have no time target).
+	_process_hints(delta)
+	_process_boss_bar()
+
+	_fps_accum += delta
+	if _fps_accum >= 0.5:
+		_fps_accum = 0.0
+		_update_fps_label()
+
+	if _player == null:
+		return
+	_process_bars(delta)
+
+	_ui_accum += delta
+	if _ui_accum < UI_REFRESH_INTERVAL:
+		return
+	_ui_accum = 0.0
+	_refresh_run_labels()
+	_refresh_ability_buttons()
+	_refresh_dash_button()
+
+## Bars animate every frame (single-quad redraws are cheap), but skip writes
+## when the eased value has already visually converged.
+func _process_bars(delta: float) -> void:
+	var max_hp: float = _player.health.max_hp
+	if not is_equal_approx(hp_bar.max_value, max_hp):
+		hp_bar.max_value = max_hp
+	var hp_target: float = _player.health.current_hp
+	var hp_next := lerpf(hp_bar.value, hp_target, minf(10.0 * delta, 1.0))
+	if absf(hp_next - hp_bar.value) > 0.02:
+		hp_bar.value = hp_next
+
+	var xp_max: float = _player.experience.xp_to_next
+	if not is_equal_approx(xp_bar.max_value, xp_max):
+		xp_bar.max_value = xp_max
+	var xp_next := lerpf(xp_bar.value, _player.experience.current_xp, minf(10.0 * delta, 1.0))
+	if absf(xp_next - xp_bar.value) > 0.02:
+		xp_bar.value = xp_next
+
+## 10 Hz text refresh; every label only re-shapes when its string changed.
+func _refresh_run_labels() -> void:
+	var timer_text := RunManager.get_time_string()
+	var warn := 0
 	var mission = RunManager.mission
 	var timed_win: bool = mission == null or mission.win_rule == "survive_time"
 	if not RunManager.endless and RunManager.is_running and timed_win:
 		var left: float = maxf(RunManager.target_duration - RunManager.elapsed_time, 0.0)
-		var lm := int(left) / 60
-		var ls := int(left) % 60
-		timer_label.text = "%s  (win %d:%02d)" % [RunManager.get_time_string(), lm, ls]
+		timer_text = "%s  (win %d:%02d)" % [timer_text, int(left) / 60, int(left) % 60]
 		if left < 60.0:
-			timer_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
-		else:
-			timer_label.add_theme_color_override("font_color", Color.WHITE)
-	else:
-		timer_label.add_theme_color_override("font_color", Color.WHITE)
+			warn = 1
+	if timer_text != _last_timer_text:
+		_last_timer_text = timer_text
+		timer_label.text = timer_text
+	if warn != _last_timer_warning:
+		_last_timer_warning = warn
+		timer_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2) if warn == 1 else Color.WHITE)
 	# R18: run phase label under timer pressure
 	if RunManager.is_running:
-		var m := RunManager.elapsed_time / 60.0
+		var mins := RunManager.elapsed_time / 60.0
 		var phase := "EARLY"
-		if m >= 13.0:
+		if mins >= 13.0:
 			phase = "FINALE"
-		elif m >= 10.0:
+		elif mins >= 10.0:
 			phase = "LATE"
-		elif m >= 5.0:
+		elif mins >= 5.0:
 			phase = "MID"
-		if kills_label != null:
-			kills_label.text = "%d kills  ·  %s" % [RunManager.kills, phase]
-	_fps_accum += delta
-	if _fps_accum >= 0.25:
-		_fps_accum = 0.0
-		_update_fps_label()
+		var kills_text := "%d kills  ·  %s" % [RunManager.kills, phase]
+		if kills_text != _last_kills_text:
+			_last_kills_text = kills_text
+			kills_label.text = kills_text
 	if _player == null:
 		return
-	# V7: bars ease toward their true values (animated feel)
-	var hp_target: float = _player.health.current_hp
-	hp_bar.max_value = _player.health.max_hp
-	hp_bar.value = lerpf(hp_bar.value, hp_target, minf(10.0 * delta, 1.0))
-	hp_label.text = "%d / %d" % [int(_player.health.current_hp), int(_player.health.max_hp)]
-	xp_bar.max_value = _player.experience.xp_to_next
-	xp_bar.value = lerpf(xp_bar.value, _player.experience.current_xp, minf(10.0 * delta, 1.0))
-	level_label.text = "Lv %d" % _player.experience.level
-	_process_hints(delta)
-	_process_boss_bar()
+	var hp_text := "%d / %d" % [int(_player.health.current_hp), int(_player.health.max_hp)]
+	if hp_text != _last_hp_text:
+		_last_hp_text = hp_text
+		hp_label.text = hp_text
+	var lv_text := "Lv %d" % _player.experience.level
+	if lv_text != _last_level_text:
+		_last_level_text = lv_text
+		level_label.text = lv_text
 
-	# Ability cooldown indicators
-	if _ability_controller != null:
-		for ab in _ability_controller.abilities:
-			var data = ab["data"]
-			var ratio: float = _ability_controller.get_cooldown_ratio(data.id)
-			var btn := ability1_button if data.id == "meteor_strike" else ability2_button
-			btn.modulate = Color(1, 1, 1, 0.4 if ratio > 0.0 else 1.0)
-			# R17: ready ability glows green; S4: touch-readier contrast
-			if ratio <= 0.0:
+## Ability cooldowns: only restyle when ready→cooling (or back), and only
+## rewrite the countdown when the rounded value changes.
+func _refresh_ability_buttons() -> void:
+	if _ability_controller == null:
+		return
+	for ab in _ability_controller.abilities:
+		var data = ab["data"]
+		var is_meteor: bool = data.id == "meteor_strike"
+		var btn: Button = ability1_button if is_meteor else ability2_button
+		var idx: int = 0 if is_meteor else 1
+		var ratio: float = _ability_controller.get_cooldown_ratio(data.id)
+		var ready_state: int = 0 if ratio > 0.0 else 1
+		if ready_state != _ability_ready_state[idx]:
+			_ability_ready_state[idx] = ready_state
+			if ready_state == 1:
 				btn.modulate = Color(0.75, 1.0, 0.75, 1.0)
 				btn.add_theme_color_override("font_color", Color(0.05, 0.25, 0.08))
 			else:
+				btn.modulate = Color(1, 1, 1, 0.4)
 				btn.add_theme_color_override("font_color", Color(0.75, 0.78, 0.85))
-			# R5: show remaining seconds while cooling down
-			var base := "Q Meteor" if data.id == "meteor_strike" else "E Freeze"
-			if ratio > 0.0:
-				var left: float = float(ab.get("cooldown_left", 0.0))
-				btn.text = "%s %.0f" % [base, ceil(left)]
-			else:
-				btn.text = base
+		var base := "Q Meteor" if is_meteor else "E Freeze"
+		var text := base
+		if ratio > 0.0:
+			text = "%s %.0f" % [base, ceil(float(ab.get("cooldown_left", 0.0)))]
+		if text != _last_ability_text[idx]:
+			_last_ability_text[idx] = text
+			btn.text = text
 
-	# V16A: dash cooldown indicator (Space / touch button)
-	if dash_button != null and _player != null and is_instance_valid(_player):
-		var dr: float = _player.dash.get_cooldown_ratio()
-		dash_button.modulate = Color(1, 1, 1, 0.4 if dr > 0.0 else 1.0)
-		if dr <= 0.0:
+## Dash cooldown indicator (F key / touch button). Restores "F Dash" when ready.
+func _refresh_dash_button() -> void:
+	if dash_button == null or _player == null or not is_instance_valid(_player):
+		return
+	var dr: float = _player.dash.get_cooldown_ratio()
+	var ready_state: int = 0 if dr > 0.0 else 1
+	if ready_state != _dash_ready_state:
+		_dash_ready_state = ready_state
+		if ready_state == 1:
 			dash_button.modulate = Color(0.75, 1.0, 0.75, 1.0)
 			dash_button.add_theme_color_override("font_color", Color(0.05, 0.25, 0.08))
 		else:
+			dash_button.modulate = Color(1, 1, 1, 0.4)
 			dash_button.add_theme_color_override("font_color", Color(0.75, 0.78, 0.85))
-			dash_button.text = "%.1f" % (_player.dash.cooldown_left)
+	var text: String = "F Dash" if dr <= 0.0 else "%.1f" % _player.dash.cooldown_left
+	if text != _last_dash_text:
+		_last_dash_text = text
+		dash_button.text = text
 
 func _process_boss_bar() -> void:
 	if boss_bar == null:
@@ -444,22 +512,30 @@ func _process_hints(delta: float) -> void:
 	# Toast (relic pickup, synergy) always wins over onboarding hints
 	if _toast_left > 0.0:
 		_toast_left -= delta
-		hint_label.visible = true
+		if not hint_label.visible:
+			hint_label.visible = true
 		hint_label.modulate.a = clampf(_toast_left / 0.6, 0.0, 1.0)
+		_hint_shown = false
 		return
 	# Contextual onboarding: only during the first 90 seconds of a run
 	if not RunManager.is_running or RunManager.elapsed_time > 90.0:
 		if hint_label.visible and _toast_left <= 0.0:
 			hint_label.visible = false
 			_hints_active = false
+			_hint_shown = false
 		return
 	_hints_active = true
-	hint_label.visible = true
+	if not hint_label.visible:
+		hint_label.visible = true
 	_hint_time += delta
 	if _hint_time >= 11.0:
 		_hint_time = 0.0
 		_hint_index = (_hint_index + 1) % HINT_KEYS.size()
-	hint_label.text = _hint_text(_hint_index)
+		_hint_shown = false
+	# V30A: text shaping was happening every frame; only rewrite on change.
+	if not _hint_shown:
+		hint_label.text = _hint_text(_hint_index)
+		_hint_shown = true
 	hint_label.modulate.a = clampf(1.0 - (_hint_time - 9.0) / 2.0, 0.0, 1.0) if _hint_time > 9.0 else 1.0
 
 ## Localized hint text, falling back to the English string when the key is

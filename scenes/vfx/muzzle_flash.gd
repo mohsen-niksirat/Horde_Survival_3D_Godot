@@ -8,6 +8,9 @@ var _life: float = 0.0
 var _active: bool = false
 var _frames: int = 0
 
+func _ready() -> void:
+	set_process(false)
+
 func trigger(pos: Vector3, dir: Vector3) -> void:
 	global_position = pos
 	if dir.length_squared() > 0.01:
@@ -16,12 +19,14 @@ func trigger(pos: Vector3, dir: Vector3) -> void:
 	_frames = 0
 	_active = true
 	visible = true
+	set_process(true)
 	var light := get_node_or_null("Light")
 	if light is Light3D:
 		light.visible = PerformanceManager.prefer_dynamic_lights() if PerformanceManager != null else true
 
 func _process(delta: float) -> void:
 	if not _active:
+		set_process(false)
 		return
 	_frames += 1
 	# Clamp: one heavy hitch frame (asset load at first spawn) must not
@@ -33,3 +38,4 @@ func _process(delta: float) -> void:
 		_active = false
 		visible = false
 		scale = Vector3.ONE
+		set_process(false)

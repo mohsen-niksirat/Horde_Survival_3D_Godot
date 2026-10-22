@@ -34,6 +34,12 @@ var _active_tweens: Array = []
 var _last_phasing: bool = false
 var _elite_ring: MeshInstance3D = null
 var _spawn_target_scale: Vector3 = Vector3.ONE
+## V30A: a single reused flash tween + a 55 ms gate. Dense horde combat used
+## to allocate one Tween per material per hit and keep every one of them in
+## _active_tweens forever.
+const HIT_FLASH_INTERVAL_MS := 55
+var _last_hit_flash_ms: int = -1000
+var _flash_tween: Tween = null
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -57,16 +63,30 @@ func _on_damaged(event: DamageEvent) -> void:
 				Engine.time_scale = 1.0)
 
 func _hit_flash() -> void:
-	# Flash all archetype part materials white briefly
+	# Flash all archetype part materials white briefly. Rate-limited because
+	# multi-hit weapons + burn DoT could otherwise spawn hundreds of tweens/sec.
+	var now := Time.get_ticks_msec()
+	if now - _last_hit_flash_ms < HIT_FLASH_INTERVAL_MS:
+		return
+	_last_hit_flash_ms = now
+	if _flash_tween != null and _flash_tween.is_valid():
+		_flash_tween.kill()
+	_flash_tween = null
 	var was_phasing := _is_phasing()
+	var tween := create_tween()
+	_flash_tween = tween
+	var first := true
 	for mi in _flash_materials:
 		if is_instance_valid(mi):
 			mi.albedo_color = Color(3, 3, 3)
 			var restore: Color = mi.get_meta("base_color")
 			if was_phasing:
 				restore.a = 0.35
-			var tween := _track_tween(create_tween())
-			tween.tween_property(mi, "albedo_color", restore, 0.12)
+			if first:
+				tween.tween_property(mi, "albedo_color", restore, 0.12)
+				first = false
+			else:
+				tween.parallel().tween_property(mi, "albedo_color", restore, 0.12)
 
 func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: float, p_spd_scale: float) -> void:
 	data = p_data
@@ -84,6 +104,9 @@ func setup(p_data: EnemyData, p_player: Node3D, p_hp_scale: float, p_dmg_scale: 
 	_kill_tweens()
 	_clear_elite_ring()
 	elite = null
+	var elite_comp := get_node_or_null("EliteComponent")
+	if elite_comp != null and elite_comp.has_method("disable"):
+		elite_comp.disable()
 	health.damage_interceptor = Callable()
 	status.clear_all()
 
@@ -170,7 +193,9 @@ func make_elite(p_abilities: Array) -> void:
 func _physics_process(delta: float) -> void:
 	if not _alive or _player == null or not is_instance_valid(_player):
 		return
-	var _start := Time.get_ticks_usec()
+	var _start := 0
+	if PerformanceManager != null and PerformanceManager.telemetry_enabled:
+		_start = Time.get_ticks_usec()
 
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
@@ -195,7 +220,7 @@ func _physics_process(delta: float) -> void:
 			velocity.x = face_dir.x * 2.0
 			velocity.z = face_dir.z * 2.0
 			global_position += velocity * delta
-		if dist < 32.0:
+		if dist < 32.0 and _start > 0:
 			PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
 		return
 
@@ -256,7 +281,7 @@ func _physics_process(delta: float) -> void:
 		if phasing != _last_phasing:
 			_last_phasing = phasing
 			_set_phasing_alpha(phasing)
-	if dist < 32.0:
+	if dist < 32.0 and _start > 0:
 		PerformanceManager.report_system_time("enemy_ai", Time.get_ticks_usec() - _start)
 	# V20A: procedural micro-motion is the last per-enemy CPU cost in dense
 	# hordes — near enemies animate every frame, mid-range every 3rd physics
@@ -376,6 +401,9 @@ func despawn() -> void:
 	velocity = Vector3.ZERO
 	_kill_tweens()
 	_clear_elite_ring()
+	var elite_comp := get_node_or_null("EliteComponent")
+	if elite_comp != null and elite_comp.has_method("disable"):
+		elite_comp.disable()
 	elite = null
 
 func _track_tween(tween: Tween) -> Tween:
@@ -388,6 +416,11 @@ func _kill_tweens() -> void:
 		if t != null and t.is_valid():
 			t.kill()
 	_active_tweens.clear()
+	if _flash_tween != null:
+		if _flash_tween.is_valid():
+			_flash_tween.kill()
+		_flash_tween = null
+	_last_hit_flash_ms = -1000
 
 func _animate_elite_ring() -> void:
 	if _elite_ring == null or not is_instance_valid(_elite_ring):

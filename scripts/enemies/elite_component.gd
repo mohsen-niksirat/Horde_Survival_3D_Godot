@@ -18,6 +18,10 @@ var _heal_timer: float = 2.0
 var _shield_hp: float = 0.0
 var _shield_active: bool = false
 
+func _ready() -> void:
+	# Every enemy owns one of these; only promoted elites need per-frame work.
+	set_process(false)
+
 func setup(p_enemy: CharacterBody3D, p_player: Node3D, p_enemy_manager: Node, p_abilities: Array) -> void:
 	enemy = p_enemy
 	player = p_player
@@ -28,6 +32,17 @@ func setup(p_enemy: CharacterBody3D, p_player: Node3D, p_enemy_manager: Node, p_
 	if EliteAbilityC.SHIELDED in abilities:
 		_shield_hp = enemy.health.max_hp * 0.3
 	enemy.health.damage_interceptor = Callable(self, "on_damaged")
+	set_process(true)
+
+## Called when a pooled enemy is recycled back into a normal enemy.
+func disable() -> void:
+	set_process(false)
+	abilities.clear()
+	enemy = null
+	player = null
+	enemy_manager = null
+	_shield_hp = 0.0
+	_shield_active = false
 
 func _process(delta: float) -> void:
 	if enemy == null or not is_instance_valid(enemy) or not enemy.is_enemy_alive():

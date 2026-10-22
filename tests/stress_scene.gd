@@ -16,6 +16,8 @@ var _fed := 0
 func _ready() -> void:
 	# Force HIGH quality tier so caps don't interfere with measurement.
 	PerformanceManager.set_quality(PerformanceManager.Quality.ULTRA, false)
+	# This scene exists to profile systems — per-frame timing is opt-in now.
+	PerformanceManager.set_telemetry_enabled(true)
 
 	var em: Node = get_node_or_null("EnemyManager")
 	if em == null:

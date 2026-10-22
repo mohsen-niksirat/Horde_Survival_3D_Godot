@@ -17,6 +17,9 @@ func bind_player(player: Node) -> void:
 	EventBus.enemy_spawned.connect(_on_enemy_maybe_elite)
 	vignette.modulate.a = 0.0
 	flash.modulate.a = 0.0
+	# V30A: invisible full-screen quads still cost a blend pass on weak GPUs.
+	vignette.visible = false
+	flash.visible = false
 
 func _on_enemy_maybe_elite(enemy: Node) -> void:
 	if enemy != null and enemy.get("elite") != null and enemy.elite != null:
@@ -26,6 +29,7 @@ func _on_player_died() -> void:
 	# R7: hard red flash on death
 	flash.color = Color(0.9, 0.05, 0.05)
 	flash.modulate.a = 0.85
+	flash.visible = true
 
 func _process(delta: float) -> void:
 	# Low-HP pulsing vignette (<25%, softer so the arena stays readable)
@@ -39,21 +43,27 @@ func _process(delta: float) -> void:
 	else:
 		vignette.modulate.a = maxf(vignette.modulate.a - delta * 2.0, 0.0)
 	flash.modulate.a = maxf(flash.modulate.a - delta * 2.5, 0.0)
+	vignette.visible = vignette.modulate.a > 0.002
+	flash.visible = flash.modulate.a > 0.002
 
 func _on_level_up(_level: int) -> void:
 	flash.color = Color(1, 0.95, 0.7)
 	flash.modulate.a = 0.45
+	flash.visible = true
 
 func _on_boss_spawned(_boss: Node) -> void:
 	flash.color = Color(1, 0.45, 0.2)
 	flash.modulate.a = 0.5
+	flash.visible = true
 
 func _on_elite_spawned() -> void:
 	# R13: subtle gold flash when an elite enters the arena
 	flash.color = Color(1.0, 0.85, 0.3)
 	flash.modulate.a = 0.28
+	flash.visible = true
 
 ## V15B: phase-transition / victory flash uses the phase color.
 func _on_boss_phase_changed(_phase_name: String, color: Color) -> void:
 	flash.color = color
 	flash.modulate.a = 0.55
+	flash.visible = true

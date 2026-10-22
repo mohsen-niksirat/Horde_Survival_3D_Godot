@@ -13,6 +13,7 @@ var _active: bool = false
 
 func _ready() -> void:
 	visible = false
+	set_process(false)
 
 func trigger(pos: Vector3, color: Color) -> void:
 	global_position = Vector3(pos.x, 0.1, pos.z)
@@ -31,9 +32,11 @@ func trigger(pos: Vector3, color: Color) -> void:
 	_life = 0.0
 	_active = true
 	visible = true
+	set_process(true)
 
 func _process(delta: float) -> void:
 	if not _active:
+		set_process(false)
 		return
 	_life += delta
 	var t := _life / LIFETIME
@@ -46,3 +49,4 @@ func _process(delta: float) -> void:
 	if _life > LIFETIME:
 		_active = false
 		visible = false
+		set_process(false)

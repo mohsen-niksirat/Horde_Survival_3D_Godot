@@ -24,6 +24,9 @@ func _initialize() -> void:
 	# Quality.ULTRA == 4 (scene forces it so caps don't interfere)
 	_check(perf.quality == 4, "quality forced ULTRA (%d)" % perf.quality)
 
+	# V30A: per-system timing is opt-in now (F3 overlay / F4 capture).
+	perf.set_telemetry_enabled(true)
+
 	# Let systems tick for profiling data accumulation
 	for i in range(30):
 		await process_frame

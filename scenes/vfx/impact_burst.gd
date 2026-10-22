@@ -13,6 +13,7 @@ var _base_scale := 1.0
 
 func _ready() -> void:
 	visible = false
+	set_process(false)
 
 func trigger(pos: Vector3, color: Color, critical: bool = false) -> void:
 	global_position = pos + Vector3(0, 0.55, 0)
@@ -36,9 +37,11 @@ func trigger(pos: Vector3, color: Color, critical: bool = false) -> void:
 	visible = true
 	ring.scale = Vector3.ONE * (_base_scale * 0.35)
 	core.scale = Vector3.ONE * (_base_scale * 0.45)
+	set_process(true)
 
 func _process(delta: float) -> void:
 	if not _active:
+		set_process(false)
 		return
 	_life += minf(delta, LIFETIME * 0.5)
 	var t := clampf(_life / LIFETIME, 0.0, 1.0)
@@ -53,5 +56,6 @@ func _process(delta: float) -> void:
 	if _life >= LIFETIME:
 		_active = false
 		visible = false
+		set_process(false)
 		if light != null:
 			light.visible = false

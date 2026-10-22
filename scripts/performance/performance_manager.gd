@@ -65,6 +65,23 @@ const STRESS_CAP_SCALE := 0.65
 const DAMAGE_NUMBER_HEAVY_ENEMIES := 150
 const DAMAGE_NUMBER_HEAVY_SCALE := 0.4
 
+## V30A: dynamic resolution — trade pixels for frame rate on weak GPUs.
+## The tier scale is the ceiling; this ladder only ever lowers it, and it
+## reverts automatically when dropping pixels does not improve FPS (CPU-bound).
+const DYN_STEP := 0.08
+const DYN_MIN_SCALE := 0.4
+const DYN_LOW_FPS := 46
+const DYN_HIGH_FPS := 57
+const DYN_LOW_HOLD := 1.2
+const DYN_HIGH_HOLD := 3.0
+const DYN_CHECK_WINDOW := 1.5
+const DYN_NO_GAIN_RATIO := 1.12
+const DYN_COOLDOWN := 20.0
+const DYN_SETTLE_GRACE := 2.5
+
+## V30A: stress/Auto FPS checks at 5 Hz instead of every rendered frame.
+const STRESS_SAMPLE_INTERVAL := 0.2
+
 var quality: int = Quality.VERY_LOW
 var auto_mode: bool = false
 var stress_mode: bool = false
@@ -87,6 +104,32 @@ var active_enemies: int = 0
 var active_projectiles: int = 0
 var active_particles: int = 0
 
+## V30A: cached platform probes. OS.get_name()/DisplayServer lookups are not
+## free in WASM and the cap helpers were calling them dozens of times/second.
+var _web: bool = false
+var _touch: bool = false
+var _mobile: bool = false
+## Cached settings so per-hit cap calls never touch SaveManager dictionaries.
+var _reduced_vfx: bool = false
+
+## V30A: gameplay telemetry is off during normal play. The per-enemy dictionary
+## bookkeeping in report_system_time was pure overhead unless the F3 overlay or
+## F4 session logger was actually consuming it.
+var telemetry_enabled: bool = false
+
+## Dynamic resolution state (V30A).
+var dynamic_resolution: bool = true
+var _dyn_scale: float = 1.0
+var _dyn_low_time: float = 0.0
+var _dyn_high_time: float = 0.0
+var _dyn_grace: float = 0.0
+var _dyn_check_left: float = 0.0
+var _dyn_fps_before: float = 0.0
+var _dyn_fps_sum: float = 0.0
+var _dyn_fps_count: int = 0
+var _dyn_cooldown: float = 0.0
+var _stress_accum: float = 0.0
+
 ## Release-readiness session logger (opt-in, F4). Captures a 1s telemetry
 ## sample while a run is active so a real-device playthrough leaves a
 ## paste-able trace for the balance/perf pass. Zero cost when off.
@@ -106,6 +149,13 @@ var _fog_cache: Array = []
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Cache platform/settings probes once — cap helpers run on every spawn/hit.
+	_web = OS.get_name() == "Web"
+	_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS" or OS.has_feature("mobile")
+	_touch = DisplayServer.is_touchscreen_available() or _mobile
+	_reduced_vfx = bool(SaveManager.get_setting("reduced_vfx", false))
+	# Headless test runs have no real swap chain; leave the scale alone there.
+	dynamic_resolution = DisplayServer.get_name() != "headless"
 	_auto_grace_left = AUTO_STARTUP_GRACE
 	var saved = SaveManager.get_setting("quality", -1)
 	var scheme := int(SaveManager.get_setting("quality_schema", QUALITY_SCHEMA))
@@ -140,10 +190,10 @@ func _migrate_legacy_quality(old_q: int) -> int:
 		_: return Quality.VERY_LOW
 
 func _is_web() -> bool:
-	return OS.get_name() == "Web"
+	return _web
 
 func _is_touch() -> bool:
-	return DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
+	return _touch
 
 func _default_quality() -> int:
 	# Lowest for everyone on first run / auto start.
@@ -157,12 +207,17 @@ func quality_name() -> String:
 	return base
 
 func _apply_render_settings() -> void:
-	var enable_shadows := quality >= Quality.HIGH or (quality == Quality.MEDIUM and not _is_web())
+	# Mobile MEDIUM used to keep real-time shadows on because only "web" was
+	# excluded — that is the single most expensive toggle on weak phone GPUs.
+	var enable_shadows := quality >= Quality.HIGH or (quality == Quality.MEDIUM and not _is_web() and not _is_touch())
 	for sun in _get_suns(true):
 		if sun is DirectionalLight3D:
 			sun.shadow_enabled = enable_shadows
-	# Fog is free-ish but still fill-rate on weak GPUs
+	# Fog is fill-rate work: keep it for native desktop MEDIUM+, but only HIGH+
+	# on web/touch where every 3D fragment is precious.
 	var enable_fog := quality >= Quality.MEDIUM
+	if _is_web() or _is_touch():
+		enable_fog = quality >= Quality.HIGH
 	for env in _get_world_envs():
 		if env is WorldEnvironment and env.environment != null:
 			env.environment.fog_enabled = enable_fog
@@ -171,12 +226,111 @@ func _apply_render_settings() -> void:
 		return
 	var msaa := RenderingServer.VIEWPORT_MSAA_2X if (quality >= Quality.HIGH and not _is_web()) else RenderingServer.VIEWPORT_MSAA_DISABLED
 	RenderingServer.viewport_set_msaa_3d(vp.get_viewport_rid(), msaa)
-	var scale := _render_scale()
-	if scale < 1.0:
+	# Reset the adaptive ladder to the tier ceiling and give shaders a moment
+	# to settle before the first downscale decision.
+	_dyn_scale = _render_scale()
+	_reset_dynamic_state()
+	_dyn_grace = DYN_SETTLE_GRACE
+	_apply_render_scale(_dyn_scale)
+
+## Push a 3D render scale to the root viewport. Kept separate from
+## _apply_render_settings so the adaptive ladder can change it cheaply.
+func _apply_render_scale(scale: float) -> void:
+	var vp := get_viewport()
+	if vp == null:
+		return
+	if scale < 0.999:
 		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
 		vp.scaling_3d_scale = scale
 	else:
 		vp.scaling_3d_scale = 1.0
+
+## Current 3D render scale (tier ceiling adjusted by the adaptive ladder).
+func current_render_scale() -> float:
+	return _dyn_scale
+
+func _reset_dynamic_state() -> void:
+	_dyn_low_time = 0.0
+	_dyn_high_time = 0.0
+	_dyn_check_left = 0.0
+	_dyn_cooldown = 0.0
+	_dyn_fps_before = 0.0
+	_reset_dynamic_samples()
+
+func _reset_dynamic_samples() -> void:
+	_dyn_fps_sum = 0.0
+	_dyn_fps_count = 0
+
+func _set_dynamic_scale(value: float) -> void:
+	if absf(value - _dyn_scale) < 0.001:
+		return
+	_dyn_scale = value
+	_apply_render_scale(value)
+
+## Lowest scale the adaptive ladder may reach for a given tier ceiling.
+func _dynamic_floor(base: float) -> float:
+	return maxf(DYN_MIN_SCALE, base - 0.25)
+
+## Enable/disable adaptive resolution at runtime (settings/debug).
+func set_dynamic_resolution(enabled: bool) -> void:
+	dynamic_resolution = enabled
+	_reset_dynamic_state()
+	_set_dynamic_scale(_render_scale())
+
+## Adaptive resolution loop (called at STRESS_SAMPLE_INTERVAL cadence).
+## Drops pixels while FPS is low, climbs back when there is headroom, and
+## reverts + pauses if a downscale did not actually buy frames (CPU-bound).
+func _tick_dynamic_resolution(delta: float, fps: int) -> void:
+	if not dynamic_resolution:
+		return
+	if _dyn_cooldown > 0.0:
+		_dyn_cooldown = maxf(_dyn_cooldown - delta, 0.0)
+		return
+	var base := _render_scale()
+	if _dyn_scale > base:
+		_set_dynamic_scale(base)
+	if _dyn_grace > 0.0:
+		_dyn_grace = maxf(_dyn_grace - delta, 0.0)
+		return
+	if fps > 0:
+		_dyn_fps_sum += float(fps)
+		_dyn_fps_count += 1
+	if _dyn_check_left > 0.0:
+		_dyn_check_left -= delta
+		if _dyn_check_left <= 0.0:
+			var avg := _dyn_fps_sum / maxf(float(_dyn_fps_count), 1.0)
+			if avg < _dyn_fps_before * DYN_NO_GAIN_RATIO:
+				# Smaller buffers did not help — the bottleneck is CPU-side.
+				# Restore sharpness and stop probing for a while.
+				_set_dynamic_scale(base)
+				_dyn_cooldown = DYN_COOLDOWN
+			_dyn_low_time = 0.0
+			_dyn_high_time = 0.0
+			_reset_dynamic_samples()
+		return
+	if fps <= 0:
+		return
+	if fps < DYN_LOW_FPS:
+		_dyn_high_time = 0.0
+		_dyn_low_time += delta
+		if _dyn_low_time >= DYN_LOW_HOLD:
+			var bottom := _dynamic_floor(base)
+			if _dyn_scale > bottom + 0.001:
+				_dyn_fps_before = _dyn_fps_sum / maxf(float(_dyn_fps_count), 1.0)
+				_set_dynamic_scale(maxf(_dyn_scale - DYN_STEP, bottom))
+				_dyn_check_left = DYN_CHECK_WINDOW
+				_dyn_low_time = 0.0
+				_reset_dynamic_samples()
+	elif fps > DYN_HIGH_FPS:
+		_dyn_low_time = 0.0
+		_dyn_high_time += delta
+		if _dyn_high_time >= DYN_HIGH_HOLD and _dyn_scale < base - 0.001:
+			_set_dynamic_scale(minf(_dyn_scale + DYN_STEP, base))
+			_dyn_high_time = 0.0
+			_reset_dynamic_samples()
+	else:
+		_dyn_low_time = 0.0
+		_dyn_high_time = 0.0
 
 func _render_scale() -> float:
 	if _is_web():
@@ -225,9 +379,17 @@ func _get_world_envs() -> Array:
 	return _fog_cache
 
 func _process(delta: float) -> void:
+	# V30A: stress + adaptive resolution sample at 5 Hz. Engine FPS lookups and
+	# cap math do not need to run 60 times a second.
+	_stress_accum += delta
+	if _stress_accum >= STRESS_SAMPLE_INTERVAL:
+		var step := _stress_accum
+		_stress_accum = 0.0
+		var fps := Engine.get_frames_per_second()
+		_update_stress(step, fps)
+		_tick_dynamic_resolution(step, fps)
 	if auto_mode:
 		_auto_tick(delta)
-	_update_stress(delta)
 	if perf_logging:
 		_perf_tick(delta)
 
@@ -240,6 +402,7 @@ func toggle_perf_logging() -> void:
 
 func start_perf_logging() -> void:
 	perf_logging = true
+	telemetry_enabled = true
 	_perf_samples.clear()
 	_perf_sample_accum = 0.0
 	_perf_min_fps = 9999
@@ -250,12 +413,20 @@ func start_perf_logging() -> void:
 
 func stop_perf_logging() -> String:
 	perf_logging = false
+	telemetry_enabled = false
 	var report := _perf_report()
 	print(report)
 	# On web the console is the only reliable sink; also try clipboard on native.
 	if not _is_web() and DisplayServer.has_feature(DisplayServer.FEATURE_CLIPBOARD):
 		DisplayServer.clipboard_set(report)
 	return report
+
+## V30A: per-frame system timing is only recorded while someone is looking
+## (F3 overlay or F4 capture). Idle play pays zero dictionary overhead.
+func set_telemetry_enabled(enabled: bool) -> void:
+	telemetry_enabled = enabled or perf_logging
+	if not telemetry_enabled:
+		_system_times.clear()
 
 func _perf_tick(delta: float) -> void:
 	# Only sample during an active run; menu frames would pollute the trace.
@@ -291,11 +462,11 @@ func _perf_report() -> String:
 func update_horde_pressure(enemy_count: int) -> void:
 	active_enemies = enemy_count
 
-func _update_stress(delta: float) -> void:
+func _update_stress(delta: float, fps_override: int = -1) -> void:
 	var cap := enemy_cap()
 	var pressure := float(active_enemies) / maxf(float(cap), 1.0)
-	var fps := Engine.get_frames_per_second()
-	var heavy := pressure >= STRESS_PRESSURE or (active_enemies >= STRESS_ENEMY_MIN and fps > 0 and fps < STRESS_FPS)
+	var fps: int = fps_override if fps_override >= 0 else Engine.get_frames_per_second()
+	var heavy: bool = pressure >= STRESS_PRESSURE or (active_enemies >= STRESS_ENEMY_MIN and fps > 0 and fps < STRESS_FPS)
 	if heavy:
 		_stress_low_time += delta
 		if _stress_low_time > 0.75:
@@ -408,13 +579,15 @@ func particle_cap() -> int:
 		cap = maxi(8, int(cap * scale))
 	if _is_touch() and quality > Quality.VERY_LOW and not _is_web():
 		cap = maxi(12, int(cap * TOUCH_PARTICLE_CAP_SCALE))
-	# V19: reduced-VFX setting shrinks particle budget
-	if SaveManager != null and SaveManager.get_setting("reduced_vfx", false):
+	# V19: reduced-VFX setting shrinks particle budget (cached — this runs per
+	# particle spawn and SaveManager lookups add up in WASM).
+	if _reduced_vfx:
 		cap = maxi(8, int(cap * 0.45))
 	return cap
 
 ## V19: call when the reduced-VFX setting changes.
 func notify_reduced_vfx() -> void:
+	_reduced_vfx = bool(SaveManager.get_setting("reduced_vfx", false))
 	quality_changed.emit(quality)
 
 func damage_number_cap() -> int:
@@ -452,9 +625,14 @@ func should_skip_damage_number(is_crit: bool, amount: float) -> bool:
 func should_throttle_enemy_ai() -> bool:
 	# Medium on Web is still a constrained GPU/CPU budget; throttle distant
 	# enemies there as well to prevent late-run frame collapse.
-	return stress_mode or quality <= Quality.MEDIUM
+	if stress_mode or quality <= Quality.MEDIUM:
+		return true
+	# HIGH on web/touch is still a browser/phone budget — keep far-enemy LOD.
+	return quality == Quality.HIGH and (_is_web() or _is_touch())
 
 func report_system_time(name: String, elapsed_usec: int) -> void:
+	if not telemetry_enabled:
+		return
 	if not _system_times.has(name):
 		_system_times[name] = {"total": 0, "frames": 0}
 	var stat: Dictionary = _system_times[name]
@@ -477,12 +655,13 @@ func get_debug_info() -> String:
 	var mode := "AUTO" if auto_mode else "FIXED"
 	if stress_mode:
 		mode += "+STRESS"
-	lines.append("FPS: %d | frame: %.2f ms | physics: %.2f ms | Q:%s %s" % [
+	lines.append("FPS: %d | frame: %.2f ms | physics: %.2f ms | Q:%s %s | res:%.2f" % [
 		Engine.get_frames_per_second(),
 		Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
 		Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
 		quality_name(),
 		mode,
+		current_render_scale(),
 	])
 	lines.append("draw calls: %d | primitives: %dk | objects: %d " % [
 		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),

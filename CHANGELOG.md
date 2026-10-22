@@ -54,6 +54,25 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   projectile weapons by tier 5. See `docs/WEAPON_BALANCE.md`.
 - **Web Medium tier is cheaper** on web: lower enemy/projectile/particle
   caps and enemy AI throttling now extend to Medium.
+- **Adaptive 3D resolution** (V30A): the tier scale is now a ceiling; while
+  FPS stays below ~46 the render scale steps down (to a floor of 0.4) and
+  climbs back after sustained headroom. If a downscale does not improve FPS
+  (CPU-bound device), it restores sharpness and pauses probing for 20 s.
+- **HUD updates are throttled to 10 Hz** and only re-shape text / re-apply
+  theme overrides when a value actually changed (timer, kills, HP, level,
+  ability and dash buttons, hints). The dash button now returns to `F Dash`
+  when ready instead of keeping a stale countdown.
+- **Per-system timing is opt-in** (F3 overlay or F4 capture), removing
+  dictionary bookkeeping and `Time.get_ticks_usec()` calls from every enemy,
+  weapon and wave tick during normal play.
+- **Pooled VFX and per-enemy components sleep** when idle: damage numbers,
+  bursts, muzzle flashes and lightning strikes disable `_process` between
+  uses; `StatusComponent` and `EliteComponent` only process while active.
+- **Cheaper rendering probes**: platform/settings lookups are cached;
+  fog is HIGH+ on web/touch; MEDIUM shadows are desktop-only.
+- **Allocation-free target spread**: nearest-N selection replaces the
+  per-volley filter/sort closures; the enemy spatial grid rebuilds at
+  100 ms instead of 40 ms.
 - **VFX dynamic lights** are opt-in above ULTRA on web/mobile; all pooled
   OmniLight3D nodes start hidden.
 - **Service worker** no longer intercepts the large `index.wasm` /

@@ -9,6 +9,7 @@ var _active: bool = false
 
 func _ready() -> void:
 	visible = false
+	set_process(false)
 
 ## weapon_like: WeaponInstance or AbilityData — needs get_damage/get_area/get_crit_chance
 func trigger(weapon_like, target_pos: Vector3, enemy_manager: Node, player: Node3D) -> void:
@@ -16,6 +17,7 @@ func trigger(weapon_like, target_pos: Vector3, enemy_manager: Node, player: Node
 	_life = 0.0
 	_active = true
 	visible = true
+	set_process(true)
 
 	# AOE damage in the strike area
 	var radius: float = weapon_like.get_area()
@@ -38,6 +40,7 @@ func trigger(weapon_like, target_pos: Vector3, enemy_manager: Node, player: Node
 
 func _process(delta: float) -> void:
 	if not _active:
+		set_process(false)
 		return
 	_life += delta
 	scale = Vector3.ONE * (1.0 + _life * 2.0)
@@ -45,6 +48,7 @@ func _process(delta: float) -> void:
 		_active = false
 		visible = false
 		scale = Vector3.ONE
+		set_process(false)
 		# Free one-shot VFX; global and controller-local pool nodes hide.
 		# Local VFX must not claim ownership by the global PoolManager.
 		if get_meta("pool_scene", "") == "" and not bool(get_meta("local_pool", false)):

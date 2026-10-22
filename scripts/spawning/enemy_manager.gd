@@ -11,8 +11,10 @@ const CELL_SIZE := 8.0
 ## Cap how many enemies can enter the tree in a single frame (hitch guard).
 const MAX_SPAWNS_PER_FRAME := 8
 const MAX_SPAWN_QUEUE := 48
-## Grid rebuilds when dirty or older than this (ms).
-const GRID_REBUILD_MS := 40
+## Grid rebuilds when dirty or older than this (ms). V30A: 100 ms halves
+## rebuild/GC churn; radius queries still distance-check live positions, so a
+## ~0.5 m stale cell edge never produces a visible miss.
+const GRID_REBUILD_MS := 100
 ## Below this count a linear scan is cheaper than grid bookkeeping.
 const LINEAR_THRESHOLD := 20
 

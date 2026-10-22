@@ -13,6 +13,9 @@ var _rise: float = 0.0
 
 func _ready() -> void:
 	visible = false
+	# V30A: pooled nodes live under JuiceManager forever — idle ones must not
+	# receive a per-frame script callback.
+	set_process(false)
 
 func trigger(pos: Vector3, amount: float, is_crit: bool) -> void:
 	global_position = pos + Vector3(randf_range(-0.4, 0.4), 1.6, randf_range(-0.4, 0.4))
@@ -27,9 +30,11 @@ func trigger(pos: Vector3, amount: float, is_crit: bool) -> void:
 	_rise = 0.0
 	_active = true
 	visible = true
+	set_process(true)
 
 func _process(delta: float) -> void:
 	if not _active:
+		set_process(false)
 		return
 	_life += delta
 	_rise += RISE_SPEED * delta
@@ -39,3 +44,4 @@ func _process(delta: float) -> void:
 		_active = false
 		visible = false
 		label.position.y = 0.0
+		set_process(false)

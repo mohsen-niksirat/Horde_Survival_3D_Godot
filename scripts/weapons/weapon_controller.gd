@@ -89,12 +89,15 @@ func add_weapon(weapon_data: WeaponData) -> void:
 func _process(delta: float) -> void:
 	if _player == null or not _player.is_player_alive():
 		return
-	var start := Time.get_ticks_usec()
+	var start := 0
+	if PerformanceManager != null and PerformanceManager.telemetry_enabled:
+		start = Time.get_ticks_usec()
 	for w in weapons:
 		if w.data.type == "orbit":
 			continue  # orbit weapon self-updates
 		w.tick(delta, _player, _enemy_manager)
-	PerformanceManager.report_system_time("weapons", Time.get_ticks_usec() - start)
+	if start > 0:
+		PerformanceManager.report_system_time("weapons", Time.get_ticks_usec() - start)
 
 ## Called by WeaponInstance when its cooldown elapses and a target exists.
 func fire_weapon(weapon: WeaponInstance, player: Node3D, target: Node3D) -> void:
@@ -129,12 +132,10 @@ func _spawn_projectile(weapon: WeaponInstance, player: Node3D, target: Node3D, s
 	var candidates: Array = weapon.last_query_targets
 	if candidates.is_empty():
 		candidates = _enemy_manager.get_enemies_in_radius(player.global_position, weapon.data.max_range)
-	# The cached set can hold stale entries (an enemy freed between the query
-	# and this fire) — never aim a shot at a non-enemy.
-	candidates = candidates.filter(func(c): return is_instance_valid(c) and c.is_in_group("enemies"))
-	candidates.sort_custom(func(a, b):
-		return a.global_position.distance_squared_to(player.global_position) < b.global_position.distance_squared_to(player.global_position))
-	var targets: Array = candidates.slice(0, mini(count, candidates.size()))
+	# V30A: pick the N nearest valid enemies in one pass. The old filter +
+	# sort_custom pair allocated a closure, a temp array, a sort and repeated
+	# global_position lookups on every volley.
+	var targets: Array = _pick_nearest(candidates, player, count)
 	while targets.size() < count:
 		targets.append(target)
 	for i in range(count):
@@ -163,6 +164,44 @@ func _spawn_projectile(weapon: WeaponInstance, player: Node3D, target: Node3D, s
 		if i == 0:
 			_muzzle_flash(player, aim.normalized(), weapon.data.id)
 	PerformanceManager.active_projectiles = _projectile_root.get_child_count()
+
+## Nearest-N selection without closures or a full sort. `count` is the
+## projectile spread (typically 1–6), so an insertion pass is O(n·k).
+func _pick_nearest(candidates: Array, player: Node3D, count: int) -> Array:
+	var picked: Array = []
+	if count <= 0 or candidates.is_empty():
+		return picked
+	var dists: Array = []
+	var origin := player.global_position
+	for c in candidates:
+		if not is_instance_valid(c) or not c.is_in_group("enemies"):
+			continue
+		var d2: float = origin.distance_squared_to(c.global_position)
+		if picked.size() < count:
+			picked.append(c)
+			dists.append(d2)
+			var j_full := picked.size() - 1
+			while j_full > 0 and dists[j_full] < dists[j_full - 1]:
+				var tmp = picked[j_full]
+				picked[j_full] = picked[j_full - 1]
+				picked[j_full - 1] = tmp
+				var td = dists[j_full]
+				dists[j_full] = dists[j_full - 1]
+				dists[j_full - 1] = td
+				j_full -= 1
+		elif d2 < dists[count - 1]:
+			picked[count - 1] = c
+			dists[count - 1] = d2
+			var j_tail := count - 1
+			while j_tail > 0 and dists[j_tail] < dists[j_tail - 1]:
+				var tmp = picked[j_tail]
+				picked[j_tail] = picked[j_tail - 1]
+				picked[j_tail - 1] = tmp
+				var td = dists[j_tail]
+				dists[j_tail] = dists[j_tail - 1]
+				dists[j_tail - 1] = td
+				j_tail -= 1
+	return picked
 
 ## Quick light burst at the staff orb, tinted per weapon.
 func _muzzle_flash(player: Node3D, dir: Vector3, weapon_id: String) -> void:
