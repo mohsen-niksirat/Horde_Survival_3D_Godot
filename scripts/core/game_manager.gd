@@ -120,8 +120,10 @@ func _record_analytics(victory: bool) -> void:
 	var kills := 0
 	var weapons: Array = []
 	if player != null and is_instance_valid(player):
-		if player.has_method("get_stat"):
-			level = int(player.get_stat("level"))
+		# XP component owns the level; StatBlock has no "level" stat.
+		var xp: Node = player.get("experience")
+		if xp != null and is_instance_valid(xp):
+			level = int(xp.get("level"))
 		var wc: Node = player.get("weapon_controller")
 		if wc != null and is_instance_valid(wc):
 			for w in wc.get("weapons"):
@@ -129,7 +131,8 @@ func _record_analytics(victory: bool) -> void:
 				if d != null:
 					weapons.append(d.id)
 	if RunManager != null:
-		kills = int(RunManager.get("total_kills"))
+		# RunManager tracks kills as `kills` (there is no total_kills property).
+		kills = int(RunManager.get("kills"))
 	Analytics.record_run(victory, RunManager.elapsed_time if RunManager != null else 0.0, level, kills, weapons)
 
 func _on_game_state_changed(_new_state: int, _old: int) -> void:

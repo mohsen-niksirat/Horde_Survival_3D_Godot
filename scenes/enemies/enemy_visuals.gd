@@ -139,6 +139,11 @@ static func clear(visual_root: Node3D) -> void:
 static func _clear_parts(visual_root: Node3D) -> void:
 	if visual_root.has_meta("rig_ap"):
 		visual_root.remove_meta("rig_ap")
+	# animate() reads cached node refs from metadata; stale refs from a
+	# previous archetype must not survive a rebuild (pooled enemies).
+	for m in ["anim_wl", "anim_wr", "anim_outer", "anim_bobbers"]:
+		if visual_root.has_meta(m):
+			visual_root.remove_meta(m)
 	for child in visual_root.get_children():
 		child.queue_free()
 
@@ -219,6 +224,14 @@ static func _build_drone(v: Node3D) -> void:
 	skirt.bottom_radius = 0.42
 	skirt.height = 0.2
 	_mesh(v, skirt, body_mat, Vector3(0, 0.25, 0))
+	# Cache the bobbing parts once — animate() used to re-scan children
+	# with has_meta("base_y") every frame per drone. Parts from a previous
+	# archetype rebuild are queue_free'd but still children — skip them.
+	var bobbers: Array = []
+	for child in v.get_children():
+		if child is Node3D and child.has_meta("base_y") and not child.is_queued_for_deletion():
+			bobbers.append(child)
+	v.set_meta("anim_bobbers", bobbers)
 
 static func _build_wisp(v: Node3D) -> void:
 	var core_mat := _mat(Color(0.4, 0.85, 1.0), 2.0)
@@ -226,7 +239,8 @@ static func _build_wisp(v: Node3D) -> void:
 	_sphere(v, core_mat, 0.28, Vector3(0, 0.7, 0))
 	var kite := PrismMesh.new()
 	kite.size = Vector3(0.7, 0.9, 0.2)
-	_mesh(v, kite, outer_mat, Vector3(0, 0.75, 0), -0.4)
+	var kite_mi := _mesh(v, kite, outer_mat, Vector3(0, 0.75, 0), -0.4)
+	v.set_meta("anim_outer", kite_mi)
 
 static func _build_golem(v: Node3D) -> void:
 	var stone := _mat(Color(0.45, 0.42, 0.4))
@@ -264,6 +278,8 @@ static func _build_bat(v: Node3D) -> void:
 	var wr := _mesh(v, wing_mesh, wing_mat, Vector3(0.36, 0.5, 0))
 	wl.name = "WingL"
 	wr.name = "WingR"
+	v.set_meta("anim_wl", wl)
+	v.set_meta("anim_wr", wr)
 
 static func _sphere(v: Node3D, mat: StandardMaterial3D, radius: float, pos: Vector3) -> void:
 	var s := SphereMesh.new()
@@ -276,23 +292,33 @@ static func animate(visual_root: Node3D, archetype_id: String, time: float, seed
 	# statics fall through to the procedural micro-motion branches.
 	if RigUtil.play_locomotion(visual_root, move_speed):
 		return
+	# V31: part references are cached in metadata at build time — the old
+	# get_node_or_null / child re-scan ran per animated enemy per frame.
+	# has_meta guards keep the GLB path (no cached parts) error-free; a
+	# missing key with a null default would push an engine ERROR per call.
 	match archetype_id:
 		"swarm_bat", "swarm_bat_mini":
-			var wl := visual_root.get_node_or_null("WingL")
-			var wr := visual_root.get_node_or_null("WingR")
-			if wl != null and wr != null:
-				var flap := sin(time * 14.0 + seed_val) * 0.6
-				wl.rotation.z = flap
-				wr.rotation.z = -flap
+			if visual_root.has_meta("anim_wl") and visual_root.has_meta("anim_wr"):
+				var wl = visual_root.get_meta("anim_wl")
+				var wr = visual_root.get_meta("anim_wr")
+				if wl != null and wr != null and is_instance_valid(wl) and is_instance_valid(wr):
+					var flap := sin(time * 14.0 + seed_val) * 0.6
+					wl.rotation.z = flap
+					wr.rotation.z = -flap
 		"fast_wisp":
-			if visual_root.get_child_count() > 1:
-				var outer: Node3D = visual_root.get_child(1)
-				var s := 1.0 + sin(time * 9.0 + seed_val) * 0.12
-				outer.scale = Vector3(s, s, s)
+			if visual_root.has_meta("anim_outer"):
+				var outer = visual_root.get_meta("anim_outer")
+				if outer != null and is_instance_valid(outer):
+					var s := 1.0 + sin(time * 9.0 + seed_val) * 0.12
+					outer.scale = Vector3(s, s, s)
 		"basic_drone":
-			for child in visual_root.get_children():
-				if child is Node3D and child.has_meta("base_y"):
-					child.position.y = child.get_meta("base_y") + sin(time * 5.0 + seed_val) * 0.03
+			if visual_root.has_meta("anim_bobbers"):
+				var bobbers = visual_root.get_meta("anim_bobbers")
+				if bobbers != null:
+					var bob := sin(time * 5.0 + seed_val) * 0.03
+					for child in bobbers:
+						if is_instance_valid(child):
+							child.position.y = child.get_meta("base_y") + bob
 
 static func _build_ghost(v: Node3D) -> void:
 	var pale := _mat(Color(0.35, 0.48, 0.62, 0.7), 0.0, BaseMaterial3D.TRANSPARENCY_ALPHA)

@@ -78,6 +78,18 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Service worker** no longer intercepts the large `index.wasm` /
   `index.pck` payloads — a pending service-worker response left the engine
   stuck on "Compiling engine" forever.
+- **Enemy animation LOD cache** (V31): the per-archetype micro-motion
+  branch (`EnemyVisuals.animate`) reads part references from metadata set at
+  build time instead of re-running `get_node_or_null` / child scans for every
+  animated enemy every physics frame. A `has_meta` guard keeps pooled/GLB
+  visuals error-free (a missing meta key with a null default pushes an
+  engine error per call, which itself stalls dense hordes).
+- **Enemy steering math**: the wobble/sine/kite strafe vector is now the
+  direct horizontal perpendicular (`Vector3(dir.z, 0, -dir.x)`) instead of
+  `UP.cross(dir).normalized()` — identical result, no cross/normalize churn
+  per enemy per frame.
+- **XP orb pickup-radius probe cached per life** — `has_method()` no longer
+  runs on every orb every frame.
 
 ### Fixed
 - **Web startup hang**: `engine.startGame()` is no longer gated on
@@ -94,6 +106,14 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   order.
 - **Phase-5 wave test** no longer asserts a tight spawn count (≥7 instead of
   ≥10) — the spawn cadence is threat-budget driven.
+- **Run analytics recorded zeros**: the run-end hook read the nonexistent
+  `RunManager.total_kills` and a nonexistent `level` StatBlock stat, so
+  opt-in local analytics always logged 0 kills / 0 level. It now reads
+  `RunManager.kills` and the XP component's level.
+- **HUD gold was unreadable during a run**: `kills_changed` wrote a
+  competing "Kills: N  Gold: M" format that the 10 Hz label refresh
+  instantly overwrote. The refreshed line now carries kills, gold and run
+  phase in one place.
 
 ### Removed
 - `web/index.html` — a stale duplicate of the real export shell

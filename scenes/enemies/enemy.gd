@@ -228,10 +228,12 @@ func _physics_process(delta: float) -> void:
 		var dir := to_player / dist
 		match data.movement_type:
 			"wobble":
-				var wobble := Vector3.UP.cross(dir).normalized()
+				# Horizontal perpendicular of dir — same as UP.cross(dir) for a
+				# unit horizontal vector, without the cross + normalize churn.
+				var wobble := Vector3(dir.z, 0.0, -dir.x)
 				dir = (dir + wobble * sin(Time.get_ticks_msec() / 1000.0 * 8.0 + _wobble_seed) * 0.4).normalized()
 			"sine":
-				var sway := Vector3.UP.cross(dir).normalized()
+				var sway := Vector3(dir.z, 0.0, -dir.x)
 				dir = (dir + sway * sin(Time.get_ticks_msec() / 1000.0 * 3.0 + _wobble_seed) * 0.3).normalized()
 			"stationary":
 				dir = Vector3.ZERO
@@ -241,7 +243,7 @@ func _physics_process(delta: float) -> void:
 				elif dist > 16.0:
 					pass
 				else:
-					var strafe := Vector3.UP.cross(dir).normalized()
+					var strafe := Vector3(dir.z, 0.0, -dir.x)
 					dir = strafe * (1.0 if _wobble_seed > PI else -1.0)
 
 		var speed: float = minf(data.move_speed * spd_scale * status.get_speed_factor(), 5.5)

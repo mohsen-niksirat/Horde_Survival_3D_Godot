@@ -93,7 +93,6 @@ func bind_player(player: Node) -> void:
 	_player = player
 	_refresh_weapon_icons()
 	EventBus.player_leveled_up.connect(_on_level_up)
-	RunManager.kills_changed.connect(_on_kills)
 	EventBus.combo_changed.connect(_on_combo)
 	EventBus.upgrade_applied.connect(_on_upgrade_applied)
 	EventBus.run_ended.connect(_on_run_ended_toast)
@@ -391,7 +390,10 @@ func _refresh_run_labels() -> void:
 			phase = "LATE"
 		elif mins >= 5.0:
 			phase = "MID"
-		var kills_text := "%d kills  ·  %s" % [RunManager.kills, phase]
+		# Gold lives here too — kills_changed used to write a competing
+		# "Kills/Gold" format that the 10 Hz refresh overwrote instantly,
+		# so gold was never readable during a run.
+		var kills_text := "%d kills  ·  %d gold  ·  %s" % [RunManager.kills, int(RunManager.gold_earned), phase]
 		if kills_text != _last_kills_text:
 			_last_kills_text = kills_text
 			kills_label.text = kills_text
@@ -504,9 +506,6 @@ func _update_fps_label() -> void:
 
 func _on_level_up(_level: int) -> void:
 	pass
-
-func _on_kills(kills: int) -> void:
-	kills_label.text = "Kills: %d  Gold: %d" % [kills, int(RunManager.gold_earned)]
 
 func _process_hints(delta: float) -> void:
 	# Toast (relic pickup, synergy) always wins over onboarding hints

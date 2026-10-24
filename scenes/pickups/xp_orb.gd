@@ -25,6 +25,8 @@ var _pulse_stagger: float = 0.0
 var _pulse_active: bool = false
 var _wobble: float = 0.0
 var _visualized: bool = false
+## V31: cached per life — has_method() ran on every orb every frame.
+var _has_pickup_radius: bool = false
 ## V20A: value tier the visuals were last built for (0/1/2) — skips the
 ## material-duplication pass when an orb recycles at the same tier.
 var _last_visual_tier: int = -1
@@ -88,6 +90,7 @@ func _apply_value_visuals() -> void:
 func setup(p_value: float, p_player: Node3D, spawn_pos: Vector3) -> void:
 	value = p_value
 	_player = p_player
+	_has_pickup_radius = _player != null and is_instance_valid(_player) and _player.has_method("get_pickup_radius")
 	_magnetized = false
 	_life = 0.0
 	_settled = false
@@ -130,7 +133,7 @@ func _process(delta: float) -> void:
 	var dist := to_player.length()
 
 	var pickup_radius: float = 3.0
-	if _player.has_method("get_pickup_radius"):
+	if _has_pickup_radius:
 		pickup_radius = _player.get_pickup_radius()
 
 	# Global magnet pulse (soft XP wave)
