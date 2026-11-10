@@ -5,6 +5,7 @@ const CACHE_NAME = 'hs3d-v4';
 
 const CACHE_ASSETS = [
   'index.wasm',
+  'index.wasm.gz',
   'index.pck',
   'index.js',
   'index.html',
@@ -79,6 +80,9 @@ async function networkFirst(request) {
   } catch (e) {
     const cache = await caches.open(CACHE_NAME);
     const hit = await cache.match(request, { ignoreSearch: true });
-    return hit || Response.error();
+    if (hit) return hit;
+    const offlineHit = await cache.match('index.offline.html');
+    if (offlineHit) return offlineHit;
+    throw e;
   }
 }

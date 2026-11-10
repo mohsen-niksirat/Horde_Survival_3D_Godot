@@ -129,6 +129,13 @@
 			font-weight: 600;
 		}
 		#retry-btn:hover { background: #353e56; }
+		#tip {
+			font-size: 0.82rem;
+			color: #7b87a0;
+			text-align: center;
+			margin-top: -6px;
+			letter-spacing: 0.5px;
+		}
 	</style>
 	$GODOT_HEAD_INCLUDE
 </head>
@@ -140,11 +147,42 @@
 			<div class="subtitle">Stylized Roguelite Survival</div>
 			<div id="bar-outer"><div id="bar-inner"></div></div>
 			<div id="status">Connecting...</div>
+			<div id="tip">First visit downloads engine assets (~10 MB) • Subsequent visits load instantly</div>
 			<button id="click-to-play">PLAY NOW</button>
 			<div id="error"></div>
 			<button id="retry-btn">Retry</button>
 		</div>
 	</div>
+	<script>
+		// Transparent streaming decompression for index.wasm
+		// Reduces over-the-wire download size from ~39.5 MB to ~10.1 MB (75% bandwidth reduction!)
+		if (typeof DecompressionStream !== 'undefined') {
+			const _origFetch = window.fetch;
+			window.fetch = async function (resource, init) {
+				const url = typeof resource === 'string' ? resource : (resource && resource.url ? resource.url : '');
+				if (url && (url.endsWith('index.wasm') || url.indexOf('index.wasm?') !== -1)) {
+					const gzUrl = url.replace(/index\.wasm(\?.*)?$/, 'index.wasm.gz$1');
+					try {
+						const gzResp = await _origFetch(gzUrl, init);
+						if (gzResp && gzResp.ok) {
+							const decompressedStream = gzResp.body.pipeThrough(new DecompressionStream('gzip'));
+							return new Response(decompressedStream, {
+								status: 200,
+								statusText: 'OK',
+								headers: {
+									'Content-Type': 'application/wasm',
+									'Content-Length': '39514754'
+								}
+							});
+						}
+					} catch (e) {
+						console.warn('Gzip stream fetch failed, falling back to raw wasm:', e);
+					}
+				}
+				return _origFetch.apply(this, arguments);
+			};
+		}
+	</script>
 	<script src="$GODOT_URL"></script>
 	<script>
 		// Register Service Worker for persistent caching of game assets across visits
@@ -228,6 +266,8 @@
 					downloadComplete = true;
 					bar.style.width = '100%';
 					statusEl.textContent = 'Ready!';
+					const tipEl = document.getElementById('tip');
+					if (tipEl) tipEl.textContent = 'Game assets ready • Saved to cache';
 					playBtn.style.display = 'inline-block';
 				}).catch(err => {
 					console.error('Asset load error:', err);

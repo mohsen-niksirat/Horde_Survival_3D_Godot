@@ -52,6 +52,8 @@ jobs:
         run: |
           mkdir -p build/web
           godot --headless --export-release "Web" build/web/index.html
+          # Pre-compress index.wasm with gzip -9 (cuts network transfer from 39.5MB to 10MB)
+          gzip -9 -k build/web/index.wasm
 
       - name: Deploy service worker
         run: |
