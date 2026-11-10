@@ -232,13 +232,13 @@ func _on_pause_pressed() -> void:
 
 func bind_abilities(controller: Node) -> void:
 	_ability_controller = controller
-	ability1_button.text = "Q Meteor"
-	ability2_button.text = "E Freeze"
+	ability1_button.text = "[Q]\nMeteor"
+	ability2_button.text = "[E]\nFreeze"
 	# V-fix: touch ability buttons actually execute on mobile
 	ability1_button.pressed.connect(func(): ability1_button.release_focus(); _trigger_ability("meteor_strike"))
 	ability2_button.pressed.connect(func(): ability2_button.release_focus(); _trigger_ability("time_freeze"))
 	# V16A: dash button mirrors the F-key dash (touch parity)
-	dash_button.text = "F Dash"
+	dash_button.text = "[F]\nDash"
 	dash_button.button_down.connect(func(): InputManager.set_touch_action("dash", true))
 	dash_button.button_up.connect(func(): InputManager.set_touch_action("dash", false))
 	dash_button.pressed.connect(_on_dash_pressed)
@@ -422,21 +422,24 @@ func _refresh_ability_buttons() -> void:
 		var ready_state: int = 0 if ratio > 0.0 else 1
 		if ready_state != _ability_ready_state[idx]:
 			_ability_ready_state[idx] = ready_state
+			btn.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+			btn.add_theme_constant_override("outline_size", 4)
 			if ready_state == 1:
-				btn.modulate = Color(0.75, 1.0, 0.75, 1.0)
-				btn.add_theme_color_override("font_color", Color(0.05, 0.25, 0.08))
+				btn.modulate = Color(1.0, 1.0, 1.0, 1.0)
+				btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 			else:
-				btn.modulate = Color(1, 1, 1, 0.4)
-				btn.add_theme_color_override("font_color", Color(0.75, 0.78, 0.85))
-		var base := "Q Meteor" if is_meteor else "E Freeze"
-		var text := base
+				btn.modulate = Color(0.7, 0.72, 0.78, 0.9)
+				btn.add_theme_color_override("font_color", Color(1.0, 0.84, 0.25, 1.0))
+		var key_name := "[Q]" if is_meteor else "[E]"
+		var skill_name := "Meteor" if is_meteor else "Freeze"
+		var text := "%s\n%s" % [key_name, skill_name]
 		if ratio > 0.0:
-			text = "%s %.0f" % [base, ceil(float(ab.get("cooldown_left", 0.0)))]
+			text = "%s\n%.0fs" % [key_name, ceil(float(ab.get("cooldown_left", 0.0)))]
 		if text != _last_ability_text[idx]:
 			_last_ability_text[idx] = text
 			btn.text = text
 
-## Dash cooldown indicator (F key / touch button). Restores "F Dash" when ready.
+## Dash cooldown indicator (F key / touch button). Restores "[F] Dash" when ready.
 func _refresh_dash_button() -> void:
 	if dash_button == null or _player == null or not is_instance_valid(_player):
 		return
@@ -444,13 +447,15 @@ func _refresh_dash_button() -> void:
 	var ready_state: int = 0 if dr > 0.0 else 1
 	if ready_state != _dash_ready_state:
 		_dash_ready_state = ready_state
+		dash_button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+		dash_button.add_theme_constant_override("outline_size", 4)
 		if ready_state == 1:
-			dash_button.modulate = Color(0.75, 1.0, 0.75, 1.0)
-			dash_button.add_theme_color_override("font_color", Color(0.05, 0.25, 0.08))
+			dash_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+			dash_button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 		else:
-			dash_button.modulate = Color(1, 1, 1, 0.4)
-			dash_button.add_theme_color_override("font_color", Color(0.75, 0.78, 0.85))
-	var text: String = "F Dash" if dr <= 0.0 else "%.1f" % _player.dash.cooldown_left
+			dash_button.modulate = Color(0.7, 0.72, 0.78, 0.9)
+			dash_button.add_theme_color_override("font_color", Color(1.0, 0.84, 0.25, 1.0))
+	var text: String = "[F]\nDash" if dr <= 0.0 else "[F]\n%.1fs" % _player.dash.cooldown_left
 	if text != _last_dash_text:
 		_last_dash_text = text
 		dash_button.text = text

@@ -13,14 +13,7 @@ func _ready() -> void:
 	AudioManager.apply_saved_volumes()
 	if OS.get_name() != "Web" and DisplayServer.get_name() != "headless":
 		_prefetch_resources()
-		_go_menu()
-	elif OS.get_name() == "Web":
-		# The HTML shell already handled the audio-unlock user gesture when clicking PLAY.
-		# Run a quick framed warmup of hot resources, then transition straight to menu.
-		await _web_warmup()
-		_go_menu()
-	else:
-		_go_menu()
+	_go_menu()
 
 # V21A: fire-and-forget warmup of the most-hit resources during the
 # interactive click-gate window. No await / no blocking of _go_menu.

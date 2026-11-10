@@ -22,6 +22,11 @@ boot_splash/bg_color=Color(0.101961, 0.109804, 0.14902, 1)
 boot_splash/show_image=false
 config/icon="res://assets/ui/icon.svg"
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://locale/en.en.translation", "res://locale/fa.fa.translation")
+locale/fallback="en"
+
 [autoload]
 
 EventBus="*res://scripts/core/event_bus.gd"

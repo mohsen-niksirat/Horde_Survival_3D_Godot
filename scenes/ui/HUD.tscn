@@ -23,6 +23,8 @@ mouse_filter=2
 [node name="TimerLabel" type="Label" parent="Top"]
 layout_mode=2
 theme_override_font_sizes/font_size=28
+theme_override_colors/font_outline_color=Color(0, 0, 0, 0.9)
+theme_override_constants/outline_size=4
 text="00:00"
 horizontal_alignment=1
 
@@ -43,6 +45,8 @@ mouse_filter=2
 [node name="LevelLabel" type="Label" parent="TopLeft"]
 layout_mode=2
 theme_override_font_sizes/font_size=20
+theme_override_colors/font_outline_color=Color(0, 0, 0, 0.9)
+theme_override_constants/outline_size=4
 text="Lv 1"
 
 [node name="HPBar" type="ProgressBar" parent="TopLeft"]
@@ -53,6 +57,8 @@ show_percentage=false
 [node name="HPLabel" type="Label" parent="TopLeft"]
 layout_mode=2
 theme_override_font_sizes/font_size=13
+theme_override_colors/font_outline_color=Color(0, 0, 0, 0.9)
+theme_override_constants/outline_size=3
 text="100 / 100"
 
 [node name="WeaponIcons" type="HBoxContainer" parent="TopLeft"]
@@ -204,17 +210,26 @@ alignment=1
 [node name="Ability1" type="Button" parent="AbilityPanel/AbilityCol"]
 custom_minimum_size=Vector2(96, 96)
 layout_mode=2
-theme_override_font_sizes/font_size=14
-text="Q"
+theme_override_font_sizes/font_size=15
+theme_override_colors/font_outline_color=Color(0, 0, 0, 1)
+theme_override_constants/outline_size=4
+text="[Q]
+Meteor"
 
 [node name="Ability2" type="Button" parent="AbilityPanel/AbilityCol"]
 custom_minimum_size=Vector2(96, 96)
 layout_mode=2
-theme_override_font_sizes/font_size=14
-text="E"
+theme_override_font_sizes/font_size=15
+theme_override_colors/font_outline_color=Color(0, 0, 0, 1)
+theme_override_constants/outline_size=4
+text="[E]
+Freeze"
 
 [node name="DashButton" type="Button" parent="AbilityPanel/AbilityCol"]
 custom_minimum_size=Vector2(96, 96)
 layout_mode=2
-theme_override_font_sizes/font_size=14
-text="SPACE Dash"
+theme_override_font_sizes/font_size=15
+theme_override_colors/font_outline_color=Color(0, 0, 0, 1)
+theme_override_constants/outline_size=4
+text="[F]
+Dash"

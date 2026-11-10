@@ -37,12 +37,25 @@ func _load_catalogues() -> void:
 	_catalogues.clear()
 	# The first catalogue holds every key; later ones only fill in gaps.
 	for loc in SUPPORTED_LOCALES:
-		var path := "%s%s.csv" % [CSV_DIR, loc]
-		if not FileAccess.file_exists(path):
-			continue
-		var rows := _read_csv(path)
+		var csv_path := "%s%s.csv" % [CSV_DIR, loc]
+		var tr_path := "%s%s.%s.translation" % [CSV_DIR, loc, loc]
+		var rows: Dictionary = {}
+
+		# Priority 1: Read CSV if present
+		if FileAccess.file_exists(csv_path):
+			rows = _read_csv(csv_path)
+
+		# Priority 2: Fall back to compiled .translation resource
+		if rows.is_empty() and ResourceLoader.exists(tr_path):
+			var tr_res_loaded = ResourceLoader.load(tr_path)
+			if tr_res_loaded is Translation:
+				TranslationServer.add_translation(tr_res_loaded)
+				for msg in tr_res_loaded.get_message_list():
+					rows[msg] = tr_res_loaded.get_message(msg)
+
 		if rows.is_empty():
 			continue
+
 		_catalogues[loc] = rows
 		var tr_res := Translation.new()
 		tr_res.locale = loc
