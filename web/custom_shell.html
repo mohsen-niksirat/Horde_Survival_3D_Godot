@@ -207,12 +207,12 @@
 				}
 			};
 
-			engine = new Engine(GODOT_CONFIG);
-
 			const exe = GODOT_CONFIG.executable || 'index';
 			const pack = GODOT_CONFIG.mainPack || (exe + '.pck');
-			if (!GODOT_CONFIG.args) GODOT_CONFIG.args = [];
-			GODOT_CONFIG.args = ['--main-pack', pack].concat(GODOT_CONFIG.args);
+			GODOT_CONFIG.args = ['--main-pack', pack].concat(GODOT_CONFIG.args || []);
+			GODOT_CONFIG.serviceWorker = '';
+
+			engine = new Engine(GODOT_CONFIG);
 
 			function startLoad() {
 				errorEl.style.display = 'none';
@@ -256,7 +256,7 @@
 				} catch (e) {}
 
 				// Engine is already inited & preloaded, start() completes instantly
-				engine.start().then(() => {
+				engine.start({ args: ['--main-pack', pack] }).then(() => {
 					loader.classList.add('hidden');
 				}).catch(err => {
 					console.error('Start error:', err);
