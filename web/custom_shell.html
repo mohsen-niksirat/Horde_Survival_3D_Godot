@@ -5,36 +5,130 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>HordeSurvival 3D</title>
 	<style>
-		:root { --bg: #1a1c26; --accent: #6bb6ff; --gold: #ffd700; }
+		:root {
+			--bg: #10121a;
+			--card: #181b26;
+			--accent: #4da6ff;
+			--accent-glow: rgba(77, 166, 255, 0.4);
+			--gold: #ffd700;
+			--gold-glow: rgba(255, 215, 0, 0.45);
+			--text-dim: #8b95a8;
+			--text-light: #e8eaf0;
+		}
 		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body {
 			background: var(--bg);
-			color: #e8eaf0;
-			font-family: 'Segoe UI', system-ui, sans-serif;
+			color: var(--text-light);
+			font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 			display: flex; align-items: center; justify-content: center;
 			height: 100vh; overflow: hidden;
+			user-select: none;
 		}
 		#frame { position: relative; width: 100vw; height: 100vh; }
 		#canvas { width: 100%; height: 100%; display: block; outline: none; }
 		#loader {
 			position: absolute; inset: 0;
 			display: flex; flex-direction: column;
-			align-items: center; justify-content: center; gap: 18px;
-			background: var(--bg); z-index: 10;
+			align-items: center; justify-content: center; gap: 20px;
+			background: radial-gradient(circle at center, #181c2b 0%, #0d0f17 100%);
+			z-index: 10;
+			transition: opacity 0.3s ease, visibility 0.3s ease;
 		}
-		#loader.hidden { display: none; }
-		h1 { font-size: 2.4rem; letter-spacing: 2px; color: var(--gold); text-shadow: 0 0 24px rgba(255,215,0,.35); }
-		#status { color: #9aa3b5; font-size: 1rem; }
-		#bar-outer { width: min(420px, 70vw); height: 10px; border-radius: 6px; background: #2a2d3a; overflow: hidden; }
-		#bar-inner { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), #9bd0ff); transition: width .2s ease; }
+		#loader.hidden {
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+		}
+		h1 {
+			font-size: 2.5rem;
+			letter-spacing: 3px;
+			color: var(--gold);
+			text-shadow: 0 0 28px var(--gold-glow);
+			font-weight: 800;
+			text-transform: uppercase;
+		}
+		.subtitle {
+			font-size: 0.95rem;
+			color: var(--text-dim);
+			margin-top: -10px;
+			letter-spacing: 1px;
+		}
+		#status {
+			color: #b0bad0;
+			font-size: 0.95rem;
+			font-weight: 500;
+			min-height: 1.4em;
+			text-align: center;
+		}
+		#bar-outer {
+			width: min(440px, 78vw);
+			height: 12px;
+			border-radius: 8px;
+			background: #1e2230;
+			box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(0,0,0,0.2);
+			overflow: hidden;
+			padding: 2px;
+		}
+		#bar-inner {
+			width: 0%;
+			height: 100%;
+			border-radius: 6px;
+			background: linear-gradient(90deg, var(--accent) 0%, #70baff 50%, var(--gold) 100%);
+			box-shadow: 0 0 12px var(--accent-glow);
+			transition: width 0.15s ease-out;
+		}
 		#click-to-play {
-			display: none; margin-top: 10px; padding: 14px 44px;
-			font-size: 1.2rem; letter-spacing: 1px;
-			color: #10131c; background: var(--gold); border: 0; border-radius: 10px;
-			cursor: pointer; font-weight: 700;
+			display: none;
+			margin-top: 10px;
+			padding: 14px 52px;
+			font-size: 1.25rem;
+			letter-spacing: 2px;
+			color: #0c0e14;
+			background: linear-gradient(180deg, #ffe033 0%, var(--gold) 100%);
+			border: 0;
+			border-radius: 12px;
+			cursor: pointer;
+			font-weight: 800;
+			box-shadow: 0 4px 24px var(--gold-glow);
+			transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+			animation: pulse-glow 2s infinite ease-in-out;
 		}
-		#click-to-play:hover { filter: brightness(1.1); }
-		#error { color: #ff6b6b; max-width: 80vw; text-align: center; display: none; white-space: pre-wrap; }
+		#click-to-play:hover {
+			transform: scale(1.04);
+			filter: brightness(1.1);
+			box-shadow: 0 6px 30px rgba(255, 215, 0, 0.65);
+		}
+		#click-to-play:active {
+			transform: scale(0.98);
+		}
+		@keyframes pulse-glow {
+			0%, 100% { box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4); }
+			50% { box-shadow: 0 4px 32px rgba(255, 215, 0, 0.75); }
+		}
+		#error {
+			color: #ff6b6b;
+			max-width: 85vw;
+			text-align: center;
+			display: none;
+			white-space: pre-wrap;
+			font-size: 0.95rem;
+			background: rgba(255, 80, 80, 0.1);
+			border: 1px solid rgba(255, 80, 80, 0.25);
+			padding: 12px 20px;
+			border-radius: 8px;
+		}
+		#retry-btn {
+			display: none;
+			margin-top: 8px;
+			padding: 10px 28px;
+			background: #2a3144;
+			color: #fff;
+			border: 1px solid #444f6d;
+			border-radius: 8px;
+			cursor: pointer;
+			font-weight: 600;
+		}
+		#retry-btn:hover { background: #353e56; }
 	</style>
 	$GODOT_HEAD_INCLUDE
 </head>
@@ -43,41 +137,33 @@
 		<canvas id="canvas"></canvas>
 		<div id="loader">
 			<h1>HordeSurvival 3D</h1>
+			<div class="subtitle">Stylized Roguelite Survival</div>
 			<div id="bar-outer"><div id="bar-inner"></div></div>
-			<div id="status">Loading assets...</div>
-			<button id="click-to-play">PLAY</button>
+			<div id="status">Connecting...</div>
+			<button id="click-to-play">PLAY NOW</button>
 			<div id="error"></div>
+			<button id="retry-btn">Retry</button>
 		</div>
 	</div>
 	<script src="$GODOT_URL"></script>
 	<script>
-		// Register the engine-payload cache so repeat visits skip the wasm
-		// download+compile — the biggest single win on GitHub Pages. Keep the
-		// promise: starting while an old worker still controls the page can mix
-		// Godot's index.js with an old audio worklet.
-		let swReady = Promise.resolve(null);
+		// Register Service Worker for persistent caching of game assets across visits
 		if ('serviceWorker' in navigator) {
-			swReady = navigator.serviceWorker.register('sw.js', { scope: './' })
+			navigator.serviceWorker.register('sw.js', { scope: './' })
 				.then(reg => reg.update().catch(() => {}))
-				.catch(() => null);
-			// Cap the wait: serviceWorker.ready can stay pending forever (SW
-			// disabled, private windows, install stalls) and startGame must
-			// never be gated on it.
-			swReady = Promise.race([
-				swReady.then(() => navigator.serviceWorker.ready).catch(() => null),
-				new Promise(resolve => setTimeout(resolve, 4000)),
-			]);
+				.catch(() => {});
 		}
+
 		const GODOT_CONFIG = $GODOT_CONFIG;
 		const loader = document.getElementById('loader');
 		const bar = document.getElementById('bar-inner');
 		const statusEl = document.getElementById('status');
 		const playBtn = document.getElementById('click-to-play');
 		const errorEl = document.getElementById('error');
+		const retryBtn = document.getElementById('retry-btn');
 		let engine = null;
+		let downloadComplete = false;
 
-		// Drop Pointer Lock whenever the tab/page is left or backgrounded.
-		// Otherwise the browser keeps showing "press Esc to see your mouse".
 		function forceUnlockPointer() {
 			try {
 				if (document.exitPointerLock) document.exitPointerLock();
@@ -102,68 +188,87 @@
 		}
 
 		if (!webglSupported()) {
-			statusEl.textContent = 'Loading failed';
+			statusEl.textContent = 'WebGL 2 Required';
 			errorEl.style.display = 'block';
 			errorEl.textContent = 'WebGL 2 is not available in this browser. Please use a modern browser with hardware acceleration enabled.';
 			document.getElementById('bar-outer').style.display = 'none';
 		} else {
+			// Real download telemetry tracking
 			GODOT_CONFIG['onProgress'] = function (current, total) {
-				const pct = total > 0 ? (current / total) * 100 : 0;
-				bar.style.width = pct + '%';
-				statusEl.textContent = 'Loading game data... ' + Math.round(pct) + '%';
+				if (downloadComplete) return;
+				const pct = total > 0 ? Math.min(100, (current / total) * 100) : 0;
+				bar.style.width = Math.max(3, pct) + '%';
+				const mbLoaded = (current / (1024 * 1024)).toFixed(1);
+				if (total > 0) {
+					const mbTotal = (total / (1024 * 1024)).toFixed(1);
+					statusEl.textContent = 'Loading game assets... ' + Math.round(pct) + '% (' + mbLoaded + ' / ' + mbTotal + ' MB)';
+				} else {
+					statusEl.textContent = 'Loading game assets... ' + mbLoaded + ' MB';
+				}
 			};
+
 			engine = new Engine(GODOT_CONFIG);
-			statusEl.textContent = 'Ready!';
-			playBtn.style.display = 'block';
-			let tickMsg = null;
+
+			const exe = GODOT_CONFIG.executable || 'index';
+			const pack = GODOT_CONFIG.mainPack || (exe + '.pck');
+			if (!GODOT_CONFIG.args) GODOT_CONFIG.args = [];
+			GODOT_CONFIG.args = ['--main-pack', pack].concat(GODOT_CONFIG.args);
+
+			function startLoad() {
+				errorEl.style.display = 'none';
+				retryBtn.style.display = 'none';
+				statusEl.textContent = 'Initializing engine...';
+				bar.style.width = '3%';
+
+				// Download & compile WASM and preload PCK immediately in parallel
+				Promise.all([
+					engine.init(exe),
+					engine.preloadFile(pack, pack)
+				]).then(() => {
+					downloadComplete = true;
+					bar.style.width = '100%';
+					statusEl.textContent = 'Ready!';
+					playBtn.style.display = 'inline-block';
+				}).catch(err => {
+					console.error('Asset load error:', err);
+					downloadComplete = true;
+					statusEl.textContent = 'Failed to load';
+					errorEl.style.display = 'block';
+					errorEl.textContent = 'Loading failed: ' + (err.message || err) + '\nPlease check your connection and retry.';
+					retryBtn.style.display = 'inline-block';
+				});
+			}
+
+			retryBtn.addEventListener('click', () => {
+				startLoad();
+			});
+
 			playBtn.addEventListener('click', () => {
-				playBtn.style.display = 'none';
-				bar.style.width = '0%';
+				playBtn.disabled = true;
+				playBtn.style.opacity = '0.5';
+				statusEl.textContent = 'Starting game...';
 				forceUnlockPointer();
-				// Explicitly resume any browser audio context in the same user
-				// gesture. Godot's WebAudio backend otherwise may start with an
-				// uninitialised sampleNodes table on some browsers.
+
+				// Resume AudioContext inside the user gesture
 				try {
 					const contexts = [window.AudioContext, window.webkitAudioContext].filter(Boolean);
 					contexts.forEach(Ctx => { try { const c = new Ctx(); if (c.resume) c.resume(); } catch (e) {} });
 				} catch (e) {}
-				// WASM download+compile dominates on GitHub Pages (no
-				// Cross-Origin-Isolation → recompiles every visit). Show a
-				// live timer so it doesn't look hung during the long tail.
-				const startTime = Date.now();
-				statusEl.textContent = 'Preparing audio and engine...';
-				tickMsg = setInterval(() => {
-					const s = Math.round((Date.now() - startTime) / 1000);
-					statusEl.textContent = (s < 6 ? 'Downloading engine... ' : 'Compiling engine (first load ~1 min)... ') + s + 's';
-				}, 1000);
-				// Hard watchdog: if startGame neither resolves nor rejects after
-				// 5 minutes, surface a retry instead of spinning forever.
-				let watchdog = setTimeout(() => {
-					clearInterval(tickMsg);
-					errorEl.style.display = 'block';
-					errorEl.textContent = 'Loading is taking too long. Check your connection and press PLAY to retry.';
-					playBtn.style.display = 'block';
-					forceUnlockPointer();
-				}, 300000);
-				// Wait for the SW handshake with a short timeout, then kick off
-				// the engine. The watchdog is cleared on either outcome.
-				Promise.race([
-					swReady,
-					new Promise(resolve => setTimeout(resolve, 4000)),
-				]).then(() => engine.startGame()).then(() => {
-					clearTimeout(watchdog);
-					clearInterval(tickMsg);
+
+				// Engine is already inited & preloaded, start() completes instantly
+				engine.start().then(() => {
 					loader.classList.add('hidden');
 				}).catch(err => {
-					clearTimeout(watchdog);
-					clearInterval(tickMsg);
+					console.error('Start error:', err);
 					errorEl.style.display = 'block';
-					errorEl.textContent = 'Failed to start: ' + err;
-					loader.classList.remove('hidden');
-					playBtn.style.display = 'block';
-					forceUnlockPointer();
+					errorEl.textContent = 'Failed to start game: ' + (err.message || err);
+					playBtn.disabled = false;
+					playBtn.style.opacity = '1';
 				});
 			});
+
+			// Begin loading immediately on page load!
+			startLoad();
 		}
 	</script>
 </body>

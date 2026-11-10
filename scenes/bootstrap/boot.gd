@@ -11,14 +11,14 @@ var _load_phase: int = 0  # 0=none, 1=prewarm, 2=ready
 func _ready() -> void:
 	await get_tree().process_frame
 	AudioManager.apply_saved_volumes()
-	# V21A: warm up common resources in the background during the click-gate
-	# so the menu doesn't hitch on first render. Only native; Web uses its
-	# own thread-safe warmup in Main so we don't block the click gate.
 	if OS.get_name() != "Web" and DisplayServer.get_name() != "headless":
 		_prefetch_resources()
-	if OS.get_name() == "Web":
-		click_label.visible = true
-		_waiting_for_click = true
+		_go_menu()
+	elif OS.get_name() == "Web":
+		# The HTML shell already handled the audio-unlock user gesture when clicking PLAY.
+		# Run a quick framed warmup of hot resources, then transition straight to menu.
+		await _web_warmup()
+		_go_menu()
 	else:
 		_go_menu()
 
