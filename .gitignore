@@ -43,3 +43,6 @@ assets/models/external/
 # Distributable archives - use GitHub Releases instead of committing
 *.zip
 
+
+# Graphify knowledge graph artifacts
+graphify-out/

@@ -20,6 +20,7 @@ func _ready() -> void:
 	add_child(dungeon)
 	_apply_skybox()
 	if PerformanceManager != null:
+		PerformanceManager.apply_render_settings()
 		if not PerformanceManager.quality_changed.is_connected(_on_quality_changed):
 			PerformanceManager.quality_changed.connect(_on_quality_changed)
 

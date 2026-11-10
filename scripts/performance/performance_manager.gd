@@ -174,6 +174,12 @@ func _ready() -> void:
 		quality = Quality.VERY_LOW
 	quality_changed.emit(quality)
 	_apply_render_settings()
+	if get_tree() != null:
+		get_tree().node_added.connect(_on_node_added)
+
+func _on_node_added(node: Node) -> void:
+	if node is DirectionalLight3D or node is WorldEnvironment:
+		call_deferred("_apply_render_settings")
 
 ## True on Android/iOS. Used to pick safe defaults (Very Low) and to keep
 ## the mobile render budget honest.
@@ -206,7 +212,12 @@ func quality_name() -> String:
 		return base + "+A"
 	return base
 
+func apply_render_settings() -> void:
+	_apply_render_settings()
+
 func _apply_render_settings() -> void:
+	_sun_cache_time = -10000
+	_fog_cache.clear()
 	# Mobile MEDIUM used to keep real-time shadows on because only "web" was
 	# excluded — that is the single most expensive toggle on weak phone GPUs.
 	var enable_shadows := quality >= Quality.HIGH or (quality == Quality.MEDIUM and not _is_web() and not _is_touch())

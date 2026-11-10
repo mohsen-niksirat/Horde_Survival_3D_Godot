@@ -38,6 +38,8 @@ func _ready() -> void:
 	# Drop stale touch input carried over from a previous run/scene.
 	InputManager.clear_touch()
 	GameManager.change_state(GameManager.State.PLAYING)
+	if PerformanceManager != null:
+		PerformanceManager.apply_render_settings()
 
 	enemy_manager = Node.new()
 	enemy_manager.set_script(ENEMY_MANAGER)

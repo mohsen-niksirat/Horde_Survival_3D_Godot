@@ -163,6 +163,7 @@ margin=0.25
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]
 fov=60.0
+far=100.0
 current=true
 
 [node name="Hurtbox" type="Area3D" parent="."]
