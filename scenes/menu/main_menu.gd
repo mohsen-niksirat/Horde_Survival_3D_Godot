@@ -15,6 +15,15 @@ extends Control
 
 var campaign_button: Button
 
+## Menu styles are built once and re-applied (the campaign button is added
+## after _ready and triggers a second styling pass).
+var _play_norm: StyleBoxFlat
+var _play_hov: StyleBoxFlat
+var _play_press: StyleBoxFlat
+var _sec_norm: StyleBoxFlat
+var _sec_hov: StyleBoxFlat
+var _sec_press: StyleBoxFlat
+
 func _ready() -> void:
 	InputManager.release_pointer()
 	play_button.pressed.connect(_on_play_pressed)
@@ -29,6 +38,10 @@ func _ready() -> void:
 		quit_button.visible = false
 	notice_label.text = ""
 	_apply_locale()
+	# V31A: bake the gameplay SFX/music PCM while the player is still in the
+	# menu. AudioManager slices the work across frames, so the menu stays
+	# smooth and the first run starts with a warm audio cache.
+	AudioManager.prewarm_audio()
 	# P9: full achievements panel — V20A: instantiate deferred one frame so
 	# the menu's first frame (and the Play button) appear without the panel
 	# build cost stalling the startup path.
@@ -78,28 +91,14 @@ func _apply_locale() -> void:
 
 ## Apply custom stylish roguelite themes to all menu buttons
 func _style_menu_buttons() -> void:
-	# Gold Call-to-Action for PlayButton
-	var play_norm := StyleBoxFlat.new()
-	play_norm.bg_color = Color(1.0, 0.82, 0.15, 1.0)
-	play_norm.corner_radius_top_left = 12
-	play_norm.corner_radius_top_right = 12
-	play_norm.corner_radius_bottom_left = 12
-	play_norm.corner_radius_bottom_right = 12
-	play_norm.border_width_left = 2
-	play_norm.border_width_top = 2
-	play_norm.border_width_right = 2
-	play_norm.border_width_bottom = 2
-	play_norm.border_color = Color(1.0, 0.95, 0.6, 0.9)
-	play_norm.shadow_color = Color(1.0, 0.8, 0.0, 0.35)
-	play_norm.shadow_size = 8
-
-	var play_hov := play_norm.duplicate() as StyleBoxFlat
-	play_hov.bg_color = Color(1.0, 0.88, 0.28, 1.0)
-	play_hov.border_color = Color(1.0, 1.0, 0.8, 1.0)
-	play_hov.shadow_size = 14
-
-	var play_press := play_norm.duplicate() as StyleBoxFlat
-	play_press.bg_color = Color(0.88, 0.7, 0.1, 1.0)
+	if _play_norm == null:
+		_build_menu_styles()
+	var play_norm := _play_norm
+	var play_hov := _play_hov
+	var play_press := _play_press
+	var sec_norm := _sec_norm
+	var sec_hov := _sec_hov
+	var sec_press := _sec_press
 
 	play_button.add_theme_stylebox_override("normal", play_norm)
 	play_button.add_theme_stylebox_override("hover", play_hov)
@@ -109,27 +108,6 @@ func _style_menu_buttons() -> void:
 	play_button.add_theme_font_size_override("font_size", 24)
 
 	# Sleek dark slate glass theme for secondary buttons
-	var sec_norm := StyleBoxFlat.new()
-	sec_norm.bg_color = Color(0.12, 0.15, 0.22, 0.85)
-	sec_norm.corner_radius_top_left = 10
-	sec_norm.corner_radius_top_right = 10
-	sec_norm.corner_radius_bottom_left = 10
-	sec_norm.corner_radius_bottom_right = 10
-	sec_norm.border_width_left = 1
-	sec_norm.border_width_top = 1
-	sec_norm.border_width_right = 1
-	sec_norm.border_width_bottom = 1
-	sec_norm.border_color = Color(0.28, 0.38, 0.55, 0.7)
-
-	var sec_hov := sec_norm.duplicate() as StyleBoxFlat
-	sec_hov.bg_color = Color(0.18, 0.24, 0.36, 0.95)
-	sec_hov.border_color = Color(0.45, 0.75, 1.0, 0.95)
-	sec_hov.shadow_color = Color(0.3, 0.6, 1.0, 0.25)
-	sec_hov.shadow_size = 6
-
-	var sec_press := sec_norm.duplicate() as StyleBoxFlat
-	sec_press.bg_color = Color(0.09, 0.12, 0.18, 0.95)
-
 	var secondary_buttons: Array = [
 		characters_button, weapons_button, achievements_button,
 		settings_button, upgrades_button, how_to_play_button, quit_button
@@ -150,6 +128,51 @@ func _style_menu_buttons() -> void:
 
 	if not play_button.mouse_entered.is_connected(_on_btn_hover):
 		play_button.mouse_entered.connect(_on_btn_hover)
+
+## Build the menu's StyleBox assets exactly once (gold CTA + slate glass).
+func _build_menu_styles() -> void:
+	_play_norm = StyleBoxFlat.new()
+	_play_norm.bg_color = Color(1.0, 0.82, 0.15, 1.0)
+	_play_norm.corner_radius_top_left = 12
+	_play_norm.corner_radius_top_right = 12
+	_play_norm.corner_radius_bottom_left = 12
+	_play_norm.corner_radius_bottom_right = 12
+	_play_norm.border_width_left = 2
+	_play_norm.border_width_top = 2
+	_play_norm.border_width_right = 2
+	_play_norm.border_width_bottom = 2
+	_play_norm.border_color = Color(1.0, 0.95, 0.6, 0.9)
+	_play_norm.shadow_color = Color(1.0, 0.8, 0.0, 0.35)
+	_play_norm.shadow_size = 8
+
+	_play_hov = _play_norm.duplicate() as StyleBoxFlat
+	_play_hov.bg_color = Color(1.0, 0.88, 0.28, 1.0)
+	_play_hov.border_color = Color(1.0, 1.0, 0.8, 1.0)
+	_play_hov.shadow_size = 14
+
+	_play_press = _play_norm.duplicate() as StyleBoxFlat
+	_play_press.bg_color = Color(0.88, 0.7, 0.1, 1.0)
+
+	_sec_norm = StyleBoxFlat.new()
+	_sec_norm.bg_color = Color(0.12, 0.15, 0.22, 0.85)
+	_sec_norm.corner_radius_top_left = 10
+	_sec_norm.corner_radius_top_right = 10
+	_sec_norm.corner_radius_bottom_left = 10
+	_sec_norm.corner_radius_bottom_right = 10
+	_sec_norm.border_width_left = 1
+	_sec_norm.border_width_top = 1
+	_sec_norm.border_width_right = 1
+	_sec_norm.border_width_bottom = 1
+	_sec_norm.border_color = Color(0.28, 0.38, 0.55, 0.7)
+
+	_sec_hov = _sec_norm.duplicate() as StyleBoxFlat
+	_sec_hov.bg_color = Color(0.18, 0.24, 0.36, 0.95)
+	_sec_hov.border_color = Color(0.45, 0.75, 1.0, 0.95)
+	_sec_hov.shadow_color = Color(0.3, 0.6, 1.0, 0.25)
+	_sec_hov.shadow_size = 6
+
+	_sec_press = _sec_norm.duplicate() as StyleBoxFlat
+	_sec_press.bg_color = Color(0.09, 0.12, 0.18, 0.95)
 
 func _on_btn_hover() -> void:
 	AudioManager.play_game_sfx("ui_hover")

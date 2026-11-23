@@ -43,6 +43,37 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   no matching section.
 - **Independent music/SFX mute** toggles in Settings.
 
+### Performance (V31A — first-load / run-start pass)
+- **Menu-time audio baking.** All SFX and music waveforms are now plain data
+  (`AudioManager.SFX_RECIPES`, `AudioManager.MUSIC_LAYERS`) synthesised in
+  512–1024-sample slices while the menu is open, instead of synchronously the
+  first time a sound is played. On the dev machine the old path cost ~0.6 s
+  of GDScript PCM work (first shot, first kill, first level-up each paid a
+  30–250 ms frame) plus 0.24–0.62 s of music synthesis at the start of *every*
+  run. Both are now off the frame loop; a cache miss still falls back to the
+  one-shot builder so nothing can go silent.
+- **Music pads are cached for the session** (previously `MusicDirector` was
+  rebuilt per run and re-synthesised its three 2-second loops every time).
+- **Cheaper PCM synthesis**: incremental glide/envelope (two multiplies per
+  sample) instead of `pow()`/`exp()` per sample, plus per-block encoding.
+  Output is verified sample-identical to the old synthesiser outside the
+  randomised attack window (`tests/test_v31a_load.gd`).
+- **Boot no longer loads the menu twice**: `Boot` queued `MainMenu.tscn` with
+  `ResourceLoader.load_threaded_request` and then loaded it again through
+  `change_scene_to_file`. Only the small data resources are prefetched now.
+- **Dead web warmup removed**: `_waiting_for_click` / `_web_warmup()` were
+  unreachable (the click gate lives in the HTML shell), so the synchronous
+  GLB parses they contained never ran on any platform.
+- **Render-setting re-applies are coalesced**: `node_added` used to queue a
+  full re-apply (two whole-tree scans, MSAA set, adaptive-resolution reset)
+  for every directional light / environment added during a scene load.
+- **Menu background redraws at 30 Hz** instead of every frame (~120 circle
+  draws per redraw); ember motion still uses the real elapsed time.
+- **Enemy pool prewarm and native rig preloads start after the first rendered
+  frame** instead of competing with the arena's own GLB parses in it.
+- **`ui_hover` and `dash` SFX actually play** — both ids were requested by the
+  menu and the dash component but had no recipe, so they were silent.
+
 ### Changed
 - **Dash key moved from Space to F.** Space re-triggered the focused HUD
   button, which bounced the player out of fullscreen.

@@ -50,6 +50,14 @@ func queue_spawn(data: EnemyData, position: Vector3, player: Node3D, hp_scale: f
 
 func _ready() -> void:
 	add_to_group("enemy_manager")
+	# V31A: prewarming instantiates scene instances, so keep it off the first
+	# rendered frame of the run (that frame already pays scene setup).
+	_deferred_prewarm()
+
+func _deferred_prewarm() -> void:
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	prewarm_pool(16)
 
 func prewarm_pool(count: int) -> void:

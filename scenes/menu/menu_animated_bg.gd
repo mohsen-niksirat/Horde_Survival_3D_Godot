@@ -5,11 +5,15 @@ extends Node2D
 const ORB_COUNT := 16
 const STAR_COUNT := 48
 const EMBER_COUNT := 28
+## V31A: the background is ambient motion at ~120 circle draws per redraw.
+## 30 Hz is visually identical and halves the menu's per-frame draw cost.
+const REDRAW_INTERVAL := 1.0 / 30.0
 
 var _orbs: Array = []
 var _stars: Array = []
 var _embers: Array = []
 var _time: float = 0.0
+var _redraw_accum: float = 0.0
 var _size: Vector2 = Vector2(1280, 720)
 
 func _ready() -> void:
@@ -40,9 +44,14 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	_redraw_accum += delta
+	if _redraw_accum < REDRAW_INTERVAL:
+		return
+	var step := _redraw_accum
+	_redraw_accum = 0.0
 	for e in _embers:
-		e["y"] -= delta * e["speed"]
-		e["wobble"] += delta * 2.0
+		e["y"] -= step * e["speed"]
+		e["wobble"] += step * 2.0
 		if e["y"] < -20.0:
 			e["y"] = _size.y + 20.0
 			e["x"] = randf() * _size.x

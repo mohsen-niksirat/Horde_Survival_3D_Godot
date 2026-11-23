@@ -219,29 +219,19 @@ func _muzzle_flash(player: Node3D, dir: Vector3, weapon_id: String) -> void:
 		mat.emission = tint
 
 ## Distinct fire sound per weapon id.
+## V31A: the recipes live in AudioManager.SFX_RECIPES so the menu-time
+## prewarm bakes them; the first shot of a run is a cache lookup, not a
+## ~100 ms PCM synthesis in the middle of combat.
 func _play_fire_sfx(weapon_id: String) -> void:
 	match weapon_id:
 		"fireball", "hellfire":
-			AudioManager.play_recipe("shoot_fireball", [
-				{"freq": 260.0, "glide": 0.28, "dur": 0.2, "kind": "saw", "gain": 1.0},
-				{"freq": 0.0, "glide": 1.0, "dur": 0.08, "kind": "noise", "gain": 0.45},
-			], -6.0)
+			AudioManager.play_game_sfx("shoot_fireball")
 		"magic_missile", "holy_bible":
-			AudioManager.play_recipe("shoot_missile", [
-				{"freq": 1400.0, "glide": 0.22, "dur": 0.11, "kind": "sine", "gain": 0.9},
-				{"freq": 2800.0, "glide": 0.3, "dur": 0.05, "kind": "sine", "gain": 0.25},
-			], -10.0)
+			AudioManager.play_game_sfx("shoot_missile")
 		"divine_spear", "judgment":
-			AudioManager.play_recipe("shoot_spear", [
-				{"freq": 950.0, "glide": 0.12, "dur": 0.07, "kind": "square", "gain": 0.8},
-				{"freq": 0.0, "glide": 1.0, "dur": 0.03, "kind": "noise", "gain": 0.6},
-			], -8.0)
+			AudioManager.play_game_sfx("shoot_spear")
 		"lightning", "thunderstorm":
-			AudioManager.play_recipe("shoot_lightning", [
-				{"freq": 0.0, "glide": 1.0, "dur": 0.17, "kind": "noise", "gain": 0.75},
-				{"freq": 95.0, "glide": 0.45, "dur": 0.24, "kind": "sine", "gain": 0.95, "decay": 2.4},
-				{"freq": 700.0, "glide": 0.3, "dur": 0.09, "kind": "zap", "gain": 0.5},
-			], -5.0)
+			AudioManager.play_game_sfx("shoot_lightning")
 		_:
 			AudioManager.play_game_sfx("weapon_fire")
 

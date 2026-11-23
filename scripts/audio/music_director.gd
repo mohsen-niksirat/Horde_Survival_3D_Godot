@@ -1,7 +1,8 @@
 extends Node
 ## V8 procedural music: layered synth pads built from cached tone loops.
 ## Three intensity states cross-faded by game state (calm/tense/boss).
-## All web-safe: zero audio assets, generated once and looped.
+## All web-safe: zero audio assets; the PCM itself is baked once per session
+## by AudioManager (menu-time prewarm) and reused by every run.
 
 signal intensity_changed(state: int)
 
@@ -36,33 +37,12 @@ func build_music() -> void:
 	_players[Intensity.BOSS] = _make_layer("music_boss", BOSS_NOTES, 0.08)
 
 func _make_layer(cache_id: String, notes: Array, gain: float) -> AudioStreamPlayer:
-	# Layer a detuned stack of slow tones into one looped WAV
-	var sample_rate := 11025  # halved: still plenty for sub-440 Hz pads
-	var loop_len := int(sample_rate * 2.0)  # 2-second seamless pad loop
-	var data := PackedByteArray()
-	data.resize(loop_len * 2)
-	var i := 0
-	while i < loop_len:
-		var t := float(i) / sample_rate
-		var value := 0.0
-		var n_i := 0
-		while n_i < notes.size():
-			var n: float = notes[n_i]
-			value += sin(TAU * n * t)
-			value += sin(TAU * n * 1.005 * t)  # detune shimmer
-			n_i += 1
-		value /= float(notes.size()) * 2.0
-		var env := 0.85 + 0.15 * sin(TAU * t / 4.0)
-		var s := int(clampf(value * env * gain, -1.0, 1.0) * 32000.0)
-		data.encode_s16(i * 2, s)
-		i += 1
-	var stream := AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = sample_rate
-	stream.data = data
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	stream.loop_begin = 0
-	stream.loop_end = loop_len
+	# V31A: the PCM is generated (and cached) by AudioManager, so a new run
+	# reuses the pads baked during the menu instead of re-synthesising
+	# ~66k samples of GDScript math at the start of every run.
+	var stream: AudioStreamWAV = AudioManager.get_music_stream(cache_id)
+	if stream == null:
+		stream = AudioManager._build_music_layer({"notes": notes, "gain": gain})
 	var p := AudioStreamPlayer.new()
 	p.bus = _bus
 	p.stream = stream

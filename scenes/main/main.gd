@@ -75,11 +75,18 @@ func _ready() -> void:
 	projectile_root.add_to_group("projectile_container")
 	add_child(projectile_root)
 	player.bind_combat(enemy_manager, projectile_root)
+	# Audio is baked in the background (menu-time prewarm normally wins the
+	# race); calling it here too keeps the first shot of a direct-start run
+	# from synthesising PCM mid-combat.
+	AudioManager.prewarm_audio()
 	_request_rig_preload()
 
 ## Kick off threaded GLB loads so the first enemy/hero spawn doesn't pay
 ## the full parse cost in one hitchy frame.
 ## V21A: also add the hero GLB variants so character switching never hitches.
+## V31A: the loads start two frames in — queuing ten parses in the same frame
+## as the arena decor GLBs made the slowest machines slower at load, and the
+## requests are non-blocking anyway so the systems below still come up now.
 func _request_rig_preload() -> void:
 	var rig_paths := [
 		"res://assets/models/kaykit/heroes/adventurer_mage.glb",
@@ -96,10 +103,7 @@ func _request_rig_preload() -> void:
 	]
 	# Single-thread Web and dummy headless renderers must not construct
 	# GLB subresources on worker threads. Only native graphical runs preload.
-	if not OS.has_feature("web") and DisplayServer.get_name() != "headless":
-		for p in rig_paths:
-			if ResourceLoader.exists(p):
-				ResourceLoader.load_threaded_request(p, "PackedScene", false)
+	_start_rig_preload(rig_paths)
 
 	# Horde spawning
 	wave_manager = Node.new()
@@ -159,6 +163,20 @@ func _request_rig_preload() -> void:
 
 	# Pet (Dragon Welp) — defer so first frame is faster on weak browsers
 	call_deferred("_spawn_pet")
+
+## Queue the rig preloads after the scene has settled. Native only: Web is
+## single-threaded and the dummy headless renderer must not build GLB
+## subresources on worker threads.
+func _start_rig_preload(rig_paths: Array) -> void:
+	if OS.has_feature("web") or DisplayServer.get_name() == "headless":
+		return
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	for p in rig_paths:
+		if ResourceLoader.exists(p):
+			ResourceLoader.load_threaded_request(p, "PackedScene", false)
 
 func _spawn_pet() -> void:
 	if not is_inside_tree():

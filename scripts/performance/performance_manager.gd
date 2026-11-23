@@ -129,6 +129,9 @@ var _dyn_fps_sum: float = 0.0
 var _dyn_fps_count: int = 0
 var _dyn_cooldown: float = 0.0
 var _stress_accum: float = 0.0
+## V31A: coalesce render-setting re-applies triggered by node_added during a
+## scene load (one pass instead of one per light/environment).
+var _reapply_queued: bool = false
 
 ## Release-readiness session logger (opt-in, F4). Captures a 1s telemetry
 ## sample while a run is active so a real-device playthrough leaves a
@@ -178,8 +181,16 @@ func _ready() -> void:
 		get_tree().node_added.connect(_on_node_added)
 
 func _on_node_added(node: Node) -> void:
-	if node is DirectionalLight3D or node is WorldEnvironment:
-		call_deferred("_apply_render_settings")
+	# A single scene load adds several lights/environments in the same frame.
+	# Each one used to queue its own full re-apply (two whole-tree scans, an
+	# MSAA set and an adaptive-resolution reset) — collapse them into one pass.
+	if (node is DirectionalLight3D or node is WorldEnvironment) and not _reapply_queued:
+		_reapply_queued = true
+		call_deferred("_apply_render_settings_deferred")
+
+func _apply_render_settings_deferred() -> void:
+	_reapply_queued = false
+	_apply_render_settings()
 
 ## True on Android/iOS. Used to pick safe defaults (Very Low) and to keep
 ## the mobile render budget honest.
