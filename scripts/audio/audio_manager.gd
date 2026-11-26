@@ -39,11 +39,14 @@ const SFX_IMPORTANCE := {
 }
 
 ## Per-tier volume multipliers under stress / low quality.
+## V31B: the old mix measured -21 dBFS for ambient combat SFX and -29 dBFS
+## for music — far below the -12..-6 dBFS a game should sit at, which read as
+## "the game has no sound" on laptop/phone speakers.
 const TIER_VOLUME_SCALE := {
 	SfxTier.CRITICAL: 1.0,
 	SfxTier.IMPORTANT: 0.85,
-	SfxTier.AMBIENT: 0.6,
-	SfxTier.LOW: 0.3,
+	SfxTier.AMBIENT: 0.75,
+	SfxTier.LOW: 0.45,
 }
 
 ## Dynamic SFX rate limiter: avoids audio spam under heavy load.
@@ -81,15 +84,15 @@ const SFX_RECIPES := {
 		{"freq": 300.0, "glide": 0.35, "dur": 0.09, "kind": "saw", "gain": 0.9},
 		{"freq": 0.0, "glide": 1.0, "dur": 0.025, "kind": "noise", "gain": 0.4},
 	]},
-	"enemy_hit": {"cache": "hit", "tier": SfxTier.AMBIENT, "vol": -9.0, "layers": [
+	"enemy_hit": {"cache": "hit", "tier": SfxTier.AMBIENT, "vol": -7.0, "layers": [
 		{"freq": 520.0, "glide": 0.4, "dur": 0.045, "kind": "square", "gain": 0.7},
 		{"freq": 0.0, "glide": 1.0, "dur": 0.02, "kind": "noise", "gain": 0.6},
 	]},
-	"enemy_death": {"cache": "death", "tier": SfxTier.IMPORTANT, "vol": -7.0, "layers": [
+	"enemy_death": {"cache": "death", "tier": SfxTier.IMPORTANT, "vol": -5.0, "layers": [
 		{"freq": 180.0, "glide": 0.25, "dur": 0.2, "kind": "saw", "gain": 0.8},
 		{"freq": 0.0, "glide": 1.0, "dur": 0.14, "kind": "noise", "gain": 0.55},
 	]},
-	"xp_pickup": {"cache": "xp", "tier": SfxTier.AMBIENT, "vol": -11.0, "layers": [
+	"xp_pickup": {"cache": "xp", "tier": SfxTier.AMBIENT, "vol": -8.0, "layers": [
 		{"freq": 900.0, "glide": 1.65, "dur": 0.07, "kind": "sine", "gain": 0.8},
 		{"freq": 1800.0, "glide": 1.4, "dur": 0.05, "delay": 0.03, "kind": "sine", "gain": 0.3},
 	]},
@@ -109,10 +112,10 @@ const SFX_RECIPES := {
 		{"freq": 0.0, "glide": 1.0, "dur": 0.55, "kind": "noise", "gain": 0.7, "decay": 2.0},
 		{"freq": 48.0, "glide": 0.5, "dur": 1.0, "kind": "sine", "gain": 1.0, "decay": 1.2},
 	]},
-	"ui_click": {"cache": "ui", "tier": SfxTier.LOW, "vol": -10.0, "layers": [
+	"ui_click": {"cache": "ui", "tier": SfxTier.LOW, "vol": -8.0, "layers": [
 		{"freq": 1050.0, "glide": 0.75, "dur": 0.035, "kind": "sine", "gain": 0.8},
 	]},
-	"ui_hover": {"cache": "ui_hover", "tier": SfxTier.LOW, "vol": -18.0, "layers": [
+	"ui_hover": {"cache": "ui_hover", "tier": SfxTier.LOW, "vol": -12.0, "layers": [
 		{"freq": 1320.0, "glide": 1.12, "dur": 0.025, "kind": "sine", "gain": 0.5},
 	]},
 	"dash": {"cache": "dash", "tier": SfxTier.IMPORTANT, "vol": -7.0, "layers": [
@@ -161,10 +164,12 @@ const SFX_RECIPES := {
 
 ## Three procedural music pads. Kept here (not in MusicDirector) so the PCM is
 ## generated once per session instead of once per run.
+## V31B: gains raised ~5x — the pads peaked at 0.06 amplitude (-24 dBFS),
+## which after the volume ceiling landed at ~-29 dBFS (inaudible on speakers).
 const MUSIC_LAYERS := {
-	"music_calm": {"notes": [220.0, 330.0, 440.0], "gain": 0.06},
-	"music_tense": {"notes": [220.0, 293.66, 349.23, 440.0], "gain": 0.07},
-	"music_boss": {"notes": [164.81, 220.0, 311.11, 415.30], "gain": 0.08},
+	"music_calm": {"notes": [220.0, 330.0, 440.0], "gain": 0.30},
+	"music_tense": {"notes": [220.0, 293.66, 349.23, 440.0], "gain": 0.34},
+	"music_boss": {"notes": [164.81, 220.0, 311.11, 415.30], "gain": 0.38},
 }
 
 func _ready() -> void:
@@ -414,6 +419,36 @@ func prewarm_audio() -> void:
 	_prewarm_started = true
 	_prewarm_coroutine()
 
+var _menu_music_pending: bool = false
+
+## V31B: the main menu had no audio at all — music only started with a run.
+## Play the calm pad on the menu and hand over to MusicDirector on run start.
+func play_menu_music() -> void:
+	prewarm_audio()
+	if _menu_music_pending:
+		return
+	_menu_music_pending = true
+	_menu_music_coroutine()
+
+func _menu_music_coroutine() -> void:
+	while not _tone_cache.has("music_calm"):
+		if not _menu_music_pending or not is_inside_tree():
+			_menu_music_pending = false
+			return
+		var tree := get_tree()
+		if tree == null:
+			_menu_music_pending = false
+			return
+		await tree.process_frame
+	if not _menu_music_pending or not is_inside_tree():
+		_menu_music_pending = false
+		return
+	_menu_music_pending = false
+	# A run may have started while the pads were still baking.
+	if GameManager != null and GameManager.state != GameManager.State.MAIN_MENU:
+		return
+	play_music(_tone_cache["music_calm"])
+
 func _prewarm_coroutine() -> void:
 	# Music first: the pads are needed the instant a run starts, and the three
 	# layers are the longest buffers. A player who clicks Play immediately
@@ -444,6 +479,7 @@ func play_music(stream: AudioStream, loop: bool = true) -> void:
 		_music_player.play()
 
 func stop_music() -> void:
+	_menu_music_pending = false
 	if _music_player != null:
 		_music_player.stop()
 

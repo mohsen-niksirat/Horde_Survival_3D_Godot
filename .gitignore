@@ -1,5 +1,6 @@
 # Godot 4
 .godot/
+Godot/
 *.tmp
 export_presets.cfg.secret
 

@@ -32,9 +32,9 @@ func build_music() -> void:
 	if _built:
 		return
 	_built = true
-	_players[Intensity.CALM] = _make_layer("music_calm", CALM_NOTES, 0.06)
-	_players[Intensity.TENSE] = _make_layer("music_tense", TENSE_NOTES, 0.07)
-	_players[Intensity.BOSS] = _make_layer("music_boss", BOSS_NOTES, 0.08)
+	_players[Intensity.CALM] = _make_layer("music_calm", CALM_NOTES, 0.30)
+	_players[Intensity.TENSE] = _make_layer("music_tense", TENSE_NOTES, 0.34)
+	_players[Intensity.BOSS] = _make_layer("music_boss", BOSS_NOTES, 0.38)
 
 func _make_layer(cache_id: String, notes: Array, gain: float) -> AudioStreamPlayer:
 	# V31A: the PCM is generated (and cached) by AudioManager, so a new run

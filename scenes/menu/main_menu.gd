@@ -38,10 +38,11 @@ func _ready() -> void:
 		quit_button.visible = false
 	notice_label.text = ""
 	_apply_locale()
-	# V31A: bake the gameplay SFX/music PCM while the player is still in the
+	# V31B: bake the gameplay SFX/music PCM while the player is still in the
 	# menu. AudioManager slices the work across frames, so the menu stays
-	# smooth and the first run starts with a warm audio cache.
-	AudioManager.prewarm_audio()
+	# smooth and the first run starts with a warm audio cache. The menu also
+	# plays the calm pad (the menu used to be completely silent).
+	AudioManager.play_menu_music()
 	# P9: full achievements panel — V20A: instantiate deferred one frame so
 	# the menu's first frame (and the Play button) appear without the panel
 	# build cost stalling the startup path.

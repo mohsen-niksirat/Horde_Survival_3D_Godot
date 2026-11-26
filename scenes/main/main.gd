@@ -215,6 +215,9 @@ func _spawn_pet() -> void:
 func _build_music() -> void:
 	if not is_inside_tree():
 		return
+	# V31B: the menu pad takes over — stop AudioManager's menu music so the
+	# two sources don't overlap while MusicDirector cross-fades in.
+	AudioManager.stop_music()
 	var music := Node.new()
 	music.set_script(preload("res://scripts/audio/music_director.gd"))
 	music.name = "MusicDirector"
